@@ -1,0 +1,6 @@
+---
+use:
+  demo: ~/demos/demo_charts.star
+load: demo.status_by_month
+---
+<BarChart :data=".Props.data" x="month" stacked labels label="Orders per month by status" style="width: 100%" :height="220" :series="list (dict `key` `paid` `label` `Paid` `tone` `success`) (dict `key` `pending` `label` `Pending` `tone` `warning`) (dict `key` `refunded` `label` `Refunded` `tone` `danger`)" />

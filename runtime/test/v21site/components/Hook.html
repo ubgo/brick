@@ -1,0 +1,6 @@
+<brick:client>
+brick.mount("Hook", (el) => {
+  brick.js(el, 'addClass("this", "mounted"); setAttr("@lbl", "data-x", "1")');
+});
+</brick:client>
+<div class="hook"><span brick:ref="lbl">hook</span></div>

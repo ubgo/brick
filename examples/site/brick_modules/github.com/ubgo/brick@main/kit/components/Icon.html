@@ -1,0 +1,17 @@
+---
+use:
+  icons: ~/data/icons.yaml
+props:
+  name: {type: string, required: true}
+  size: {type: int, default: 16}
+  label: {type: string, default: ""}
+  stroke: {type: string, default: "2"}
+---
+{{/*
+Icon: an inline SVG from kit/data/icons.yaml. It inherits currentColor, so
+it takes the colour of the text around it. Decorative by default
+(aria-hidden); pass label="Delete" when the icon is the only content of a
+control. An unknown name renders an empty square, and the kit's lint test
+fails on any unknown name written in the kit or the demo site.
+*/}}
+<svg class="{{ cx `bk-icon` .Attrs.class }}" width="{{ .Props.size }}" height="{{ .Props.size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="{{ .Props.stroke }}" stroke-linecap="round" stroke-linejoin="round"{{ if .Props.label }} role="img" aria-label="{{ .Props.label }}"{{ else }} aria-hidden="true"{{ end }} {{ attrs `class` }}>{{ range index .Data.icons .Props.name }}<path d="{{ . }}"/>{{ end }}</svg>

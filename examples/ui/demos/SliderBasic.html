@@ -1,0 +1,6 @@
+<div style="display: grid; gap: 1.5rem; width: 100%; max-width: 26rem">
+  <Field label="Volume"><Slider name="volume" :value="70" unit="%" /></Field>
+  <Field label="Storage"><Slider name="storage" :min="0" :max="500" :step="10" :value="120" unit=" GB" /></Field>
+  <Field label="Budget"><Slider name="budget" :min="0" :max="2000" :step="50" :value="750" prefix="$" /></Field>
+  <Field label="Zoom"><Slider name="zoom" :min="50" :max="200" :step="25" :value="100" unit="%" :marks="list 50 100 150 200" /></Field>
+</div>

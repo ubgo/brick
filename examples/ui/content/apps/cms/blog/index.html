@@ -1,0 +1,20 @@
+---
+title: Blog
+layout: app
+description: The public side of the Blog CMS demo — every post the admin publishes, newest first.
+---
+<CmsBlogHeader current="/apps/cms/blog/" />
+<main class="cms-blog-page">
+  <div class="cms-blog-hero">
+    <h1>The brick blog</h1>
+    <p>Notes on building server-rendered Go sites. Written and published in the <a href="/apps/cms/">Blog CMS</a> demo.</p>
+  </div>
+  <CmsBlogList />
+</main>
+<brick:style>
+.cms-blog-page { max-width: 64rem; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+.cms-blog-hero { margin-bottom: 2rem; }
+.cms-blog-hero h1 { font-size: var(--bk-text-4xl); letter-spacing: -.03em; }
+.cms-blog-hero p { margin-top: .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-lg); }
+.cms-blog-hero a { color: var(--bk-primary-text); }
+</brick:style>

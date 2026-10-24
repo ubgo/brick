@@ -1,0 +1,132 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  label: {type: string, default: Carousel}
+  perView: {type: int, default: 1, oneof: [1, 2, 3, 4]}
+  autoplay: {type: int, default: 0, client: true}
+  dots: {type: bool, default: true}
+  gap: {type: string, default: md, oneof: [none, sm, md]}
+---
+{{/*
+Carousel: slides in a row, one page at a time. Each child is a slide.
+
+  <Carousel label="Product photos"><img src="/a.jpg" alt="…"><img src="/b.jpg" alt="…"></Carousel>
+  <Carousel perView="3" :dots="false">…cards…</Carousel>
+  <Carousel autoplay="5000">…</Carousel>                 advance every 5 s
+
+Without JavaScript the track scrolls sideways with CSS scroll snapping
+(swipe, shift+wheel, or arrow keys once focused). With it, previous/next
+buttons move one page, dots jump to a page and show where you are, and
+autoplay (milliseconds; 0 is off) advances and wraps, pausing while the
+pointer or focus is inside, while the tab is hidden, and never running for
+people who prefer reduced motion. The track keeps the class bk-track.
+perView is for wide screens: below 640px 3 and 4 show 2, and below 420px
+every carousel shows one slide at a time.
+*/}}
+<brick:client>
+// END_SLACK is how close (px) the scroll position counts as the end: scroll
+// offsets are fractional on zoomed or high-DPI screens.
+const END_SLACK = 2;
+
+brick.mount("Carousel", (el, props) => {
+  const track = el.querySelector(".bk-track");
+  const prev = el.querySelector(".bk-prev");
+  const next = el.querySelector(".bk-next");
+  const dotsEl = el.querySelector(".bk-carousel__dots");
+  const page = () => track.clientWidth || 1;
+  const step = (dir) => track.scrollBy({ left: dir * track.clientWidth, behavior: "smooth" });
+  const onPrev = () => step(-1);
+  const onNext = () => step(1);
+  let dots = [];
+  const sync = () => {
+    const i = Math.round(track.scrollLeft / page());
+    dots.forEach((d, j) => { if (j === i) d.setAttribute("aria-current", "true"); else d.removeAttribute("aria-current"); });
+  };
+  if (dotsEl) {
+    const per = Number(getComputedStyle(el).getPropertyValue("--bk-carousel-per")) || 1;
+    const n = Math.max(1, Math.ceil(track.children.length / per));
+    dots = Array.from({ length: n }, (_, i) => {
+      const d = document.createElement("button");
+      d.type = "button";
+      d.className = "bk-carousel__dot";
+      d.setAttribute("aria-label", `Go to slide ${i + 1} of ${n}`);
+      d.addEventListener("click", () => track.scrollTo({ left: i * track.clientWidth, behavior: "smooth" }));
+      return d;
+    });
+    dotsEl.replaceChildren(...dots);
+    dotsEl.hidden = n < 2;
+  }
+  let raf = 0;
+  const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(sync); };
+  let timer = 0, paused = false;
+  const reduced = () => typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const advance = () => {
+    if (paused || document.hidden) return;
+    const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - END_SLACK;
+    if (atEnd) track.scrollTo({ left: 0, behavior: "smooth" }); else step(1);
+  };
+  const pause = () => { paused = true; };
+  const onLeave = () => { paused = el.contains(document.activeElement); };
+  const onBlur = (e) => { paused = el.contains(e.relatedTarget) || el.matches(":hover"); };
+  if (props.autoplay > 0 && !reduced()) {
+    timer = setInterval(advance, props.autoplay);
+    el.addEventListener("pointerenter", pause);
+    el.addEventListener("pointerleave", onLeave);
+    el.addEventListener("focusin", pause);
+    el.addEventListener("focusout", onBlur);
+  }
+  prev.hidden = next.hidden = false;
+  prev.addEventListener("click", onPrev);
+  next.addEventListener("click", onNext);
+  track.addEventListener("scroll", onScroll, { passive: true });
+  sync();
+  return () => {
+    clearInterval(timer);
+    cancelAnimationFrame(raf);
+    prev.removeEventListener("click", onPrev);
+    next.removeEventListener("click", onNext);
+    track.removeEventListener("scroll", onScroll);
+    el.removeEventListener("pointerenter", pause);
+    el.removeEventListener("pointerleave", onLeave);
+    el.removeEventListener("focusin", pause);
+    el.removeEventListener("focusout", onBlur);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-carousel { --bk-carousel-per: 1; --bk-carousel-gap: 1rem; position: relative; }
+.bk-carousel--gap-sm { --bk-carousel-gap: .5rem; }
+.bk-carousel--gap-none { --bk-carousel-gap: 0rem; }
+.bk-carousel--per-2 { --bk-carousel-per: 2; }
+.bk-carousel--per-3 { --bk-carousel-per: 3; }
+.bk-carousel--per-4 { --bk-carousel-per: 4; }
+/* Narrow screens show fewer slides at once, so cards keep a readable width. */
+@media (max-width: 640px) { .bk-carousel--per-3, .bk-carousel--per-4 { --bk-carousel-per: 2; } }
+@media (max-width: 420px) { .bk-carousel--per-2, .bk-carousel--per-3, .bk-carousel--per-4 { --bk-carousel-per: 1; } }
+.bk-carousel .bk-track { display: flex; gap: var(--bk-carousel-gap); overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none; border-radius: var(--bk-radius-lg); overscroll-behavior-x: contain; }
+.bk-carousel .bk-track::-webkit-scrollbar { display: none; }
+.bk-carousel .bk-track:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-carousel .bk-track > * { flex: 0 0 calc((100% - (var(--bk-carousel-per) - 1) * var(--bk-carousel-gap)) / var(--bk-carousel-per)); min-width: 0; scroll-snap-align: start; }
+.bk-carousel .bk-track > img { display: block; height: auto; object-fit: cover; border-radius: var(--bk-radius-lg); }
+.bk-carousel__btn { position: absolute; top: 50%; z-index: 1; display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; margin-top: -1.125rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-surface) 90%, transparent); color: var(--bk-fg); box-shadow: var(--bk-shadow); cursor: pointer; backdrop-filter: blur(6px); transition: background var(--bk-duration), opacity var(--bk-duration); }
+.bk-carousel__btn:hover { background: var(--bk-surface); }
+.bk-carousel__btn:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-carousel__btn[hidden] { display: none; }
+.bk-carousel__btn.bk-prev { left: .6rem; }
+.bk-carousel__btn.bk-next { right: .6rem; }
+.bk-carousel--dots .bk-carousel__btn { margin-top: calc(-1.125rem - .85rem); }
+.bk-carousel__dots { display: flex; justify-content: center; gap: .4rem; padding-top: .75rem; }
+.bk-carousel__dots[hidden] { display: none; }
+.bk-carousel__dot { width: .5rem; height: .5rem; padding: 0; border: 0; border-radius: var(--bk-radius-full); background: var(--bk-input); cursor: pointer; transition: width var(--bk-duration), background var(--bk-duration); }
+.bk-carousel__dot:hover { background: var(--bk-muted-fg); }
+.bk-carousel__dot[aria-current=true] { width: 1.25rem; background: var(--bk-primary); }
+.bk-carousel__dot:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+</brick:style>
+<section class="{{ cx `bk-carousel` (cond (gt .Props.perView 1) (print `bk-carousel--per-` .Props.perView) ``) (cond (ne .Props.gap `md`) (print `bk-carousel--gap-` .Props.gap) ``) (cond .Props.dots `bk-carousel--dots` ``) .Attrs.class }}" aria-roledescription="carousel" aria-label="{{ .Props.label }}" {{ attrs `class` }}>
+  <div class="bk-track" tabindex="0">{{ children }}</div>
+  <button type="button" class="bk-carousel__btn bk-prev" aria-label="Previous slide" hidden><Icon name="chevron-left" :size="18" /></button>
+  <button type="button" class="bk-carousel__btn bk-next" aria-label="Next slide" hidden><Icon name="chevron-right" :size="18" /></button>
+  {{- if .Props.dots }}
+  <div class="bk-carousel__dots" hidden></div>{{ end }}
+</section>

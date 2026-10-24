@@ -1,0 +1,3 @@
+tailwind:
+  input: styles/app.css
+  output: static/app.css

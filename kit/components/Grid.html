@@ -1,0 +1,41 @@
+---
+props:
+  cols: {type: int, default: 1, oneof: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+  sm: {type: int, default: 0, oneof: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+  md: {type: int, default: 0, oneof: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+  lg: {type: int, default: 0, oneof: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+  gap: {type: string, default: md, oneof: [none, xs, sm, md, lg, xl]}
+  align: {type: string, default: stretch, oneof: [stretch, start, center, end]}
+---
+{{/*
+Grid: equal columns that respond to the screen. cols is the count on the
+smallest screens; sm, md and lg take over from 640px, 768px and 1024px.
+
+  <Grid :cols="3">…</Grid>                          three columns everywhere
+  <Grid :md="2" :lg="4" gap="lg">…</Grid>           1 → 2 → 4 as the screen grows
+  <Grid :cols="2"><div class="bk-grid__span-full">wide</div>…</Grid>
+
+A child with class bk-grid__span-2 … bk-grid__span-12 spans that many
+columns (never more than the grid has); bk-grid__span-full spans the row.
+Columns are minmax(0, 1fr), so long words and wide tables cannot stretch
+a column past its share.
+*/}}
+<brick:style>
+.bk-grid { display: grid; grid-template-columns: repeat(var(--bk-grid-cols, 1), minmax(0, 1fr)); gap: var(--bk-space-4); }
+.bk-grid--cols-1 { --bk-grid-cols: 1; } .bk-grid--cols-2 { --bk-grid-cols: 2; } .bk-grid--cols-3 { --bk-grid-cols: 3; } .bk-grid--cols-4 { --bk-grid-cols: 4; } .bk-grid--cols-5 { --bk-grid-cols: 5; } .bk-grid--cols-6 { --bk-grid-cols: 6; } .bk-grid--cols-7 { --bk-grid-cols: 7; } .bk-grid--cols-8 { --bk-grid-cols: 8; } .bk-grid--cols-9 { --bk-grid-cols: 9; } .bk-grid--cols-10 { --bk-grid-cols: 10; } .bk-grid--cols-11 { --bk-grid-cols: 11; } .bk-grid--cols-12 { --bk-grid-cols: 12; }
+@media (min-width: 640px) { .bk-grid--sm-1 { --bk-grid-cols: 1; } .bk-grid--sm-2 { --bk-grid-cols: 2; } .bk-grid--sm-3 { --bk-grid-cols: 3; } .bk-grid--sm-4 { --bk-grid-cols: 4; } .bk-grid--sm-5 { --bk-grid-cols: 5; } .bk-grid--sm-6 { --bk-grid-cols: 6; } .bk-grid--sm-7 { --bk-grid-cols: 7; } .bk-grid--sm-8 { --bk-grid-cols: 8; } .bk-grid--sm-9 { --bk-grid-cols: 9; } .bk-grid--sm-10 { --bk-grid-cols: 10; } .bk-grid--sm-11 { --bk-grid-cols: 11; } .bk-grid--sm-12 { --bk-grid-cols: 12; } }
+@media (min-width: 768px) { .bk-grid--md-1 { --bk-grid-cols: 1; } .bk-grid--md-2 { --bk-grid-cols: 2; } .bk-grid--md-3 { --bk-grid-cols: 3; } .bk-grid--md-4 { --bk-grid-cols: 4; } .bk-grid--md-5 { --bk-grid-cols: 5; } .bk-grid--md-6 { --bk-grid-cols: 6; } .bk-grid--md-7 { --bk-grid-cols: 7; } .bk-grid--md-8 { --bk-grid-cols: 8; } .bk-grid--md-9 { --bk-grid-cols: 9; } .bk-grid--md-10 { --bk-grid-cols: 10; } .bk-grid--md-11 { --bk-grid-cols: 11; } .bk-grid--md-12 { --bk-grid-cols: 12; } }
+@media (min-width: 1024px) { .bk-grid--lg-1 { --bk-grid-cols: 1; } .bk-grid--lg-2 { --bk-grid-cols: 2; } .bk-grid--lg-3 { --bk-grid-cols: 3; } .bk-grid--lg-4 { --bk-grid-cols: 4; } .bk-grid--lg-5 { --bk-grid-cols: 5; } .bk-grid--lg-6 { --bk-grid-cols: 6; } .bk-grid--lg-7 { --bk-grid-cols: 7; } .bk-grid--lg-8 { --bk-grid-cols: 8; } .bk-grid--lg-9 { --bk-grid-cols: 9; } .bk-grid--lg-10 { --bk-grid-cols: 10; } .bk-grid--lg-11 { --bk-grid-cols: 11; } .bk-grid--lg-12 { --bk-grid-cols: 12; } }
+.bk-grid--gap-none { gap: 0; }
+.bk-grid--gap-xs { gap: var(--bk-space-1); }
+.bk-grid--gap-sm { gap: var(--bk-space-2); }
+.bk-grid--gap-lg { gap: var(--bk-space-6); }
+.bk-grid--gap-xl { gap: var(--bk-space-8); }
+.bk-grid--align-start { align-items: start; }
+.bk-grid--align-center { align-items: center; }
+.bk-grid--align-end { align-items: end; }
+.bk-grid > .bk-grid__span-2 { grid-column: span min(2, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-3 { grid-column: span min(3, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-4 { grid-column: span min(4, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-5 { grid-column: span min(5, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-6 { grid-column: span min(6, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-7 { grid-column: span min(7, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-8 { grid-column: span min(8, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-9 { grid-column: span min(9, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-10 { grid-column: span min(10, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-11 { grid-column: span min(11, var(--bk-grid-cols, 1)); } .bk-grid > .bk-grid__span-12 { grid-column: span min(12, var(--bk-grid-cols, 1)); }
+.bk-grid > .bk-grid__span-full { grid-column: 1 / -1; }
+</brick:style>
+{{ $p := .Props }}
+<div class="{{ cx `bk-grid` (cond (ne $p.cols 1) (print `bk-grid--cols-` $p.cols) ``) (cond $p.sm (print `bk-grid--sm-` $p.sm) ``) (cond $p.md (print `bk-grid--md-` $p.md) ``) (cond $p.lg (print `bk-grid--lg-` $p.lg) ``) (cond (ne $p.gap `md`) (print `bk-grid--gap-` $p.gap) ``) (cond (ne $p.align `stretch`) (print `bk-grid--align-` $p.align) ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</div>

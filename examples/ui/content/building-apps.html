@@ -1,0 +1,194 @@
+---
+order: 2
+title: Building an app
+category: Getting started
+description: The anatomy of the demo apps, step by step — one page, one stateful component, one Starlark file and a database — using the Contacts app as the worked example.
+---
+<brick:style>
+.docs__main > .bk-code-block { margin: 0 0 .9rem; }
+</brick:style>
+<h1>Building an app</h1>
+<p class="lead">{{ .Params.description }}</p>
+
+<Prose class="bk-prose--wide">
+<p>Every app in the sidebar (Contacts, Invoices, Inbox, Chat, Calendar…) has the same four parts, and everything but the page and the Go seed lives in one folder, <code>apps/&lt;app&gt;/</code>. The browser holds nothing but a sealed handle it cannot read or change, every click is an action, and the reply is the component re-rendered and patched in place. Contacts is the worked example below; the excerpts are copied from its files.</p>
+</Prose>
+<CodeBlock title="the four parts of an app">
+content/apps/contacts.html        the page: layout, AppShell, the app component
+apps/contacts/ContactsApp.html    one stateful component: state, markup, dialogs, toasts
+apps/contacts/contacts.star       queries and actions, in Starlark
+demodb/db_contacts.go             the table and a deterministic seed (host Go code)
+</CodeBlock>
+
+<h2>1 · The page: layout, AppShell, AppNav</h2>
+<Prose class="bk-prose--wide"><p><code>layout: app</code> drops the docs chrome. <code>AppShell</code> gives the sidebar, the sticky top bar and the scrolling main area; <code>AppNav</code> is the shared app menu, told which entry is current. The page itself holds no logic: it places the app component and a <code>Toaster</code>.</p></Prose>
+<CodeBlock lang="html" title="content/apps/contacts.html" src="~/content/apps/contacts.html" />
+
+<h2>2 · One stateful component</h2>
+<Prose class="bk-prose--wide"><p>All UI state — search, filter, sort, page, selection, the open form, the toast — is declared in <code>state:</code>. <code>use:</code> imports the app's Starlark file under a name. Because the component has state it renders per request (it is an island), and the page around it stays cacheable.</p></Prose>
+<CodeBlock lang="yaml" title="apps/contacts/ContactsApp.html — frontmatter">
+---
+use:
+  contacts: ~/apps/contacts/contacts.star
+state:
+  q: ""
+  status: all
+  sort: created
+  dir: desc
+  page: 1
+  pageq: ""
+  per: 10
+  selected: []
+  form: {open: false, id: 0, name: "", email: "", company: "", role: "", status: lead}
+  detail: 0
+---
+</CodeBlock>
+
+<h2>3 · Reading data: one script function</h2>
+<Prose class="bk-prose--wide"><p>The template asks Starlark for everything the page shows in one call, then ranges over plain values. The function takes the state, so the query follows the filters.</p></Prose>
+<CodeBlock lang="html" title="apps/contacts/ContactsApp.html">
+{{ $v := contacts.view .State }}
+</CodeBlock>
+<CodeBlock lang="python" title="apps/contacts/contacts.star">
+def view(state):
+    """Everything the page shows that comes from the database."""
+    filt, q = _filters(state)
+    total = db.query(Q_COUNT, *filt)[0]["n"]
+    page, pages = _page(state, total)
+    …
+</CodeBlock>
+
+<h2>4 · SQL is literal</h2>
+<Prose class="bk-prose--wide"><p><code>db.query</code> and <code>db.exec</code> accept only SQL written as a literal or a module-level constant, so a value can never become SQL. A dynamic <code>ORDER BY</code> therefore cannot be built by concatenation: write one fixed query per order and choose between them with an if-chain. Filters that may be off are always present and switched off by their arguments (<code>? = 'all' or status = ?</code>).</p></Prose>
+<CodeBlock lang="python" title="apps/contacts/contacts.star">
+Q_NAME_ASC = "select id, name, email, company, role, status, created from contacts where (? = 'all' or status = ?) and (? = '' or name like ? or …) order by name collate nocase asc, id asc limit ? offset ?"
+…
+def _rows(key, args):
+    if key == "name_asc":
+        return db.query(Q_NAME_ASC, *args)
+    if key == "name_desc":
+        return db.query(Q_NAME_DESC, *args)
+    …
+    return db.query(Q_CREATED_DESC, *args)
+</CodeBlock>
+
+<h2>5 · The host wiring</h2>
+<Prose class="bk-prose--wide"><p>Scripts have no clock, network or files. The Go host grants exactly what the apps need: the database (writes only because <code>DBExec</code> is on), a <code>today()</code> built-in for stamping new records, <code>sanitize_html</code> sharing one HTML policy with the template's <code>sanitize</code>, and <code>pause</code>, a stand-in for slow work that the lazy panel and the streamed reply on the Live interactivity page use. <code>Request</code> hands islands and actions per-request values (step 11). <code>StateKeys</code>, read from <code>BRICK_SECRET</code>, seals each app's state into its page, so an open app keeps working when the server restarts.</p></Prose>
+<CodeBlock lang="go" title="main.go">
+sc, err := scriptstarlark.New(scriptstarlark.Options{
+	Globals: starlark.StringDict{"today": today, "sanitize_html": sanitizeHTML(policy), "pause": pause},
+	DB:      db,
+	DBExec:  true,
+})
+…
+keys, err := demosite.StateKeys(os.LookupEnv, dev, log.Printf)
+…
+s, err := site.New(ctx, site.Options{FS: root.FS(), Engine: eng, Dev: dev, Request: requestValues, BasePath: base, KeepPaths: keep, StateKeys: keys})
+</CodeBlock>
+
+<h2>6 · Actions</h2>
+<Prose class="bk-prose--wide"><p>An action is a Starlark function <code>(state, props, args…)</code> that returns the new state. The page calls it three ways: <code>brick:click="contacts.goto(3)"</code> (arguments are JSON), <code>brick:submit</code> on a form (the fields arrive as a dict), and <code>brick:change</code> on a control (its value). <code>brick:model</code> writes one state field directly — no action needed — and <code>.debounce.300ms</code> waits for a pause in typing. <code>brick:loading</code> shows while a request runs.</p></Prose>
+<CodeBlock lang="html" title="apps/contacts/ContactsApp.html">
+<SearchInput brick:model.debounce.300ms="q" value="{{ .State.q }}" placeholder="Search name, e-mail, company…" shortcut="/" size="sm" class="ct-search" aria-label="Search contacts" />
+<span class="ct-busy" brick:loading hidden><Spinner size="sm" label="Updating" /></span>
+</CodeBlock>
+<CodeBlock lang="python" title="apps/contacts/contacts.star">
+def goto(state, props, page):
+    return dict(state, page = int(page), pageq = state["q"].strip())
+</CodeBlock>
+
+<h2>7 · Validation: [state, errors] and Field</h2>
+<Prose class="bk-prose--wide"><p>An action that returns <code>[state, errors]</code> re-renders with <code>.Errors</code> set for that render only. Keep what the visitor typed in state so the form comes back filled in. <code>&lt;Field :error=".Errors.name"&gt;</code> shows the message and wires <code>aria-invalid</code> and <code>aria-describedby</code> to the control; an empty error shows nothing, so the same markup serves the first render.</p></Prose>
+<CodeBlock lang="python" title="apps/contacts/contacts.star — save()">
+errors = {}
+if len(f["name"]) < 2:
+    errors["name"] = "Enter a name of at least two letters."
+…
+if errors:
+    return [dict(state, form = f), errors]
+</CodeBlock>
+<CodeBlock lang="html" title="apps/contacts/ContactsApp.html">
+<Field label="Name" :error=".Errors.name" required><Input name="name" value="{{ .State.form.name }}" placeholder="Ada Lovelace" autocomplete="off" /></Field>
+</CodeBlock>
+
+<h2>8 · Dialogs opened by the server</h2>
+<Prose class="bk-prose--wide"><p>Whether the form is open is state: <code>edit(id)</code> fills <code>form</code> and sets <code>open</code>, and the Dialog renders with <code>:open</code>. When the visitor closes it (Escape, ×, Cancel), <code>closeAction</code> tells the server, so the next re-render does not open it again. A failed save keeps it open with the errors inside.</p></Prose>
+<CodeBlock lang="html" title="apps/contacts/ContactsApp.html">
+<Dialog id="{{ $.ID }}-form" :title="cond .State.form.id `Edit contact` `New contact`" … :open=".State.form.open" closeAction="contacts.close_form" :dismissible="false">
+  <form id="{{ $.ID }}-form-fields" class="ct-form" brick:submit="contacts.save" novalidate>
+</CodeBlock>
+
+<h2>9 · Messages and events: brick.flash and brick.dispatch</h2>
+<Prose class="bk-prose--wide"><p>An action returns the new state and may also record <em>effects</em>: things the browser does after the re-render. <code>brick.flash(message, level)</code> shows a message (the page's <code>&lt;Toaster&gt;</code> listens to flashes and shows each as a toast of that variant), so no state field has to carry it. <code>brick.dispatch(name, data)</code> tells every other component on the page that something happened: the topbar's <code>&lt;ContactCount&gt;</code> lists <code>contact-added</code> and <code>contact-deleted</code> under <code>brick: {on:}</code> and runs <code>$refresh</code> on each, so the count stays current although neither component names the other.</p></Prose>
+<CodeBlock lang="python" title="apps/contacts/contacts.star">
+    db.exec(X_DELETE, id)
+    brick.dispatch("contact-deleted", {"ids": [id]})
+    brick.flash("Deleted " + found[0]["name"] + ".", "success")
+</CodeBlock>
+<CodeBlock lang="html" title="apps/contacts/ContactCount.html">
+state: {}
+brick:
+  on:
+    contact-added: $refresh
+    contact-deleted: $refresh
+</CodeBlock>
+<Prose class="bk-prose--wide"><p>Element ids are built from <code>$.ID</code>, the instance's own id, so two copies of the app can share a page without one copy's buttons opening the other's dialogs.</p></Prose>
+
+<h2>10 · Confirm before destroying; paginate with an action</h2>
+<Prose class="bk-prose--wide"><p><code>ConfirmDialog</code>'s <code>action</code> runs a server action when the visitor confirms. <code>Pagination</code>'s <code>action</code> turns every page link into <code>brick:click="contacts.goto(N)"</code>; its <code>href</code> stays as the no-JavaScript fallback.</p></Prose>
+<CodeBlock lang="html" title="apps/contacts/ContactsApp.html">
+<ConfirmDialog id="{{ print $.ID `-del-` .id }}" title="Delete contact?" :message="print .name ` will be removed from your workspace. This cannot be undone.`" confirmLabel="Delete" :action="print `contacts.remove(` .id `)`" />
+<Pagination :page="$v.page" :total="$v.total" :perPage="$v.per" href="#page-%d" action="contacts.goto" size="sm" label="Contacts pages" />
+</CodeBlock>
+
+<h2>11 · Per-URL records: islands read the query</h2>
+<Prose class="bk-prose--wide"><p>The page is rendered once; a stateful component (an island) renders per request. The host's <code>Request</code> hook provides the query string, and an island opts in with <code>inject</code>. The sign-in form uses it to open on the register form for <code>/apps/auth/?mode=register</code> — only while its state is fresh, so actions stay in charge afterwards.</p></Prose>
+<CodeBlock lang="go" title="main.go">
+func requestValues(r *http.Request) []brick.RenderOption {
+	q := map[string]any{}
+	for k, v := range r.URL.Query() {
+		if len(v) > 0 {
+			q[k] = v[0]
+		}
+	}
+	return []brick.RenderOption{brick.Provide(queryKey, q)}
+}
+</CodeBlock>
+<CodeBlock lang="html" title="apps/auth/AuthSignInForm.html">
+---
+inject:
+  query: {default: {}}
+state:
+  touched: false
+  mode: signin
+…
+{{- $mode := .State.mode -}}
+{{- if and (not .State.touched) (eq (print (index .Ctx.query `mode`)) `register`) }}{{ $mode = `register` }}{{ end -}}
+</CodeBlock>
+
+<h2>12 · Testing an app through /_brick/action</h2>
+<Prose class="bk-prose--wide"><p>A test drives the component exactly as the browser does: read the state handle and token from the rendered page, POST an action as JSON (one shared helper, <code>postAction</code>, builds the request every app test sends), and keep the new handle and token the patch carries. Assert on the returned HTML, and on the database when the action writes.</p></Prose>
+<CodeBlock lang="go" title="main_test.go">
+body, err := json.Marshal(map[string]any{"handle": handle, "token": token, "action": action, "args": args})
+…
+req := httptest.NewRequest(http.MethodPost, actionPath, bytes.NewReader(body))
+req.Header.Set("Content-Type", "application/json")
+req.Header.Set("Brick-Action", "1")
+</CodeBlock>
+<CodeBlock lang="go" title="apps_landing_test.go">
+code, out := postAction(s.t, s.h, s.handle, s.token, action, args...)
+…
+if m := landStateRe.FindStringSubmatch(out); m != nil {
+	s.handle = m[1]
+}
+</CodeBlock>
+
+<h2>13 · Determinism</h2>
+<Prose class="bk-prose--wide"><p>The same input must give the same bytes, or tests and caches lie. The seed counts forward from a fixed epoch, never from the clock; apps that need "today" in a view use a constant (Calendar's <code>TODAY = "2026-09-27"</code>); <code>today()</code> is only for stamping records an action creates, and tests that read those stamps derive the expected value rather than hard-coding a date.</p></Prose>
+<CodeBlock lang="go" title="demodb/db.go">
+// seedEpoch is the first seeded date. Seed rows count forward from it, so
+// every run produces the same rows and the pages that show them the same
+// bytes.
+var seedEpoch = time.Date(2026, time.January, 5, 0, 0, 0, 0, time.UTC)
+</CodeBlock>
+<Prose class="bk-prose--wide"><p>Next: <a href="/patterns/">Patterns &amp; gotchas</a> — the short rules this build learned the hard way.</p></Prose>

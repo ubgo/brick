@@ -1,0 +1,156 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  options: {type: list, required: true}
+  value: {type: string, default: ""}
+  placeholder: {type: string, default: Select…}
+  empty: {type: string, default: No results}
+  label: {type: string, default: ""}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+Combobox: a searchable select — type to filter a list, pick with the mouse
+or the keyboard.
+
+  <Combobox name="country" :options=".Params.countries" placeholder="Choose a country" />
+  <Combobox name="owner" value="Maya Chen" :options="list `Ava Patel` `Maya Chen` `Noah Kim`" />
+
+options items are strings or maps {value, label}. The value lives in a
+native <select> (name= and every attribute but class land on it), which is
+the whole component without JavaScript. The client module hides the select
+and shows a text input with role="combobox" over a role="listbox" (the
+WAI-ARIA combobox pattern): typing filters, ArrowDown/ArrowUp move the
+active option (aria-activedescendant), Enter picks, Escape closes and
+restores the chosen label. Picking sets the select's value and fires
+change and input on it, so forms and brick:model read it as usual.
+*/}}
+<brick:client>
+import { place as placePanel } from "brick:Popover";
+// GAP is the space (px) between the field and its list; EDGE the margin kept
+// from the viewport's bottom before the list flips above the field.
+const GAP = 4, EDGE = 8;
+
+brick.mount("Combobox", (el) => {
+  const select = el.querySelector(".bk-combobox__native");
+  const ui = el.querySelector(".bk-combobox__ui");
+  const input = el.querySelector(".bk-combobox__input");
+  const list = el.querySelector(".bk-combobox__list");
+  const empty = el.querySelector(".bk-combobox__empty");
+  const opts = [...list.querySelectorAll("[role=option]")];
+  let active = -1;
+  // The list goes in the top layer where the Popover API exists, so an
+  // ancestor's overflow: hidden (a card, a dialog) cannot clip it.
+  const box = el.querySelector(".bk-combobox__box");
+  const layer = typeof list.showPopover === "function";
+  if (layer) list.setAttribute("popover", "manual");
+  const place = () => placePanel(box, list, { gap: GAP, edge: EDGE, clamp: "none", width: "match" });
+  const visible = () => opts.filter((o) => !o.hidden);
+  const labelOf = (v) => { const o = opts.find((x) => x.dataset.value === v); return o ? o.dataset.label : ""; };
+  const setActive = (o) => {
+    opts.forEach((x) => x.classList.toggle("bk-combobox__option--active", x === o));
+    active = o ? opts.indexOf(o) : -1;
+    if (o) { input.setAttribute("aria-activedescendant", o.id); o.scrollIntoView && o.scrollIntoView({ block: "nearest" }); }
+    else input.removeAttribute("aria-activedescendant");
+  };
+  const open = () => {
+    if (!list.hidden) return;
+    list.hidden = false;
+    if (layer) { list.showPopover(); place(); addEventListener("scroll", place, true); addEventListener("resize", place); }
+    input.setAttribute("aria-expanded", "true");
+    const sel = opts.find((o) => o.dataset.value === select.value && !o.hidden);
+    setActive(sel || visible()[0] || null);
+  };
+  const close = () => {
+    if (layer && list.matches(":popover-open")) { list.hidePopover(); removeEventListener("scroll", place, true); removeEventListener("resize", place); }
+    list.hidden = true;
+    input.setAttribute("aria-expanded", "false");
+    setActive(null);
+  };
+  const filter = () => {
+    const q = input.value.trim().toLowerCase();
+    opts.forEach((o) => { o.hidden = q !== "" && !o.dataset.label.toLowerCase().includes(q); });
+    empty.hidden = visible().length > 0;
+    setActive(visible()[0] || null);
+    if (layer && !list.hidden) place();
+  };
+  const reset = () => { opts.forEach((o) => { o.hidden = false; }); empty.hidden = true; input.value = labelOf(select.value); };
+  const pick = (o) => {
+    select.value = o.dataset.value;
+    opts.forEach((x) => x.setAttribute("aria-selected", String(x === o)));
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    close();
+    reset();
+  };
+  const move = (d) => {
+    const v = visible();
+    if (!v.length) return;
+    const i = v.indexOf(opts[active]);
+    setActive(v[(i + d + v.length) % v.length]);
+  };
+  const onKey = (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (list.hidden) open(); else move(e.key === "ArrowDown" ? 1 : -1);
+    } else if (e.key === "Enter") {
+      if (!list.hidden && active >= 0) { e.preventDefault(); pick(opts[active]); }
+    } else if (e.key === "Escape") {
+      if (!list.hidden) { e.preventDefault(); close(); reset(); }
+    } else if (e.key === "Home" && !list.hidden) { e.preventDefault(); setActive(visible()[0] || null); }
+    else if (e.key === "End" && !list.hidden) { e.preventDefault(); const v = visible(); setActive(v[v.length - 1] || null); }
+  };
+  const onInput = () => { open(); filter(); };
+  const onDown = (e) => { const o = e.target.closest("[role=option]"); if (o) { e.preventDefault(); pick(o); } };
+  const onOut = (e) => { if (!el.contains(e.relatedTarget)) { close(); reset(); } };
+  const onToggle = (e) => { e.preventDefault(); if (list.hidden) { open(); input.focus(); } else close(); };
+  select.hidden = true;
+  ui.hidden = false;
+  if (select.id) { input.id = select.id; select.removeAttribute("id"); }
+  ["aria-describedby", "aria-invalid", "aria-required"].forEach((a) => { if (select.hasAttribute(a)) input.setAttribute(a, select.getAttribute(a)); });
+  input.disabled = select.disabled;
+  reset();
+  const toggle = el.querySelector(".bk-combobox__toggle");
+  input.addEventListener("keydown", onKey);
+  input.addEventListener("input", onInput);
+  input.addEventListener("click", open);
+  list.addEventListener("mousedown", onDown);
+  toggle.addEventListener("mousedown", onToggle);
+  el.addEventListener("focusout", onOut);
+  return () => { close(); input.removeEventListener("keydown", onKey); input.removeEventListener("input", onInput); input.removeEventListener("click", open); list.removeEventListener("mousedown", onDown); toggle.removeEventListener("mousedown", onToggle); el.removeEventListener("focusout", onOut); };
+})
+</brick:client>
+<brick:style>
+.bk-combobox { position: relative; width: 100%; }
+.bk-combobox__native { appearance: none; width: 100%; height: var(--bk-h-md); padding: 0 .65rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm)/1.25 var(--bk-font); box-shadow: var(--bk-shadow-sm); }
+.bk-combobox__ui[hidden], .bk-combobox__native[hidden] { display: none; }
+.bk-combobox__box { display: flex; align-items: center; height: var(--bk-h-md); padding: 0 .35rem 0 .65rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-combobox__box:hover { border-color: color-mix(in oklab, var(--bk-input), var(--bk-fg) 15%); }
+.bk-combobox__box:focus-within { border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-combobox--invalid .bk-combobox__box, .bk-combobox--invalid .bk-combobox__native { border-color: var(--bk-danger); }
+.bk-combobox__input { flex: 1; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0; outline: 0; background: none; color: var(--bk-fg); font: var(--bk-text-sm)/1.25 var(--bk-font); }
+.bk-combobox__input::placeholder { color: var(--bk-muted-fg); opacity: .85; }
+.bk-combobox__input:focus-visible { outline: none; }
+.bk-combobox__input:disabled { cursor: not-allowed; opacity: .6; }
+.bk-combobox__toggle { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-combobox__toggle:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-combobox__list { position: absolute; z-index: var(--bk-z-dropdown); top: calc(100% + .3rem); left: 0; right: 0; max-height: 15rem; margin: 0; padding: .25rem; overflow-y: auto; list-style: none; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); box-shadow: var(--bk-shadow-lg); animation: bk-pop-in var(--bk-duration); }
+.bk-combobox__list[hidden] { display: none; }
+.bk-combobox__list[popover] { position: fixed; inset: auto; margin: 0; color: var(--bk-fg); }
+.bk-combobox__option { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .35rem .5rem; border-radius: var(--bk-radius-sm); font-size: var(--bk-text-sm); cursor: pointer; }
+.bk-combobox__option[hidden] { display: none; }
+.bk-combobox__option--active { background: var(--bk-accent); color: var(--bk-accent-fg); }
+.bk-combobox__option .bk-icon { visibility: hidden; color: var(--bk-primary); }
+.bk-combobox__option[aria-selected=true] { font-weight: 500; }
+.bk-combobox__option[aria-selected=true] .bk-icon { visibility: visible; }
+.bk-combobox__empty { padding: .6rem .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); text-align: center; }
+.bk-combobox__empty[hidden] { display: none; }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $invalid := or .Props.invalid (index $f "invalid") }}
+{{ $sel := .Props.value }}{{ $lid := print "bk-cb" .ID }}
+<div class="{{ cx `bk-combobox` (cond $invalid `bk-combobox--invalid` ``) .Attrs.class }}"><select class="bk-combobox__native"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if or .Props.required (index $f "required") }} required{{ end }}{{ if .Props.disabled }} disabled{{ end }}{{ with .Props.label }} aria-label="{{ . }}"{{ end }} {{ attrs `class` `id` }}><option value=""{{ if not $sel }} selected{{ end }}>{{ .Props.placeholder }}</option>{{ range .Props.options }}{{ if has . "value" }}<option value="{{ .value }}"{{ if eq (print .value) $sel }} selected{{ end }}>{{ default .value .label }}</option>{{ else }}<option value="{{ . }}"{{ if eq (print .) $sel }} selected{{ end }}>{{ . }}</option>{{ end }}{{ end }}</select><div class="bk-combobox__ui" hidden><div class="bk-combobox__box"><input type="text" class="bk-combobox__input" role="combobox" aria-expanded="false" aria-controls="{{ $lid }}" aria-autocomplete="list" autocomplete="off" placeholder="{{ .Props.placeholder }}"{{ with .Props.label }} aria-label="{{ . }}"{{ end }}><button type="button" class="bk-combobox__toggle" tabindex="-1" aria-label="Show options"><Icon name="chevrons-up-down" :size="14" /></button></div><ul class="bk-combobox__list" id="{{ $lid }}" role="listbox"{{ with .Props.label }} aria-label="{{ . }}"{{ end }} hidden>{{ range $i, $o := .Props.options }}{{ $v := $o }}{{ $l := $o }}{{ if has $o "value" }}{{ $v = $o.value }}{{ $l = default $o.value $o.label }}{{ end }}<li class="bk-combobox__option" role="option" id="{{ $lid }}-{{ $i }}" data-value="{{ $v }}" data-label="{{ $l }}" aria-selected="{{ eq (print $v) $sel }}">{{ $l }}<Icon name="check" :size="14" /></li>{{ end }}<li class="bk-combobox__empty" role="presentation" hidden>{{ .Props.empty }}</li></ul></div></div>

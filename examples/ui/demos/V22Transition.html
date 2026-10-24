@@ -1,0 +1,29 @@
+---
+state:
+  items: [Alpha, Bravo, Charlie, Delta]
+  note: ""
+---
+<brick:script>
+def shuffle(state, props):
+    # The action picks its own transition type for this morph.
+    brick.transition("slide")
+    items = state["items"]
+    return dict(state, items = items[1:] + items[:1], note = "rotated with a slide")
+
+def edit(state, props):
+    # A quiet re-render: no transition, though the root opts in.
+    brick.transition("none")
+    return dict(state, note = "noted without a transition")
+</brick:script>
+{{/*
+The root opts in with brick:transition; each action can still choose:
+shuffle names the "slide" type for CSS to style, edit skips it.
+*/}}
+<section brick:transition style="display: grid; gap: .6rem">
+  <div style="display: flex; gap: .4rem">
+    <Button id="v22-shuffle" size="sm" variant="outline" brick:click="shuffle">Rotate (slide)</Button>
+    <Button id="v22-edit" size="sm" variant="outline" brick:click="edit">Note (no transition)</Button>
+  </div>
+  <ol id="v22-items" style="margin: 0">{{ range .State.items }}<li brick:key="{{ . }}">{{ . }}</li>{{ end }}</ol>
+  <span id="v22-note" style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">{{ .State.note }}</span>
+</section>

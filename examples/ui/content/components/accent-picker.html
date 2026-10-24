@@ -1,0 +1,19 @@
+---
+title: AccentPicker
+category: Foundations
+description: Colour swatches that set the primary colour for the whole page and remember it. A native radio group, hidden without JavaScript.
+api:
+  - {name: accents, type: list, default: "all seven", desc: "The swatches, from indigo, blue, emerald, rose, amber, violet and zinc."}
+  - {name: size, type: "sm | md", default: md, desc: Swatch size.}
+  - {name: label, type: string, default: Accent colour, desc: The radio group's accessible name.}
+---
+<h1>AccentPicker</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Pick an accent — every primary colour on the page follows"><AccentPickerBasic /><brick:prop name="code"><Source src="~/demos/AccentPickerBasic.html" /></brick:prop></Example>
+<Example title="In a settings card" block><AccentPickerSettings /><brick:prop name="code"><Source src="~/demos/AccentPickerSettings.html" /></brick:prop></Example>
+<Example title="A subset"><AccentPickerSubset /><brick:prop name="code"><Source src="~/demos/AccentPickerSubset.html" /></brick:prop></Example>
+<h2>How it works</h2>
+<Prose><p>A choice sets <code>data-accent</code> on <code>&lt;html&gt;</code> and is saved under <code>bk-accent</code> in <code>localStorage</code>; every picker on the page follows. Apply a saved choice before first paint with one line in <code>&lt;head&gt;</code>:</p></Prose>
+<Prose class="bk-prose--wide"><Source src="~/snippets/accent-head.html" /></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

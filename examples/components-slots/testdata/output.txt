@@ -1,0 +1,38 @@
+== content/index.html
+<div class="card">
+  <header><strong>Plans</strong></header>
+  <div class="body">
+  
+  
+  <p>This is the children.</p>
+</div>
+  <footer><a href="/buy">Buy now</a></footer>
+</div>
+<div class="card">
+  <header>No footer</header>
+  <div class="body"><p>Only a body.</p></div>
+</div>
+<ul>
+  <li><a href="/hello/">Hello</a></li>
+  <li><a href="/again/">Again</a></li>
+</ul>
+<section class="panel"><h2>Settings</h2><p>Panel body.</p></section>
+
+== content/tabs.html
+<div class="tabs">
+  <div role="tablist">
+    <button role="tab">One</button>
+    <button role="tab">Two</button>
+  </div>
+  <div class="panel"><section>First panel.</section></div>
+</div>
+
+== content/code.html
+<pre><code class="language-go">if x &lt; 10 &amp;&amp; y &gt; 2 {
+    fmt.Println(&#34;{{ not a template }}&#34;)
+}</code></pre>
+<pre><code class="language-go">package main
+
+func main() { println(&#34;hello&#34;) }
+</code></pre>
+

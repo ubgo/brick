@@ -1,0 +1,35 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  title: {type: string, default: ""}
+  controls: {type: string, default: mac, oneof: [mac, windows, none]}
+---
+{{/*
+WindowMockup: a desktop application window — a title bar with macOS
+traffic lights or Windows controls, and the children as its content.
+
+  <WindowMockup title="Settings"><form>…</form></WindowMockup>
+  <WindowMockup title="Notepad" controls="windows"><pre>…</pre></WindowMockup>
+
+A <figure> named by its title; the controls are
+decoration (aria-hidden), not buttons.
+*/}}
+<brick:style>
+.bk-window { display: flex; flex-direction: column; margin: 0; overflow: hidden; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-lg); }
+.bk-window__bar { position: relative; display: flex; align-items: center; gap: .5rem; height: 2.25rem; padding: 0 .75rem; border-bottom: 1px solid var(--bk-border); background: var(--bk-surface-2); font-size: var(--bk-text-xs); font-weight: 600; color: var(--bk-muted-fg); }
+.bk-window__title { position: absolute; inset: 0 5rem; display: grid; place-items: center; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; pointer-events: none; }
+.bk-window__lights { display: flex; gap: .4rem; }
+.bk-window__lights > i { width: .7rem; height: .7rem; border-radius: 50%; background: var(--bk-danger); }
+.bk-window__lights > i:nth-child(2) { background: var(--bk-warning); }
+.bk-window__lights > i:nth-child(3) { background: var(--bk-success); }
+.bk-window--windows .bk-window__bar { padding-right: 0; }
+.bk-window--windows .bk-window__title { place-items: center start; inset: 0 8rem 0 .85rem; }
+.bk-window__ctl { display: flex; margin-left: auto; height: 100%; }
+.bk-window__ctl > span { display: grid; place-items: center; width: 2.6rem; height: 100%; color: var(--bk-fg); }
+.bk-window__content { flex: 1; min-height: 0; overflow: auto; padding: 1rem; }
+</brick:style>
+<figure class="{{ cx `bk-window` (print `bk-window--` .Props.controls) .Attrs.class }}"{{ if .Props.title }} aria-labelledby="{{ .ID }}-t"{{ end }} {{ attrs `class` }}>
+  <div class="bk-window__bar">{{ if eq .Props.controls "mac" }}<span class="bk-window__lights" aria-hidden="true"><i></i><i></i><i></i></span>{{ end }}{{ with .Props.title }}<span class="bk-window__title" id="{{ $.ID }}-t">{{ . }}</span>{{ end }}{{ if eq .Props.controls "windows" }}<span class="bk-window__ctl" aria-hidden="true"><span><Icon name="minus" :size="13" stroke="1.5" /></span><span><Icon name="square" :size="11" stroke="1.5" /></span><span><Icon name="x" :size="14" stroke="1.5" /></span></span>{{ end }}</div>
+  <div class="bk-window__content">{{ children }}</div>
+</figure>

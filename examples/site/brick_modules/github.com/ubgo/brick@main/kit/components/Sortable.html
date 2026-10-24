@@ -1,0 +1,248 @@
+---
+props:
+  action: {type: string, default: ""}
+  direction: {type: string, default: vertical, oneof: [vertical, horizontal]}
+  label: {type: string, default: ""}
+  group: {type: string, default: ""}
+  list: {type: string, default: ""}
+---
+{{/*
+Sortable: a list you reorder by dragging — tasks, playlist tracks,
+priorities. Its children are <SortableItem>s (or any <li data-id>).
+
+  <Sortable label="Tasks" action="move">
+    {{ range $i, $t := .State.tasks }}<SortableItem :id="$t.id" :label="$t.title" :index="$i">{{ $t.title }}</SortableItem>{{ end }}
+  </Sortable>
+
+  def move(state, props, id, index):   # the action, in the stateful component
+      …put the task with this id at this index…
+
+Drag an item by its handle (a whole <li data-id> without one); it takes
+its new place as the pointer passes its neighbours. From the keyboard:
+Space or Enter on a handle picks the item up, the arrow keys move it,
+Space drops it and Escape puts it back; every step is announced in an
+aria-live region. On a drop that changed the order the Sortable dispatches
+a "bk-sort" event ({id, from, to, order}) and, with action set, calls
+brick.action(el, action, [id, newIndex]) on the stateful component around
+it — so the server owns the order. direction="horizontal" lays the items in
+a row and uses ArrowLeft/Right.
+
+Lists that share a group trade items: drag a card into another list of
+the group, or lift it and press ArrowLeft/Right (ArrowUp/Down for
+horizontal lists) to hop to the neighbouring list, in page order. Each
+list names itself with list; a drop then calls action(id, list, index)
+with the list it landed in, and bk-sort's detail adds fromList and
+toList. An empty list in a group keeps a drop area.
+
+  <Sortable group="board" list="todo" label="To do" action="move">…</Sortable>
+  <Sortable group="board" list="done" label="Done" action="move">…</Sortable>
+
+  def move(state, props, id, list, index): …
+
+Without JavaScript it is a plain list; SortableItems with an index show
+move up / move down buttons that call the same action.
+*/}}
+<brick:client>
+// THRESHOLD is how far (px) the pointer must travel before a press on a
+// handle becomes a drag, so a plain click on a whole-item row still clicks.
+// NAME_MAX caps an item's announced name when it has no data-label.
+const THRESHOLD = 4, NAME_MAX = 60;
+
+// Lists that share a group trade items, so a lift or a drag can end in
+// another Sortable than it began in: its state is the module's, not one
+// instance's, and pointer moves are followed on the document.
+let lifted = null; // {it, fromRoot, from, next, focus}
+let drag = null; // {it, fromRoot, from, x, y, moved, grip}
+
+const rootOf = (n) => n.closest(".bk-sortable");
+const listOf = (root) => root.querySelector(":scope > .bk-sortable__list");
+const itemsOf = (root) => [...listOf(root).children].filter((c) => c.hasAttribute("data-id"));
+const horizontalOf = (root) => root.classList.contains("bk-sortable--horizontal");
+const nameOf = (it) => it.dataset.label || it.textContent.trim().replace(/\s+/g, " ").slice(0, NAME_MAX);
+// peers are the Sortables an item may move between: its group, in page order.
+const peers = (root) => root.dataset.group ? [...document.querySelectorAll(".bk-sortable.bk-sortable--ready")].filter((r) => r.dataset.group === root.dataset.group) : [root];
+const listName = (root) => listOf(root).getAttribute("aria-label") || root.dataset.list || "";
+const say = (root, m) => { const live = root.querySelector(":scope > .bk-sortable__live"); if (live) live.textContent = m; };
+const where = (it) => {
+  const root = rootOf(it), all = itemsOf(root);
+  const at = `position ${all.indexOf(it) + 1} of ${all.length}`;
+  return root.dataset.group && listName(root) ? `${at} in ${listName(root)}` : at;
+};
+
+// commit reports a finished move: bk-sort always, the action when set —
+// [id, list, index] in a group, [id, index] otherwise.
+const commit = (it, fromRoot, from) => {
+  const root = rootOf(it), to = itemsOf(root).indexOf(it);
+  if ((root === fromRoot && to === from) || to < 0) return;
+  const raw = it.dataset.id;
+  const id = /^-?\d+$/.test(raw) ? Number(raw) : raw;
+  const fromList = fromRoot.dataset.list || "", toList = root.dataset.list || "";
+  root.dispatchEvent(new CustomEvent("bk-sort", { bubbles: true, detail: { id, from, to, fromList, toList, order: itemsOf(root).map((i) => i.dataset.id) } }));
+  const action = root.dataset.action || "";
+  const scope = root.closest("[data-brick-state]");
+  if (!action || !scope) return;
+  // The action's patch may replace the items: put focus and the last
+  // announcement back on the moved item once it lands.
+  const hadFocus = it.contains(document.activeElement);
+  const live = root.querySelector(":scope > .bk-sortable__live");
+  const message = live ? live.textContent : "";
+  brick.action(root, action, root.dataset.group ? [id, toList, to] : [id, to]).then(() => {
+    const now = scope.querySelector(`.bk-sortable [data-id="${CSS.escape(raw)}"]`);
+    if (!now) return;
+    if (hadFocus && !now.contains(document.activeElement)) (now.querySelector(".bk-sortable__handle") || now).focus();
+    const region = rootOf(now).querySelector(":scope > .bk-sortable__live");
+    if (region && message && !region.textContent) region.textContent = message;
+  }).catch(() => {});
+};
+
+// ---- keyboard: lift, move (within the list, or to a neighbour), drop ----
+const drop = (cancel) => {
+  const { it, fromRoot, from, next, focus } = lifted;
+  lifted = null;
+  it.classList.remove("bk-sortable__item--lifted");
+  if (cancel) {
+    listOf(fromRoot).insertBefore(it, next && next.parentNode === listOf(fromRoot) ? next : null);
+    focus.focus();
+    say(fromRoot, `${nameOf(it)} is back at ${where(it)}.`);
+    return;
+  }
+  say(rootOf(it), `Dropped ${nameOf(it)} at ${where(it)}.`);
+  commit(it, fromRoot, from);
+};
+// hop moves the lifted item to the next (d = 1) or previous Sortable of
+// its group, at the same position or the end.
+const hop = (d) => {
+  const root = rootOf(lifted.it), group = peers(root), j = group.indexOf(root) + d;
+  if (j < 0 || j >= group.length) return false;
+  const i = itemsOf(root).indexOf(lifted.it), there = itemsOf(group[j]);
+  moving = true;
+  listOf(group[j]).insertBefore(lifted.it, there[i] || null);
+  lifted.focus.focus();
+  moving = false;
+  return true;
+};
+const key = (e) => {
+  const it = e.target.closest("[data-id]");
+  if (!it || !it.parentElement.classList.contains("bk-sortable__list")) return;
+  const onGrip = e.target.classList.contains("bk-sortable__handle") || e.target === it;
+  if (!onGrip) return;
+  const root = rootOf(it), horizontal = horizontalOf(root);
+  const back = horizontal ? "ArrowLeft" : "ArrowUp", fwd = horizontal ? "ArrowRight" : "ArrowDown";
+  if (e.key === " " || e.key === "Enter") {
+    e.preventDefault();
+    if (lifted) { drop(false); return; }
+    lifted = { it, fromRoot: root, from: itemsOf(root).indexOf(it), next: it.nextSibling, focus: e.target };
+    it.classList.add("bk-sortable__item--lifted");
+    const across = root.dataset.group && peers(root).length > 1 ? (horizontal ? ", ArrowUp and ArrowDown to move it to another list" : ", ArrowLeft and ArrowRight to move it to another list") : "";
+    say(root, `Picked up ${nameOf(it)}, ${where(it)}. Use the arrow keys to move it${across}, Space to drop it, Escape to cancel.`);
+  } else if (lifted && (e.key === back || e.key === fwd)) {
+    e.preventDefault();
+    const all = itemsOf(root), i = all.indexOf(lifted.it);
+    moving = true;
+    if (e.key === back && i > 0) listOf(root).insertBefore(lifted.it, all[i - 1]);
+    else if (e.key === fwd && i < all.length - 1) listOf(root).insertBefore(all[i + 1], lifted.it);
+    lifted.focus.focus();
+    moving = false;
+    say(rootOf(lifted.it), `${nameOf(lifted.it)}, ${where(lifted.it)}.`);
+  } else if (lifted && root.dataset.group && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) {
+    e.preventDefault();
+    if (hop(e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1)) {
+      say(rootOf(lifted.it), `${nameOf(lifted.it)}, ${where(lifted.it)}.`);
+    }
+  } else if (lifted && e.key === "Escape") {
+    e.preventDefault();
+    drop(true);
+  }
+};
+// moving is true while the lifted item is re-inserted: a browser may blur
+// a focused element it moves, and that is not the user leaving.
+let moving = false;
+const blur = (e) => { if (lifted && !moving && !lifted.it.contains(e.relatedTarget)) drop(false); };
+
+// ---- pointer: drag by the handle, into any list of the group ----
+const inside = (r, x, y) => x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+const move = (e) => {
+  if (!drag) return;
+  if (!drag.moved) {
+    if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < THRESHOLD) return;
+    drag.moved = true;
+    drag.it.classList.add("bk-sortable__item--dragging");
+    peers(drag.fromRoot).forEach((r) => r.classList.add("bk-sortable--dragging"));
+  }
+  e.preventDefault();
+  let root = rootOf(drag.it);
+  if (drag.fromRoot.dataset.group) {
+    const over = peers(drag.fromRoot).find((r) => r !== root && inside(listOf(r).getBoundingClientRect(), e.clientX, e.clientY));
+    if (over) {
+      const p = horizontalOf(over) ? e.clientX : e.clientY;
+      const at = itemsOf(over).find((n) => { const r = n.getBoundingClientRect(); return p < (horizontalOf(over) ? r.left + r.width / 2 : r.top + r.height / 2); });
+      listOf(over).insertBefore(drag.it, at || null);
+      return;
+    }
+  }
+  const horizontal = horizontalOf(root), p = horizontal ? e.clientX : e.clientY;
+  const all = itemsOf(root), i = all.indexOf(drag.it);
+  const mid = (n) => { const r = n.getBoundingClientRect(); return horizontal ? r.left + r.width / 2 : r.top + r.height / 2; };
+  if (i > 0 && p < mid(all[i - 1])) listOf(root).insertBefore(drag.it, all[i - 1]);
+  else if (i < all.length - 1 && p > mid(all[i + 1])) listOf(root).insertBefore(all[i + 1], drag.it);
+};
+const up = () => {
+  if (!drag) return;
+  const { it, fromRoot, from, moved } = drag;
+  drag = null;
+  document.removeEventListener("pointermove", move);
+  document.removeEventListener("pointerup", up);
+  document.removeEventListener("pointercancel", up);
+  it.classList.remove("bk-sortable__item--dragging");
+  peers(fromRoot).forEach((r) => r.classList.remove("bk-sortable--dragging"));
+  if (moved) { say(rootOf(it), `Dropped ${nameOf(it)} at ${where(it)}.`); commit(it, fromRoot, from); }
+};
+const down = (e) => {
+  if (e.button !== 0 || lifted || drag) return;
+  const it = e.target.closest("[data-id]");
+  if (!it || !it.parentElement.classList.contains("bk-sortable__list")) return;
+  const handle = e.target.closest(".bk-sortable__handle");
+  if (!handle && !it.classList.contains("bk-sortable__item--whole")) return;
+  if (!handle && e.target.closest("a, button, input, select, textarea, summary, [contenteditable]")) return;
+  const root = rootOf(it);
+  drag = { it, fromRoot: root, from: itemsOf(root).indexOf(it), x: e.clientX, y: e.clientY, moved: false };
+  document.addEventListener("pointermove", move);
+  document.addEventListener("pointerup", up);
+  document.addEventListener("pointercancel", up);
+};
+
+brick.mount("Sortable", (el) => {
+  const list = listOf(el);
+  if (!list) return;
+  itemsOf(el).forEach((it) => { if (!it.querySelector(".bk-sortable__handle")) { it.tabIndex = 0; it.classList.add("bk-sortable__item--whole"); } });
+  el.classList.add("bk-sortable--ready");
+  list.addEventListener("keydown", key);
+  list.addEventListener("focusout", blur);
+  list.addEventListener("pointerdown", down);
+  return () => {
+    el.classList.remove("bk-sortable--ready");
+    list.removeEventListener("keydown", key);
+    list.removeEventListener("focusout", blur);
+    list.removeEventListener("pointerdown", down);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-sortable__list { display: flex; flex-direction: column; gap: .375rem; margin: 0; padding: 0; list-style: none; }
+.bk-sortable--horizontal > .bk-sortable__list { flex-direction: row; flex-wrap: wrap; }
+.bk-sortable--grouped > .bk-sortable__list { min-height: 3rem; }
+.bk-sortable--ready .bk-sortable__moves { display: none; }
+.bk-sortable--dragging { user-select: none; cursor: grabbing; }
+.bk-sortable--dragging .bk-sortable__handle { cursor: grabbing; }
+.bk-sortable .bk-sortable__item--whole { cursor: grab; touch-action: none; }
+.bk-sortable .bk-sortable__item--whole:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-sortable .bk-sortable__item--dragging, .bk-sortable .bk-sortable__item--lifted { position: relative; z-index: 1; border-color: color-mix(in oklab, var(--bk-primary) 45%, var(--bk-border)); box-shadow: var(--bk-shadow-lg); transform: scale(1.015); }
+@media (prefers-reduced-motion: reduce) { .bk-sortable .bk-sortable__item--dragging, .bk-sortable .bk-sortable__item--lifted { transform: none; } }
+</brick:style>
+{{ $help := print .ID `-help` }}
+<div class="{{ cx `bk-sortable` (print `bk-sortable--` .Props.direction) (cond .Props.group `bk-sortable--grouped` ``) .Attrs.class }}"{{ with .Props.action }} data-action="{{ . }}"{{ end }}{{ with .Props.group }} data-group="{{ . }}"{{ end }}{{ with .Props.list }} data-list="{{ . }}"{{ end }} {{ attrs `class` }}>
+  <p id="{{ $help }}" class="bk-sr-only">Press Space or Enter to pick the item up, the arrow keys to move it, Space to drop it, Escape to cancel.</p>
+  {{ provide "bkSortable" (dict "action" .Props.action "help" $help "list" (cond .Props.group .Props.list "")) }}
+  <ul class="bk-sortable__list" role="list"{{ with .Props.label }} aria-label="{{ . }}"{{ end }}>{{ children }}</ul>
+  <div class="bk-sr-only bk-sortable__live" aria-live="assertive" aria-atomic="true"></div>
+</div>

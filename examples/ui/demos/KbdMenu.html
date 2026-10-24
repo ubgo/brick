@@ -1,0 +1,13 @@
+<brick:style>
+.kbd-menu { width: 16rem; padding: .3rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-lg); font-size: var(--bk-text-sm); }
+.kbd-menu div { display: flex; align-items: center; gap: .55rem; padding: .4rem .5rem; border-radius: var(--bk-radius-sm); }
+.kbd-menu div:hover { background: var(--bk-accent); }
+.kbd-menu .bk-kbd { margin-left: auto; }
+</brick:style>
+<div class="kbd-menu" role="menu">
+  <div role="menuitem"><Icon name="search" :size="14" />Search<Kbd keys="⌘ K" size="sm" /></div>
+  <div role="menuitem"><Icon name="plus" :size="14" />New file<Kbd keys="⌘ N" size="sm" /></div>
+  <div role="menuitem"><Icon name="settings" :size="14" />Settings<Kbd keys="⌘ ," size="sm" /></div>
+  <div role="menuitem"><Icon name="log-out" :size="14" />Sign out<Kbd keys="⇧ ⌘ Q" size="sm" /></div>
+</div>
+<Text tone="muted" size="sm">Press <Kbd keys="⌘ K" size="sm" /> to open the command palette.</Text>

@@ -1,0 +1,22 @@
+---
+# A listening component is stateful: a pushed refresh is its $refresh.
+state:
+  live: true
+brick: {listen: "demo:notes"}
+---
+<brick:script>
+def board():
+    # The newest five notes and the total, read fresh on every render: a
+    # pushed refresh re-renders this component through its own action,
+    # so the event carries no data and needs no authorisation of its own.
+    rows = db.query("select id, body from push_notes order by id desc limit 5")
+    total = db.query("select count(*) as n from push_notes")[0]["n"]
+    return {"rows": rows, "total": total}
+</brick:script>
+{{ $b := board }}
+<section style="display: grid; gap: .4rem; width: 100%; max-width: 26rem">
+  <span id="rb-count" style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">{{ $b.total }} notes</span>
+  <ul id="rb-notes" style="margin: 0; padding-left: 1.1rem">
+    {{ range $b.rows }}<li brick:key="{{ .id }}">{{ .body }}</li>{{ end }}
+  </ul>
+</section>

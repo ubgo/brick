@@ -1,0 +1,64 @@
+---
+props:
+  before: {type: string, default: ""}
+  after: {type: string, default: ""}
+  beforeAlt: {type: string, default: Before}
+  afterAlt: {type: string, default: After}
+  beforeLabel: {type: string, default: Before}
+  afterLabel: {type: string, default: After}
+  position: {type: int, default: 50}
+  ratio: {type: string, default: 16/9, oneof: [16/9, 4/3, 3/2, 1/1, 21/9, auto]}
+  label: {type: string, default: Comparison}
+---
+{{/*
+Diff: two versions of the same picture stacked, with a divider to drag
+between them — a redesign, a photo edit, light versus dark.
+
+  <Diff before="/img/old.png" after="/img/new.png" />
+  <Diff ratio="4/3" :position="30" beforeLabel="v1" afterLabel="v2">
+    <brick:prop name="beforeContent"><div class="old-ui">…</div></brick:prop>
+    <brick:prop name="afterContent"><div class="new-ui">…</div></brick:prop>
+  </Diff>
+
+Images come from before/after (with beforeAlt/afterAlt), markup from the
+beforeContent/afterContent blocks; both layers fill a box of the given
+aspect ratio (auto: the before layer's own height). The divider is a real range input, so it works with arrow
+keys, Home and End, and a screen reader announces its value. Without
+JavaScript the split stays at position percent: both versions still show.
+*/}}
+<brick:client>
+brick.mount("Diff", (el) => {
+  const range = el.querySelector(".bk-diff__range");
+  const set = () => el.style.setProperty("--bk-diff-pos", range.value + "%");
+  range.hidden = false;
+  range.addEventListener("input", set);
+  set();
+  return () => range.removeEventListener("input", set);
+})
+</brick:client>
+<brick:style>
+.bk-diff { --bk-diff-pos: 50%; position: relative; display: grid; margin: 0; overflow: hidden; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-muted); user-select: none; container-type: inline-size; }
+.bk-diff--16-9 { aspect-ratio: 16 / 9; }
+.bk-diff--4-3 { aspect-ratio: 4 / 3; }
+.bk-diff--3-2 { aspect-ratio: 3 / 2; }
+.bk-diff--1-1 { aspect-ratio: 1; }
+.bk-diff--21-9 { aspect-ratio: 21 / 9; }
+.bk-diff__layer { grid-area: 1 / 1; position: relative; min-width: 0; overflow: hidden; }
+.bk-diff__layer > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.bk-diff__layer--after { clip-path: inset(0 0 0 var(--bk-diff-pos)); }
+.bk-diff__tag { position: absolute; top: .5rem; padding: .1rem .45rem; border-radius: var(--bk-radius-sm); background: color-mix(in oklab, var(--bk-bg) 80%, transparent); color: var(--bk-fg); font-size: var(--bk-text-xs); font-weight: 600; backdrop-filter: blur(4px); pointer-events: none; }
+.bk-diff__layer--before .bk-diff__tag { left: .5rem; }
+.bk-diff__layer--after .bk-diff__tag { right: .5rem; }
+.bk-diff__handle { position: absolute; top: 0; bottom: 0; left: var(--bk-diff-pos); width: 2px; margin-left: -1px; background: var(--bk-bg); box-shadow: 0 0 0 1px color-mix(in oklab, var(--bk-fg) 15%, transparent); pointer-events: none; }
+.bk-diff__handle::after { content: ""; position: absolute; top: 50%; left: 50%; width: 1.75rem; height: 1.75rem; border-radius: var(--bk-radius-full); background: var(--bk-bg); box-shadow: var(--bk-shadow); transform: translate(-50%, -50%); }
+.bk-diff__handle::before { content: ""; position: absolute; top: 50%; left: 50%; z-index: 1; width: .55rem; height: .55rem; border-left: 2px solid var(--bk-muted-fg); border-right: 2px solid var(--bk-muted-fg); transform: translate(-50%, -50%); }
+.bk-diff__range { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
+.bk-diff__range[hidden] { display: none; }
+.bk-diff:has(.bk-diff__range:focus-visible) .bk-diff__handle::after { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+</brick:style>
+<figure class="{{ cx `bk-diff` (print `bk-diff--` (replace `/` `-` .Props.ratio)) .Attrs.class }}" style="--bk-diff-pos: {{ .Props.position }}%" {{ attrs `class` }}>
+  <div class="bk-diff__layer bk-diff__layer--before">{{ if hasNode "beforeContent" }}{{ node "beforeContent" }}{{ else if .Props.before }}<img src="{{ .Props.before }}" alt="{{ .Props.beforeAlt }}" draggable="false">{{ end }}{{ with .Props.beforeLabel }}<span class="bk-diff__tag" aria-hidden="true">{{ . }}</span>{{ end }}</div>
+  <div class="bk-diff__layer bk-diff__layer--after">{{ if hasNode "afterContent" }}{{ node "afterContent" }}{{ else if .Props.after }}<img src="{{ .Props.after }}" alt="{{ .Props.afterAlt }}" draggable="false">{{ end }}{{ with .Props.afterLabel }}<span class="bk-diff__tag" aria-hidden="true">{{ . }}</span>{{ end }}</div>
+  <span class="bk-diff__handle" aria-hidden="true"></span>
+  <input type="range" class="bk-diff__range" min="0" max="100" value="{{ .Props.position }}" aria-label="{{ .Props.label }}: {{ .Props.beforeLabel }} to {{ .Props.afterLabel }}" hidden>
+</figure>

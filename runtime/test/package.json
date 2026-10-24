@@ -1,0 +1,9 @@
+{
+  "name": "brick-runtime-tests",
+  "private": true,
+  "description": "Test-only dependencies for brick's browser runtime; nothing here ships.",
+  "type": "module",
+  "devDependencies": {
+    "jsdom": "^26.0.0"
+  }
+}

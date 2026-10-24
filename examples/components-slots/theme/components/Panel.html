@@ -1,0 +1,7 @@
+---
+brick:
+  slots:
+    title: {required: true, doc: "The panel heading"}
+    children: {required: true}
+---
+<section class="panel"><h2>{{ node "title" }}</h2>{{ children }}</section>

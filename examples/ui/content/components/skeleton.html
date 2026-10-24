@@ -1,0 +1,17 @@
+---
+title: Skeleton
+category: Data display
+description: "Grey placeholders in the shape of content that is still loading — lines, circles and blocks, pulsing unless motion is reduced."
+api:
+  - {name: shape, type: "line | circle | rect", default: line, desc: "The placeholder's shape."}
+  - {name: lines, type: int, default: "1", desc: "Lines of text; the last is shorter."}
+  - {name: width, type: string, desc: "Width of each line or the block, e.g. 40%."}
+  - {name: height, type: string, desc: "Height of the block, e.g. 8rem."}
+  - {name: size, type: "sm | md | lg", default: md, desc: "Line thickness, or circle size."}
+---
+<h1>Skeleton</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Shapes" block><SkeletonShapes /><brick:prop name="code"><Source src="~/demos/SkeletonShapes.html" /></brick:prop></Example>
+<Example title="A loading list" block><SkeletonCard /><brick:prop name="code"><Source src="~/demos/SkeletonCard.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

@@ -1,0 +1,16 @@
+---
+title: ScrollArea
+category: Layout
+description: A box that scrolls its content with a thin scrollbar that matches the theme — a sidebar list, a log, a gallery.
+api:
+  - {name: height, type: "xs | sm | md | lg | xl", default: md, desc: "The maximum height: 8, 12, 18, 24 or 32rem."}
+  - {name: orientation, type: "vertical | horizontal | both", default: vertical, desc: Which way it scrolls.}
+  - {name: label, type: string, desc: "Names the region for screen readers (role=\"region\")."}
+  - {name: bordered, type: bool, desc: A border and a surface background.}
+---
+<h1>ScrollArea</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Vertical" block><ScrollAreaVertical /><brick:prop name="code"><Source src="~/demos/ScrollAreaVertical.html" /></brick:prop></Example>
+<Example title="Horizontal" block><ScrollAreaHorizontal /><brick:prop name="code"><Source src="~/demos/ScrollAreaHorizontal.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

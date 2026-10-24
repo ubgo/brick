@@ -1,0 +1,59 @@
+# Manual only, on purpose.
+#
+# This repository is private, where GitHub Actions minutes are metered, and a
+# workflow that goes red for billing rather than for code teaches everyone to
+# ignore the gate. `task check` is the real gate; this exists for the times a
+# clean-machine run is worth the minutes. The browser suites (task e2e,
+# task ui:e2e, task e2e:both, task ui:a11y) need Chrome and run locally.
+#
+# To restore automatic runs when there is budget, replace the `on:` block with:
+#
+#   on:
+#     push:
+#       branches: [main]
+#     pull_request:
+#     workflow_dispatch:
+
+name: test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - .
+          - contrib/script-starlark
+          - contrib/markdown-goldmark
+          - contrib/sanitize-bluemonday
+          - contrib/assets-http
+          - examples
+          - cmd/brick
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+          cache: true
+          cache-dependency-path: ${{ matrix.module }}/go.sum
+      # The runtime and kit client tests run in jsdom through node; without it
+      # they skip rather than fail, so install it where they live.
+      - uses: actions/setup-node@v5
+        if: matrix.module == '.'
+        with:
+          node-version: "22"
+      - name: jsdom
+        if: matrix.module == '.'
+        working-directory: runtime/test
+        run: npm ci --no-audit --no-fund
+      - name: test
+        working-directory: ${{ matrix.module }}
+        run: go test -race ./...

@@ -1,0 +1,14 @@
+---
+title: Tag feed
+use: {tags: ~/scripts/tags.star}
+brick: {paths: tags.list}
+---
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+<channel>
+<title>{{ .Site.title }}: {{ .Page.Route.tag }}</title>
+{{- $tag := .Page.Route.tag }}{{ range $p := .Site.Pages }}{{ range $p.Params.tags }}{{ if eq . $tag }}
+<item><title>{{ $p.Title }}</title><link>{{ $.Site.baseURL }}{{ $p.URL }}</link></item>
+{{- end }}{{ end }}{{ end }}
+</channel>
+</rss>

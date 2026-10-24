@@ -1,0 +1,46 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  title: {type: string, default: ""}
+  open: {type: bool, default: false}
+  name: {type: string, default: ""}
+  chevron: {type: bool, default: true}
+---
+{{/*
+Collapsible: one region that shows and hides under a trigger — "Show 3
+more", an advanced-settings section, a long description. Unlike Accordion
+it draws no box: just the trigger and the content, so it fits inside a
+card, a list or a form.
+
+  <Collapsible title="Show advanced options">…</Collapsible>
+  <Collapsible open>
+    <brick:prop name="trigger"><Badge tone="primary">3 more repositories</Badge></brick:prop>
+    …
+  </Collapsible>
+
+A native <details>, so it works without JavaScript, is found by
+find-in-page and opens for it. The trigger is title, or a trigger block for
+markup; chevron draws the turning arrow. name groups collapsibles so one
+opens at a time. The height animates where the browser can animate
+::details-content (interpolate-size); elsewhere it opens at once, and never
+under reduced motion.
+*/}}
+<brick:style>
+.bk-collapsible { interpolate-size: allow-keywords; }
+.bk-collapsible > summary { list-style: none; }
+.bk-collapsible > summary::-webkit-details-marker { display: none; }
+.bk-collapsible__trigger { display: inline-flex; align-items: center; gap: .35rem; padding: .2rem .1rem; border-radius: var(--bk-radius-sm); color: var(--bk-fg); font-size: var(--bk-text-sm); font-weight: 500; cursor: pointer; user-select: none; }
+.bk-collapsible__trigger:hover { color: var(--bk-primary-text); }
+.bk-collapsible__trigger:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-collapsible__chevron { color: var(--bk-muted-fg); transition: transform var(--bk-duration) ease; }
+.bk-collapsible[open] > summary .bk-collapsible__chevron { transform: rotate(90deg); }
+.bk-collapsible::details-content { height: 0; overflow: clip; transition: height calc(var(--bk-duration) * 1.6) ease, content-visibility calc(var(--bk-duration) * 1.6) allow-discrete; }
+.bk-collapsible[open]::details-content { height: auto; }
+.bk-collapsible__content { padding-top: .5rem; }
+@media (prefers-reduced-motion: reduce) { .bk-collapsible::details-content { transition: none; } }
+</brick:style>
+<details class="{{ cx `bk-collapsible` .Attrs.class }}"{{ if .Props.open }} open{{ end }}{{ with .Props.name }} name="{{ . }}"{{ end }} {{ attrs `class` }}>
+  <summary class="bk-collapsible__trigger">{{ if .Props.chevron }}<Icon name="chevron-right" :size="14" class="bk-collapsible__chevron" />{{ end }}{{ if hasNode "trigger" }}{{ node "trigger" }}{{ else }}{{ .Props.title }}{{ end }}</summary>
+  <div class="bk-collapsible__content">{{ children }}</div>
+</details>

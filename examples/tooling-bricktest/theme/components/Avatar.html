@@ -1,0 +1,8 @@
+---
+state:
+  avatar: null
+brick:
+  uploads:
+    avatar: {accept: [image/png], max_size: 1024}
+---
+<div class="avatar">{{ with .State.avatar }}<img src="{{ .url }}" alt="{{ .name }}">{{ else }}No picture yet{{ end }}</div>

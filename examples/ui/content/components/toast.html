@@ -1,0 +1,23 @@
+---
+title: Toast
+category: Feedback
+description: "A short notification that pops up in the corner and dismisses itself — from client code, or rendered by the server after an action."
+api:
+  - {name: variant, type: "neutral | info | success | warning | danger", default: neutral, desc: "The icon and its colour. danger is role=alert."}
+  - {name: title, type: string, desc: "The first line."}
+  - {name: description, type: string, desc: "The second line; children replace it with markup."}
+  - {name: duration, type: int, default: "5000", desc: "Milliseconds on screen; 0 stays until closed. Hovering the list pauses it."}
+  - {name: icon, type: string, desc: "Replaces the variant's icon."}
+  - {name: inline, type: bool, desc: "Stay where rendered: the Toaster leaves it alone (previews, notification lists)."}
+  - {name: label, type: string, default: Dismiss, desc: "The close button's accessible name."}
+  - {name: id, type: attribute, desc: "A toast whose id is already on screen is not shown twice."}
+---
+<h1>Toast</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Variants (inline previews)" block><ToastVariants /><brick:prop name="code"><Source src="~/demos/ToastVariants.html" /></brick:prop></Example>
+<Example title="From client code, with toast()" block><ToastFromCode /><brick:prop name="code"><Source src="~/demos/ToastFromCode.html" /></brick:prop></Example>
+<Example title="From a server action" block><ToastFromAction /><brick:prop name="code"><Source src="~/demos/ToastFromAction.html" /></brick:prop></Example>
+<p style="margin: -.5rem 0 1.25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">The action re-renders the component with a <code>&lt;Toast&gt;</code> in it; the patch inserts it and the Toaster takes it. Each save gets a new id, so a later re-render cannot show the same toast twice.</p>
+<Toaster />
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

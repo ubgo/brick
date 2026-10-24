@@ -1,0 +1,41 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  title: {type: string, required: true}
+  description: {type: string, default: ""}
+  icon: {type: string, default: inbox}
+  size: {type: string, default: md, oneof: [sm, md]}
+  bordered: {type: bool, default: false}
+---
+{{/*
+EmptyState: what a list, table or page shows when there is nothing in it
+yet — say why, and offer the next step.
+
+  <EmptyState title="No invoices yet" description="Invoices appear here once a customer pays." />
+  <EmptyState icon="search" title="No results for “acme”" size="sm" />
+  <EmptyState icon="users" title="Invite your team" bordered>
+    <Button icon="user-plus">Invite people</Button>
+  </EmptyState>
+
+Children are the actions, centred under the text. bordered draws a dashed
+frame, for an empty area inside a page rather than a whole page. icon=""
+leaves the icon out.
+*/}}
+<brick:style>
+.bk-empty { display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: 2.5rem 1.5rem; text-align: center; }
+.bk-empty--bordered { border: 1px dashed var(--bk-input); border-radius: var(--bk-radius-lg); background: color-mix(in oklab, var(--bk-muted) 35%, transparent); }
+.bk-empty__icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; margin-bottom: .4rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-muted-fg); box-shadow: var(--bk-shadow-sm); }
+.bk-empty__title { margin: 0; font-size: var(--bk-text-lg); font-weight: 600; color: var(--bk-fg); }
+.bk-empty__desc { max-width: 26rem; margin: 0; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.bk-empty__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin-top: .75rem; }
+.bk-empty--sm { padding: 1.5rem 1rem; gap: .2rem; }
+.bk-empty--sm .bk-empty__icon { width: 2.25rem; height: 2.25rem; margin-bottom: .25rem; }
+.bk-empty--sm .bk-empty__title { font-size: var(--bk-text-base); }
+</brick:style>
+<div class="{{ cx `bk-empty` (cond (eq .Props.size `sm`) `bk-empty--sm` ``) (cond .Props.bordered `bk-empty--bordered` ``) .Attrs.class }}" {{ attrs `class` }}>
+  {{- with .Props.icon }}<span class="bk-empty__icon"><Icon :name="." :size="cond (eq $.Props.size `sm`) 16 20" /></span>{{ end }}
+  <p class="bk-empty__title">{{ .Props.title }}</p>
+  {{- with .Props.description }}<p class="bk-empty__desc">{{ . }}</p>{{ end }}
+  {{- if hasNode "children" }}<div class="bk-empty__actions">{{ children }}</div>{{ end }}
+</div>

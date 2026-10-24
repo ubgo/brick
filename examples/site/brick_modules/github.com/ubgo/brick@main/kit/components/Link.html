@@ -1,0 +1,35 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  href: {type: string, required: true}
+  tone: {type: string, default: primary, oneof: [primary, default, muted]}
+  underline: {type: string, default: hover, oneof: [hover, always, none]}
+  external: {type: bool, default: false}
+---
+{{/*
+Link: an <a> in the kit's colours, with an underline that stays out of the
+way until hover.
+
+  <Link href="/pricing">See pricing</Link>
+  <Link href="/docs" tone="muted" underline="always">Read the docs</Link>
+  <Link href="https://go.dev" external>go.dev</Link>
+
+external opens a new tab with rel="noopener noreferrer" and adds an arrow
+icon plus a screen-reader note, so the new tab is never a surprise.
+*/}}
+<brick:style>
+.bk-link { display: inline-flex; align-items: center; gap: .2em; color: var(--bk-primary-text); font-weight: 500; text-decoration: none; text-underline-offset: .2em; text-decoration-thickness: 1px; border-radius: var(--bk-radius-sm); transition: color var(--bk-duration); }
+.bk-link:hover { text-decoration-line: underline; }
+.bk-link:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-link--default { color: var(--bk-fg); }
+.bk-link--muted { color: var(--bk-muted-fg); font-weight: 400; }
+.bk-link--muted:hover { color: var(--bk-fg); }
+.bk-link--always { text-decoration-line: underline; text-decoration-color: color-mix(in oklab, currentColor 40%, transparent); }
+.bk-link--always:hover { text-decoration-color: currentColor; }
+.bk-link--none:hover { text-decoration-line: none; }
+.bk-link__ext { opacity: .7; flex: none; }
+</brick:style>
+{{- /* and no leading whitespace */ -}}
+<a href="{{ .Props.href }}" class="{{ cx `bk-link` (cond (ne .Props.tone `primary`) (print `bk-link--` .Props.tone) ``) (cond (ne .Props.underline `hover`) (print `bk-link--` .Props.underline) ``) .Attrs.class }}"{{ if .Props.external }} target="_blank" rel="noopener noreferrer"{{ end }} {{ attrs `class` }}>{{ children }}{{ if .Props.external }}<Icon name="external-link" :size="12" class="bk-link__ext" /><span class="bk-sr-only"> (opens in a new tab)</span>{{ end }}</a>
+{{- /* no trailing newline: this renders inline, inside running text */ -}}

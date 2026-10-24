@@ -1,0 +1,27 @@
+---
+state:
+  name: ""
+  agree: false
+  done: false
+---
+<brick:script>
+def save(state, props):
+    errors = {}
+    if len(state["name"]) < 2:
+        errors["name"] = "At least two letters."
+    if not state["agree"]:
+        errors["agree"] = "Please accept the terms."
+    if errors:
+        return [state, errors]
+    return dict(state, done = True)
+</brick:script>
+<form class="signup" brick:submit="save">
+  {{ if .State.done }}<p class="done">Welcome, {{ .State.name }}!</p>{{ else }}
+  <input brick:model="name" value="{{ .State.name }}" placeholder="Your name">
+  {{ with .Errors.name }}<p class="error">{{ . }}</p>{{ end }}
+  <p>Hello, <span brick:text="name">{{ .State.name }}</span></p>
+  <label><input type="checkbox" brick:model.lazy="agree" {{ if .State.agree }}checked{{ end }}> I agree</label>
+  <p brick:show="agree" {{ if not .State.agree }}hidden{{ end }}>Thanks!</p>
+  {{ with .Errors.agree }}<p class="error">{{ . }}</p>{{ end }}
+  <button>Sign up</button> <span brick:loading hidden>Saving…</span>{{ end }}
+</form>

@@ -1,0 +1,150 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Input: ~/components/Input.html
+props:
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  weekStart: {type: string, default: sunday, oneof: [sunday, monday]}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+  openLabel: {type: string, default: Choose a date}
+---
+{{/*
+DatePicker: a native <input type="date"> with the kit's calendar popover.
+
+  <DatePicker name="due" value="2026-10-01" />
+  <DatePicker name="start" min="2026-01-01" max="2026-12-31" weekStart="monday" />
+
+value, min and max are ordinary attributes of the date input (every
+attribute but class reaches it), so the value is always ISO YYYY-MM-DD,
+the browser validates it, and without JavaScript the native picker is the
+whole component. The client module adds a calendar button: the popover
+fills its server-rendered 42-day grid for the shown month, arrows move by
+day and week, PageUp/PageDown by month, Enter picks, Escape closes; days
+outside min/max are disabled. Picking writes the input and fires input and
+change.
+*/}}
+<brick:client>
+import { place as placePanel } from "brick:Popover";
+// DAY_MS is one day: the calendar steps in whole UTC days. GAP is the space
+// (px) between the field and its popover; EDGE the margin kept from the
+// viewport before it flips above the field or shifts left.
+const DAY_MS = 864e5, GAP = 4, EDGE = 8;
+
+brick.mount("DatePicker", (el) => {
+  const input = el.querySelector("input");
+  const btn = el.querySelector(".bk-datepicker__toggle");
+  const pop = el.querySelector(".bk-datepicker__pop");
+  const title = el.querySelector(".bk-datepicker__title");
+  const cells = [...el.querySelectorAll(".bk-datepicker__day")];
+  const monday = el.getAttribute("data-week-start") === "monday";
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const pad = (n) => String(n).padStart(2, "0");
+  const iso = (d) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+  const parse = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(s || "") ? new Date(s + "T00:00:00Z") : null);
+  const today = () => { const n = new Date(); return new Date(Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())); };
+  let view = null, focus = null;
+  // The popover goes in the top layer where the Popover API exists, so an
+  // ancestor's overflow: hidden (a card, a dialog) cannot clip it.
+  const box = el.querySelector(".bk-input");
+  const layer = typeof pop.showPopover === "function";
+  if (layer) pop.setAttribute("popover", "manual");
+  const place = () => placePanel(box, pop, { gap: GAP, edge: EDGE, clamp: "x" });
+  const inRange = (d) => { const lo = parse(input.min), hi = parse(input.max); return (!lo || d >= lo) && (!hi || d <= hi); };
+  const draw = () => {
+    const first = new Date(Date.UTC(view.getUTCFullYear(), view.getUTCMonth(), 1));
+    const offset = (first.getUTCDay() - (monday ? 1 : 0) + 7) % 7;
+    const start = new Date(first.getTime() - offset * DAY_MS);
+    const sel = input.value, now = iso(today());
+    title.textContent = `${months[view.getUTCMonth()]} ${view.getUTCFullYear()}`;
+    cells.forEach((c, i) => {
+      const d = new Date(start.getTime() + i * DAY_MS), s = iso(d);
+      c.textContent = String(d.getUTCDate());
+      c.dataset.date = s;
+      c.classList.toggle("bk-datepicker__day--out", d.getUTCMonth() !== view.getUTCMonth());
+      c.classList.toggle("bk-datepicker__day--today", s === now);
+      c.setAttribute("aria-selected", String(s === sel));
+      c.setAttribute("aria-label", `${d.getUTCDate()} ${months[d.getUTCMonth()]} ${d.getUTCFullYear()}`);
+      c.disabled = !inRange(d);
+      c.tabIndex = focus && s === iso(focus) ? 0 : -1;
+    });
+  };
+  const show = (d, move) => {
+    focus = d;
+    if (!view || d.getUTCMonth() !== view.getUTCMonth() || d.getUTCFullYear() !== view.getUTCFullYear()) view = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+    draw();
+    if (move) { const c = cells.find((x) => x.dataset.date === iso(d)); if (c) c.focus(); }
+  };
+  const open = () => {
+    pop.hidden = false;
+    if (layer) { pop.showPopover(); place(); addEventListener("scroll", place, true); addEventListener("resize", place); }
+    btn.setAttribute("aria-expanded", "true");
+    view = null;
+    show(parse(input.value) || today(), true);
+  };
+  const close = (refocus) => {
+    if (layer && pop.matches(":popover-open")) { pop.hidePopover(); removeEventListener("scroll", place, true); removeEventListener("resize", place); }
+    pop.hidden = true;
+    btn.setAttribute("aria-expanded", "false");
+    if (refocus) btn.focus();
+  };
+  const pick = (s) => {
+    input.value = s;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    close(true);
+  };
+  const shiftMonth = (n) => { const d = focus || view; const t = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + n, 1)); const last = new Date(Date.UTC(t.getUTCFullYear(), t.getUTCMonth() + 1, 0)).getUTCDate(); t.setUTCDate(Math.min(d.getUTCDate(), last)); return t; };
+  const onClick = (e) => {
+    if (e.target.closest(".bk-datepicker__toggle")) { pop.hidden ? open() : close(false); return; }
+    const nav = e.target.closest("[data-nav]");
+    if (nav) { show(shiftMonth(Number(nav.dataset.nav)), false); return; }
+    const day = e.target.closest(".bk-datepicker__day");
+    if (day && !day.disabled) pick(day.dataset.date);
+  };
+  const onKey = (e) => {
+    if (pop.hidden) return;
+    if (e.key === "Escape") { e.preventDefault(); close(true); return; }
+    const day = e.target.closest && e.target.closest(".bk-datepicker__day");
+    if (!day) return;
+    const steps = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 };
+    if (e.key in steps) { e.preventDefault(); show(new Date(parse(day.dataset.date).getTime() + steps[e.key] * DAY_MS), true); }
+    else if (e.key === "PageUp" || e.key === "PageDown") { e.preventDefault(); show(shiftMonth(e.key === "PageUp" ? -1 : 1), true); }
+    else if ((e.key === "Enter" || e.key === " ") && !day.disabled) { e.preventDefault(); pick(day.dataset.date); }
+  };
+  const onDoc = (e) => { if (!pop.hidden && !el.contains(e.target)) close(false); };
+  btn.hidden = false;
+  el.classList.add("bk-datepicker--js");
+  el.addEventListener("click", onClick);
+  el.addEventListener("keydown", onKey);
+  document.addEventListener("click", onDoc);
+  return () => { close(false); el.removeEventListener("click", onClick); el.removeEventListener("keydown", onKey); document.removeEventListener("click", onDoc); };
+})
+</brick:client>
+<brick:style>
+.bk-datepicker { position: relative; width: 100%; }
+.bk-datepicker--js .bk-input__control::-webkit-calendar-picker-indicator { display: none; }
+.bk-datepicker__toggle { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-datepicker__toggle:hover, .bk-datepicker__toggle[aria-expanded=true] { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-datepicker__toggle[hidden] { display: none; }
+.bk-datepicker__pop { position: absolute; z-index: var(--bk-z-dropdown); top: calc(100% + .3rem); left: 0; width: 16.5rem; padding: .6rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); animation: bk-pop-in var(--bk-duration); }
+.bk-datepicker__pop[hidden] { display: none; }
+.bk-datepicker__pop[popover] { position: fixed; inset: auto; margin: 0; }
+.bk-datepicker__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .4rem; }
+.bk-datepicker__title { font-size: var(--bk-text-sm); font-weight: 600; }
+.bk-datepicker__nav { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; padding: 0; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-surface); color: var(--bk-fg); cursor: pointer; }
+.bk-datepicker__nav:hover { background: var(--bk-accent); }
+.bk-datepicker__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.bk-datepicker__wd { padding: .2rem 0; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 500; text-align: center; }
+.bk-datepicker__day { height: 2rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-fg); font: var(--bk-text-sm)/1 var(--bk-font); font-variant-numeric: tabular-nums; cursor: pointer; }
+.bk-datepicker__day:hover { background: var(--bk-accent); }
+.bk-datepicker__day:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 0; }
+.bk-datepicker__day--out { color: var(--bk-muted-fg); }
+.bk-datepicker__day--today { font-weight: 700; color: var(--bk-primary-text); }
+.bk-datepicker__day[aria-selected=true] { background: var(--bk-primary); color: var(--bk-primary-fg); opacity: 1; }
+.bk-datepicker__day:disabled { opacity: .3; cursor: not-allowed; background: transparent; text-decoration: line-through; }
+</brick:style>
+{{ $pid := print "bk-dp" .ID }}
+{{ $days := cond (eq .Props.weekStart "monday") (list "Mo" "Tu" "We" "Th" "Fr" "Sa" "Su") (list "Su" "Mo" "Tu" "We" "Th" "Fr" "Sa") }}
+<div class="{{ cx `bk-datepicker` .Attrs.class }}" data-week-start="{{ .Props.weekStart }}"><Input type="date" :size=".Props.size" :invalid=".Props.invalid" :required=".Props.required" :disabled=".Props.disabled" brick:spread="omit .Attrs `class`"><brick:prop name="trailing"><button type="button" class="bk-datepicker__toggle" aria-label="{{ .Props.openLabel }}" aria-haspopup="dialog" aria-expanded="false" aria-controls="{{ $pid }}" hidden><Icon name="calendar" :size="15" /></button></brick:prop></Input><div class="bk-datepicker__pop" id="{{ $pid }}" role="dialog" aria-label="{{ .Props.openLabel }}" hidden><div class="bk-datepicker__head"><button type="button" class="bk-datepicker__nav" data-nav="-1" aria-label="Previous month"><Icon name="chevron-left" :size="14" /></button><span class="bk-datepicker__title" aria-live="polite"></span><button type="button" class="bk-datepicker__nav" data-nav="1" aria-label="Next month"><Icon name="chevron-right" :size="14" /></button></div><div class="bk-datepicker__grid">{{ range $days }}<span class="bk-datepicker__wd" aria-hidden="true">{{ . }}</span>{{ end }}{{ range seq 42 }}<button type="button" class="bk-datepicker__day" tabindex="-1"></button>{{ end }}</div></div></div>

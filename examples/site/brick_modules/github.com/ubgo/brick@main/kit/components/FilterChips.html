@@ -1,0 +1,51 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  name: {type: string, required: true}
+  options: {type: list, required: true}
+  type: {type: string, default: single, oneof: [single, multiple]}
+  value: {type: any, default: ""}
+  reset: {type: string, default: All}
+  collapse: {type: bool, default: false}
+  label: {type: string, default: ""}
+  size: {type: string, default: md, oneof: [sm, md]}
+---
+{{/*
+FilterChips: a row of chips that filter a list — pick one (radios) or any
+(checkboxes). Pure CSS on native inputs: it submits with its form, fires
+change, and needs no JavaScript.
+
+  <FilterChips name="status" :options="list `Open` `Closed` `Draft`" value="Open" />
+  <FilterChips name="tag" type="multiple" :value="list `go`" :options="list `go` `html` `css`" reset="" />
+  <FilterChips name="size" collapse :options="list `S` `M` `L` `XL`" />
+
+single: the reset chip (reset, "All" by default; "" leaves it out) is a
+radio with an empty value, checked when nothing else is. collapse
+folds the group: once a chip is picked the others fold away and the
+reset chip becomes an × that brings them back. multiple: reset is an
+<input type="reset">, which clears every field of the surrounding form.
+An option is a string or {value, label}; value is the checked value, or a
+list for multiple.
+*/}}
+<brick:style>
+.bk-filter { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; margin: 0; padding: 0; border: 0; min-inline-size: 0; }
+.bk-filter__legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.bk-filter__chip { position: relative; display: inline-flex; }
+.bk-filter__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.bk-filter__face, .bk-filter__clear { display: inline-flex; align-items: center; gap: .3rem; height: var(--bk-h-sm); padding: 0 .75rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius-full); background: var(--bk-surface); color: var(--bk-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); white-space: nowrap; pointer-events: none; transition: background var(--bk-duration), border-color var(--bk-duration), color var(--bk-duration); }
+.bk-filter--sm .bk-filter__face, .bk-filter--sm .bk-filter__clear { height: var(--bk-h-xs); padding: 0 .6rem; font-size: var(--bk-text-xs); }
+.bk-filter__clear { pointer-events: auto; cursor: pointer; color: var(--bk-muted-fg); }
+.bk-filter__chip:hover .bk-filter__face, .bk-filter__clear:hover { background: var(--bk-accent); }
+.bk-filter__input:checked + .bk-filter__face { border-color: var(--bk-primary); background: var(--bk-primary); color: var(--bk-primary-fg); }
+.bk-filter__input:focus-visible + .bk-filter__face, .bk-filter__clear:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-filter__face .bk-icon { display: none; }
+.bk-filter__input:checked + .bk-filter__face .bk-icon { display: inline; }
+.bk-filter--collapse .bk-filter__chip--reset { display: none; }
+.bk-filter--collapse:has(.bk-filter__input:not([value=""]):checked) .bk-filter__chip:not(.bk-filter__chip--reset):not(:has(:checked)) { display: none; }
+.bk-filter--collapse:has(.bk-filter__input:not([value=""]):checked) .bk-filter__chip--reset { display: inline-flex; order: -1; }
+.bk-filter--collapse .bk-filter__chip--reset .bk-filter__face { width: var(--bk-h-sm); padding: 0; justify-content: center; color: var(--bk-muted-fg); }
+.bk-filter--collapse .bk-filter__chip--reset .bk-filter__face .bk-icon { display: inline; }
+</brick:style>
+{{ $multi := eq .Props.type "multiple" }}{{ $isStr := eq (printf "%T" .Props.value) "string" }}
+<fieldset class="{{ cx `bk-filter` (cond .Props.collapse `bk-filter--collapse` ``) (cond (eq .Props.size `sm`) `bk-filter--sm` ``) .Attrs.class }}" {{ attrs `class` }}>{{ with .Props.label }}<legend class="bk-filter__legend">{{ . }}</legend>{{ end }}{{ if and (not $multi) .Props.reset }}<label class="bk-filter__chip bk-filter__chip--reset"><input class="bk-filter__input" type="radio" name="{{ .Props.name }}" value=""{{ if not .Props.value }} checked{{ end }}{{ if .Props.collapse }} aria-label="{{ .Props.reset }}"{{ end }}><span class="bk-filter__face">{{ if .Props.collapse }}<Icon name="x" :size="13" />{{ else }}{{ .Props.reset }}{{ end }}</span></label>{{ end }}{{ range .Props.options }}{{ $v := . }}{{ $l := . }}{{ if ne (printf "%T" .) "string" }}{{ $v = index . "value" }}{{ $l = default $v (index . "label") }}{{ end }}{{ $on := false }}{{ if $isStr }}{{ $on = and $.Props.value (eq (print $v) $.Props.value) }}{{ else }}{{ range $.Props.value }}{{ if eq (print .) (print $v) }}{{ $on = true }}{{ end }}{{ end }}{{ end }}<label class="bk-filter__chip"><input class="bk-filter__input" type="{{ cond $multi `checkbox` `radio` }}" name="{{ $.Props.name }}" value="{{ $v }}"{{ if $on }} checked{{ end }}><span class="bk-filter__face">{{ if $multi }}<Icon name="check" :size="13" />{{ end }}{{ $l }}</span></label>{{ end }}{{ if and $multi .Props.reset }}<input type="reset" class="bk-filter__clear" value="{{ .Props.reset }}">{{ end }}</fieldset>

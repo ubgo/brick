@@ -1,0 +1,15 @@
+---
+title: SearchInput
+category: Forms
+description: "A search field with a magnifier, a clear button and a keyboard shortcut that focuses it."
+api:
+  - {name: size, type: "sm | md | lg", default: "md", desc: "Height."}
+  - {name: shortcut, type: "string", desc: "A hint such as ⌘K or / that also focuses the field."}
+  - {name: clearLabel, type: "string", default: "Clear search", desc: "The clear button's accessible name."}
+  - {name: disabled, type: "bool", desc: "Disables it."}
+---
+<h1>SearchInput</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Search" block><SearchInputBasic /><brick:prop name="code"><Source src="~/demos/SearchInputBasic.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

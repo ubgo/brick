@@ -1,0 +1,6 @@
+<div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap">
+  <Sparkline :data="list 4 6 5 9 8 12 11 15" label="Signups" />
+  <Sparkline :data="list 12 11 13 9 10 7 8 6" variant="area" tone="danger" label="Churn" />
+  <Sparkline :data="list 3 5 4 7 6 9 8" variant="bar" tone="success" label="Orders" />
+  <Sparkline :data="list 20 22 21 26 24 29 31 30 35" variant="area" :width="180" :height="44" label="Revenue" />
+</div>

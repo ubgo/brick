@@ -1,0 +1,5 @@
+---
+use:
+  d: ~/data/demo-charts.yaml
+---
+<BarChart :data=".Data.d.visitors" x="month" label="Visitors per month by device" style="width: 100%" :series="list (dict `key` `desktop` `label` `Desktop`) (dict `key` `mobile` `label` `Mobile`)" />

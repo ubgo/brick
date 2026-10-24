@@ -1,0 +1,7 @@
+---
+brick:
+  island: true
+inject:
+  user: {default: ""}
+---
+<span class="account">{{ with .Ctx.user }}Hi, {{ . }}{{ else }}<a href="?as=Sara">Sign in</a>{{ end }}</span>

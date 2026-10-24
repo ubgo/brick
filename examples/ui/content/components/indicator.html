@@ -1,0 +1,21 @@
+---
+title: Indicator
+category: Layout
+description: A badge or dot pinned to the corner of its children — an unread count on a bell, a presence dot on an avatar.
+api:
+  - {name: count, type: int, default: "0", desc: "A number; 0 shows nothing, so an empty inbox needs no condition."}
+  - {name: max, type: int, default: "99", desc: "Counts above it show as 99+."}
+  - {name: text, type: string, desc: "Text instead of a number: \"New\"."}
+  - {name: dot, type: bool, desc: A dot with no text.}
+  - {name: tone, type: "danger | primary | success | warning | info | neutral", default: danger, desc: The colour.}
+  - {name: position, type: "top-end | top-start | bottom-end | bottom-start", default: top-end, desc: The corner.}
+  - {name: label, type: string, desc: "What the badge means, for screen readers."}
+  - {name: ping, type: bool, desc: A pulsing ring to draw attention.}
+---
+<h1>Indicator</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Counts"><IndicatorCount /><brick:prop name="code"><Source src="~/demos/IndicatorCount.html" /></brick:prop></Example>
+<Example title="Dots"><IndicatorDot /><brick:prop name="code"><Source src="~/demos/IndicatorDot.html" /></brick:prop></Example>
+<Example title="Text"><IndicatorText /><brick:prop name="code"><Source src="~/demos/IndicatorText.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

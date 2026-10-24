@@ -1,0 +1,45 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  label: {type: string, default: Toggle dark mode}
+---
+{{/*
+ThemeToggle: switches <html data-theme> between light and dark and
+remembers the choice in localStorage ("bk-theme"). Put this line in <head>
+to apply a saved choice before first paint:
+
+  <script>try{const t=localStorage.getItem("bk-theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+
+Without JavaScript the button is hidden and the page follows the system.
+*/}}
+<brick:client>
+// THEME_KEY is the localStorage key the choice is saved under; the layout's
+// pre-paint <head> script (see the doc comment) reads the same key, so
+// change both together. THEMES are the two values of <html data-theme>.
+const THEME_KEY = "bk-theme";
+const THEMES = { dark: "dark", light: "light" };
+
+brick.mount("ThemeToggle", (el) => {
+  const root = document.documentElement;
+  // Without an explicit choice the page follows the system.
+  const dark = () => root.dataset.theme ? root.dataset.theme === THEMES.dark : matchMedia("(prefers-color-scheme: dark)").matches;
+  const sync = () => el.setAttribute("aria-pressed", String(dark()));
+  const click = () => {
+    root.dataset.theme = dark() ? THEMES.light : THEMES.dark;
+    try { localStorage.setItem(THEME_KEY, root.dataset.theme); } catch (e) {} // private mode: the choice lasts the page
+    sync();
+  };
+  el.hidden = false;
+  sync();
+  el.addEventListener("click", click);
+  return () => el.removeEventListener("click", click);
+})
+</brick:client>
+<brick:style>
+.bk-theme-toggle { display: inline-grid; place-items: center; width: var(--bk-h-md); height: var(--bk-h-md); border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); cursor: pointer; }
+.bk-theme-toggle:hover { background: var(--bk-accent); }
+.bk-theme-toggle .bk-theme-toggle__moon, .bk-theme-toggle[aria-pressed=true] .bk-theme-toggle__sun { display: none; }
+.bk-theme-toggle[aria-pressed=true] .bk-theme-toggle__moon { display: inline; }
+</brick:style>
+<button type="button" class="{{ cx `bk-theme-toggle` .Attrs.class }}" aria-label="{{ .Props.label }}" aria-pressed="false" hidden {{ attrs `class` }}><Icon name="sun" class="bk-theme-toggle__sun" /><Icon name="moon" class="bk-theme-toggle__moon" /></button>

@@ -1,0 +1,16 @@
+== vendored 3 files (3 fetched)
+github.com/acme/ui/brick-library.yaml@v1.2.0
+github.com/acme/ui/components/Chip.html@v1.2.0
+github.com/acme/ui/components/Tag.html@v1.2.0
+
+== content/index.html
+<brick-assets><link rel="stylesheet" href="/_brick/c/Badge.b7608c46.css" integrity="sha384-t0WimmJFz6B+5ayAXY9SlQTKTJiVX0LmS93vmWaxwMCbxTpae6w4Xs84ftsNTEUt"><link rel="stylesheet" href="/_brick/c/Button.1e124ea1.css" integrity="sha384-MTMXpICj3aepq9Q51xzzvhzKNlWfxezPdGlbmxuxc77lw/qnI1wAxFOoVk9Qe9CI"><link rel="stylesheet" href="/_brick/c/Theme.d4122c3e.css" integrity="sha384-89QIQ5GHjeETghIcpBaAeDeRU9plF/A2zzvF/9BAf8twQxK+4lm1FcxBI84uM18R"></brick-assets>
+<span class="pill">Team</span>
+<span class="bk-badge bk-badge--success bk-badge--soft" >Active</span>
+<button type="button" class="bk-btn bk-btn--outline" >Save</button>
+<em class="acme-tag">New</em>
+
+
+== content/remote-use.html
+<b class="acme-chip">Beta</b>
+

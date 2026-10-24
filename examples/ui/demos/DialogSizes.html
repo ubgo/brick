@@ -1,0 +1,9 @@
+<div style="display: flex; flex-wrap: wrap; gap: .5rem">
+  {{ range list "sm" "md" "lg" "xl" "full" }}
+  <Dialog :size="." :title="print `Size: ` ." description="The width grows; the height follows the content, up to the screen.">
+    <brick:prop name="trigger"><Button variant="outline">{{ . }}</Button></brick:prop>
+    <p>A dialog scrolls its body, never the page behind it.</p>
+    <brick:prop name="footer"><Button data-bk-close>Close</Button></brick:prop>
+  </Dialog>
+  {{ end }}
+</div>

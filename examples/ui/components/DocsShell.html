@@ -1,0 +1,69 @@
+---
+use:
+  nav: ~/data/nav.yaml
+---
+{{/*
+DocsShell: the showcase chrome, on the kit's own AppShell (so below 1024px
+the component list is a drawer behind a menu button) — top bar, a sidebar
+built from .Site.Pages
+grouped by data/nav.yaml, and the page. The sidebar marks the current page
+by comparing file paths, which every page has (.Page.Path).
+*/}}
+<brick:script>
+def palette(pages, cats, apps):
+    """The ⌘K palette's groups: every component page by category, the
+    apps, and one command. Pages arrive as dicts of brick's site.Page."""
+    groups = []
+    for c in cats:
+        items = []
+        for p in pages:
+            params = p["Params"] or {}
+            if params.get("category") == c:
+                items.append({"label": p["Title"], "href": p["URL"], "icon": "file", "keywords": p["Description"] or ""})
+        if items:
+            groups.append({"label": c, "items": sorted(items, key = lambda i: i["label"].lower())})
+    groups.append({"label": "Apps", "items": [{"label": a["title"], "href": a["url"], "icon": a["icon"]} for a in apps]})
+    groups.append({"label": "Commands", "items": [{"label": "Toggle dark mode", "value": "theme", "icon": "moon", "keywords": "light dark theme"}]})
+    return groups
+</brick:script>
+<brick:client>
+// The palette's one command: toggle the theme through the top bar's toggle.
+brick.on("command", ({ value }) => {
+  if (value === "theme") document.querySelector(".bk-appshell__topbar .bk-theme-toggle")?.click();
+});
+</brick:client>
+<brick:style>
+.docs { display: contents; }
+.docs__side { height: 100%; overflow-y: auto; padding: .75rem .5rem 2rem; font-size: var(--bk-text-sm); }
+.docs__brand { display: flex; align-items: center; gap: .5rem; padding: .25rem .5rem .75rem; font-weight: 700; font-size: var(--bk-text-lg); text-decoration: none; }
+.docs__brand b { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: var(--bk-radius); background: var(--bk-primary); color: var(--bk-primary-fg); font-size: var(--bk-text-sm); }
+.docs__group { margin: .9rem 0 .25rem; padding: 0 .5rem; font-size: var(--bk-text-xs); font-weight: 600; color: var(--bk-muted-fg); text-transform: uppercase; letter-spacing: .04em; }
+.docs__link { display: flex; align-items: center; gap: .5rem; padding: .28rem .5rem; border-radius: var(--bk-radius-sm); color: var(--bk-fg); text-decoration: none; }
+.docs__link:hover { background: var(--bk-accent); }
+.docs__link[aria-current=page] { background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); font-weight: 600; }
+.docs__main { padding: .75rem 1.25rem 4rem; max-width: 64rem; }
+.docs__spacer { flex: 1; }
+@media (max-width: 800px) { .docs__main { padding: .25rem 0 3rem; } }
+.docs__main > h1 { font-size: var(--bk-text-3xl); margin-bottom: .35rem; }
+.docs__main > .lead { color: var(--bk-muted-fg); font-size: var(--bk-text-lg); margin-bottom: 1.75rem; }
+.docs__main > p + .ex, .docs__main > p + section { margin-top: 1rem; }
+.docs__main > h2 { font-size: var(--bk-text-xl); margin: 2rem 0 .75rem; }
+</brick:style>
+<div class="docs">
+<AppShell menuLabel="Open the component list">
+  <brick:prop name="sidebar">
+    <nav class="docs__side" aria-label="Components" brick:scroll="docs-nav">
+      <a class="docs__brand" href="/"><b>b</b> brick kit</a>
+      {{ $cur := .Page.Path }}
+      {{ range .Data.nav.categories }}{{ $cat := . }}
+        <div class="docs__group">{{ $cat }}</div>
+        {{ range sortBy "Params.order" (sortBy "Title" $.Site.Pages) }}{{ if eq (index .Params "category") $cat }}<a class="docs__link" href="{{ .URL }}"{{ if eq .Path $cur }} aria-current="page"{{ end }} brick:current.exact>{{ .Title }}</a>{{ end }}{{ end }}
+      {{ end }}
+      <div class="docs__group">Apps</div>
+      {{ range .Data.nav.apps }}<a class="docs__link" href="{{ .url }}"><Icon :name=".icon" :size="14" />{{ .title }}</a>{{ end }}
+    </nav>
+  </brick:prop>
+  <brick:prop name="topbar"><CommandPalette :groups="palette .Site.Pages .Data.nav.categories .Data.nav.apps" label="Search the kit" placeholder="Search components and apps…" /><span class="docs__spacer"></span><ThemeToggle /></brick:prop>
+  <div class="docs__main">{{ children }}</div>
+</AppShell>
+</div>

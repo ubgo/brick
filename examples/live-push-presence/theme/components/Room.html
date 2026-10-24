@@ -1,0 +1,10 @@
+---
+state: {}
+props: {id: {type: string}}
+brick: {listen: {presence: "room:{{ .Props.id }}"}}
+---
+{{ $p := .Presence (printf "room:%s" .Props.id) }}
+<div class="room">
+  <p>{{ $p.Total }} here</p>
+  <ul>{{ range $p.Entries }}<li>{{ index .Data "name" }}{{ if gt .Conns 1 }} ({{ .Conns }} tabs){{ end }}</li>{{ end }}</ul>
+</div>

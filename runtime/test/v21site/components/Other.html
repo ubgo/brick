@@ -1,0 +1,9 @@
+---
+state:
+  n: 0
+---
+<brick:script>
+def inc(state, props):
+    return dict(state, n = state["n"] + 1)
+</brick:script>
+<div class="other"><button brick:click="inc">n={{ .State.n }}</button></div>

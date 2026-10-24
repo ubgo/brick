@@ -1,0 +1,62 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  items: {type: list, required: true}
+  size: {type: string, default: md, oneof: [sm, md]}
+  label: {type: string, default: ""}
+---
+{{/*
+Timeline: events in order along a vertical line — an activity feed, an
+order's history, a changelog.
+
+  <Timeline :items=".Params.events" />
+    events:
+      - {title: Order placed, time: "Sep 2, 09:14", icon: shopping-cart, tone: primary}
+      - {title: Shipped, time: "Sep 3", body: "Tracking 1Z999…", icon: package}
+      - {title: Delivered, time: "Sep 5", tone: success, icon: check}
+  <Timeline :items=".Params.events">
+    <brick:prop name="item"><b>…Slot.title…</b> by …Slot.user…</brick:prop>
+  </Timeline>
+
+Each item has a marker (icon, or a dot without one) coloured by tone:
+neutral, primary, success, warning, danger or info. time goes in a <time>
+element; pass datetime to give it a machine-readable value. The "item"
+scoped slot replaces an item's title and body, and reads the item as
+Slot (with a leading dot). The Slot mentions in this comment carry no dot
+because the engine warns about a dotted one anywhere outside a block.
+It is an ordered list, so a screen reader announces the count and order.
+*/}}
+<brick:style>
+.bk-timeline { position: relative; margin: 0; padding: 0; list-style: none; font-size: var(--bk-text-sm); }
+.bk-timeline__item { --bk-tl-c: var(--bk-muted-fg); --bk-tl-s: 1.75rem; position: relative; display: grid; grid-template-columns: var(--bk-tl-s) minmax(0, 1fr); column-gap: .75rem; padding-bottom: 1.1rem; }
+.bk-timeline__item:last-child { padding-bottom: 0; }
+.bk-timeline__item:not(:last-child)::before { content: ""; position: absolute; top: calc(var(--bk-tl-s) + .25rem); bottom: .25rem; left: calc(var(--bk-tl-s) / 2 - .5px); width: 1px; background: var(--bk-border); }
+.bk-timeline__marker { display: grid; place-items: center; width: var(--bk-tl-s); height: var(--bk-tl-s); border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-tl-c) 12%, var(--bk-surface)); color: var(--bk-tl-c); box-shadow: 0 0 0 1px color-mix(in oklab, var(--bk-tl-c) 25%, transparent); }
+.bk-timeline__dot { width: .55rem; height: .55rem; border-radius: var(--bk-radius-full); background: currentColor; }
+.bk-timeline__item--neutral .bk-timeline__marker { background: var(--bk-surface); box-shadow: 0 0 0 1px var(--bk-border); }
+.bk-timeline__item--primary { --bk-tl-c: var(--bk-primary); }
+.bk-timeline__item--success { --bk-tl-c: var(--bk-success); }
+.bk-timeline__item--warning { --bk-tl-c: var(--bk-warning); }
+.bk-timeline__item--danger { --bk-tl-c: var(--bk-danger); }
+.bk-timeline__item--info { --bk-tl-c: var(--bk-info); }
+.bk-timeline__content { min-width: 0; padding-top: calc((var(--bk-tl-s) - 1.25rem) / 2); }
+.bk-timeline__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .1rem .75rem; line-height: 1.25rem; }
+.bk-timeline__title { font-weight: 550; color: var(--bk-fg); }
+.bk-timeline__time { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bk-timeline__body { margin-top: .2rem; color: var(--bk-muted-fg); }
+.bk-timeline--sm .bk-timeline__item { --bk-tl-s: 1.25rem; padding-bottom: .75rem; column-gap: .6rem; }
+.bk-timeline--sm .bk-timeline__dot { width: .45rem; height: .45rem; }
+</brick:style>
+{{- $isize := cond (eq .Props.size "sm") 11 14 -}}
+<ol class="{{ cx `bk-timeline` (cond (eq .Props.size `sm`) `bk-timeline--sm` ``) .Attrs.class }}"{{ with .Props.label }} aria-label="{{ . }}"{{ end }} {{ attrs `class` }}>
+  {{- range .Props.items }}
+  <li class="bk-timeline__item bk-timeline__item--{{ default `neutral` .tone }}">
+    <span class="bk-timeline__marker" aria-hidden="true">{{ with .icon }}<Icon :name="." :size="$isize" />{{ else }}<span class="bk-timeline__dot"></span>{{ end }}</span>
+    <div class="bk-timeline__content">{{ if hasNode "item" }}{{ node "item" . }}{{ else }}
+      <div class="bk-timeline__head"><span class="bk-timeline__title">{{ .title }}</span>{{ if .time }}<time class="bk-timeline__time"{{ with .datetime }} datetime="{{ . }}"{{ end }}>{{ .time }}</time>{{ end }}</div>
+      {{- with .body }}<div class="bk-timeline__body">{{ . }}</div>{{ end }}{{ end }}
+    </div>
+  </li>
+  {{- end }}
+</ol>

@@ -1,0 +1,203 @@
+---
+use:
+  contacts: ~/apps/contacts/contacts.star
+state:
+  q: ""
+  status: all
+  sort: created
+  dir: desc
+  page: 1
+  pageq: ""
+  per: 10
+  selected: []
+  form: {open: false, id: 0, name: "", email: "", company: "", role: "", status: lead}
+  detail: 0
+---
+{{/*
+ContactsApp: the Contacts CRUD app — a searchable, filterable, sortable,
+paged table over the contacts table, with row selection and bulk actions,
+a create/edit dialog validated on the server, delete confirmations and a
+detail drawer. Every piece of UI state is here in state:, and every change
+is an action in apps/contacts/contacts.star, so the page is a plain server round
+trip: the browser holds nothing but the handle.
+
+The search field binds q with brick:model (a $set, debounced); everything
+else calls an action. contacts.view(.State) reads what the page shows.
+
+Every element id is built from $.ID (this instance's id), so two copies can
+share a page without their dialogs opening each other's. Messages are
+brick.flash effects shown by the page's Toaster, and deletes and creates
+dispatch contact-deleted / contact-added for listeners such as
+ContactCount.
+*/}}
+<brick:style>
+.ct { display: flex; flex-direction: column; gap: 1rem; max-width: 72rem; margin: 0 auto; padding: .5rem .25rem 3rem; }
+.ct-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.ct-search { flex: 1 1 16rem; max-width: 22rem; }
+.ct-toolbar__end { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+.ct-count { margin-left: .15rem; color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; font-weight: 400; }
+[aria-pressed=true] > .ct-count { color: inherit; }
+.ct-busy { display: inline-flex; align-items: center; color: var(--bk-muted-fg); }
+.ct-busy[hidden] { display: none; }
+.ct-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .4rem .5rem .4rem .75rem; border: 1px solid color-mix(in oklab, var(--bk-primary) 30%, var(--bk-border)); border-radius: var(--bk-radius-lg); background: color-mix(in oklab, var(--bk-primary) 6%, var(--bk-surface)); font-size: var(--bk-text-sm); animation: bk-pop-in var(--bk-duration) ease; }
+.ct-bulk__count { font-weight: 600; margin-right: .25rem; }
+.ct-bulk__end { display: flex; flex-wrap: wrap; gap: .4rem; margin-left: auto; }
+.ct-panel { border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); overflow: hidden; }
+.ct-panel .bk-table-wrap, .ct-panel .bk-table { border: 0; border-radius: 0; }
+.ct-table { width: 100%; }
+.ct-table th, .ct-table td { white-space: nowrap; }
+.ct-check { width: 2.25rem; padding-right: 0 !important; }
+.ct-sort { display: inline-flex; align-items: center; gap: .3rem; margin: -.2rem -.35rem; padding: .2rem .35rem; border: 0; border-radius: var(--bk-radius-sm); background: none; color: inherit; font: inherit; cursor: pointer; }
+.ct-sort:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.ct-sort .bk-icon { opacity: .45; }
+th[aria-sort=ascending] .ct-sort, th[aria-sort=descending] .ct-sort { color: var(--bk-fg); }
+th[aria-sort=ascending] .ct-sort .bk-icon, th[aria-sort=descending] .ct-sort .bk-icon { opacity: 1; }
+/* The name button is stretched over the whole person cell (avatar, name,
+   e-mail), so the tap target is the cell, not the 16px line of text. */
+.ct-person { position: relative; display: flex; align-items: center; gap: .6rem; min-width: 0; min-height: 2.25rem; }
+.ct-person__text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.ct-name { padding: 0; border: 0; background: none; color: var(--bk-fg); font: 500 var(--bk-text-sm) var(--bk-font); text-align: left; cursor: pointer; }
+.ct-name::after { content: ""; position: absolute; inset: -.2rem -.3rem; border-radius: var(--bk-radius-sm); }
+.ct-name:focus-visible { outline: none; }
+.ct-name:focus-visible::after { outline: 2px solid var(--bk-ring); }
+.ct-person:hover .ct-name { color: var(--bk-primary-text); text-decoration: underline; text-underline-offset: 2px; }
+.ct-email { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); overflow: hidden; text-overflow: ellipsis; }
+.ct-muted { color: var(--bk-muted-fg); }
+.ct-num { font-variant-numeric: tabular-nums; }
+.ct-actions { width: 2.5rem; text-align: right; }
+.ct-row--selected > td { background: color-mix(in oklab, var(--bk-primary) 5%, transparent); }
+.ct-foot { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .5rem .75rem; border-top: 1px solid var(--bk-border); }
+.ct-form { display: grid; gap: .9rem; }
+.ct-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
+.ct-saving { display: inline-flex; align-items: center; gap: .4rem; margin-right: auto; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.ct-saving[hidden] { display: none; }
+.ct-profile { display: flex; align-items: center; gap: .85rem; margin-bottom: 1.25rem; }
+.ct-profile__text { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.ct-profile__name { font-size: var(--bk-text-lg); font-weight: 600; }
+.ct-section { margin: 1.5rem 0 .6rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+@media (max-width: 900px) { .ct-hide-md { display: none; } }
+@media (max-width: 640px) {
+  .ct { padding: 0 0 2rem; gap: .75rem; }
+  .ct-hide-xs { display: none; }
+  .ct-hide-sm { display: none; }
+  .ct-search { max-width: none; flex-basis: 100%; }
+  .ct-toolbar__end { margin-left: 0; }
+  .ct-form__row { grid-template-columns: 1fr; }
+  .ct-foot { flex-direction: column; align-items: stretch; }
+}
+</brick:style>
+{{ $v := contacts.view .State }}
+{{ $tones := dict "active" "success" "lead" "info" "churned" "neutral" }}
+{{ $labels := dict "all" "All" "active" "Active" "lead" "Lead" "churned" "Churned" }}
+{{ $statusOptions := list (dict `value` `active` `label` `Active`) (dict `value` `lead` `label` `Lead`) (dict `value` `churned` `label` `Churned`) }}
+<div class="ct">
+  <PageHeader title="Contacts" :description="print (numberFormat $v.everyone) ` people in your workspace · ` (numberFormat $v.everyoneActive) ` active`">
+    <brick:prop name="actions"><Button icon="plus" brick:click="contacts.new_contact">New contact</Button></brick:prop>
+  </PageHeader>
+
+  <div class="ct-toolbar">
+    <SearchInput brick:model.debounce.300ms="q" value="{{ .State.q }}" placeholder="Search name, e-mail, company…" shortcut="/" size="sm" class="ct-search" aria-label="Search contacts" />
+    <ButtonGroup label="Filter by status">
+      {{ range list "all" "active" "lead" "churned" }}<Button variant="outline" size="sm" aria-pressed="{{ eq . $.State.status }}" brick:click='contacts.filter_status("{{ . }}")'>{{ index $labels . }}<span class="ct-count">{{ index $v.counts . }}</span></Button>{{ end }}
+    </ButtonGroup>
+    <div class="ct-toolbar__end">
+      <span class="ct-busy" brick:loading hidden><Spinner size="sm" label="Updating" /></span>
+      <Select size="sm" aria-label="Rows per page" brick:change="contacts.per_page" :value="print $v.per" :options="list (dict `value` `10` `label` `10 per page`) (dict `value` `25` `label` `25 per page`) (dict `value` `50` `label` `50 per page`)" />
+    </div>
+  </div>
+
+  {{ with .State.selected }}
+  <div class="ct-bulk" role="region" aria-label="Bulk actions">
+    <span class="ct-bulk__count">{{ len . }} selected</span>
+    {{ if lt (len .) $v.total }}<Button size="xs" variant="link" brick:click="contacts.select_matching">Select all {{ $v.total }} matching</Button>{{ end }}
+    <div class="ct-bulk__end">
+      <Button size="sm" variant="outline" icon="check-circle" brick:click="contacts.activate_selected">Mark active</Button>
+      <Button size="sm" variant="danger" icon="trash" data-bk-open="{{ $.ID }}-bulk-delete">Delete selected</Button>
+      <Button size="sm" variant="ghost" icon="x" brick:click="contacts.clear_selection" label="Clear selection" square />
+    </div>
+  </div>
+  <ConfirmDialog id="{{ $.ID }}-bulk-delete" :title="print `Delete ` (len .) ` ` (cond (eq (len .) 1) `contact` `contacts`) `?`" message="They are removed from your workspace. This cannot be undone." confirmLabel="Delete" action="contacts.remove_selected" />
+  {{ end }}
+
+  {{ if $v.total }}
+  <div class="ct-panel">
+    <Table hover class="ct-table">
+      <thead><tr>
+        <th class="ct-check"><Checkbox aria-label="Select every contact on this page" :checked="$v.allSelected" :indeterminate="$v.someSelected" brick:change="contacts.toggle_page" /></th>
+        {{ range list (dict `key` `name` `label` `Name` `sort` true) (dict `key` `company` `label` `Company` `sort` true `class` `ct-hide-sm`) (dict `key` `role` `label` `Role` `class` `ct-hide-md`) (dict `key` `status` `label` `Status` `class` `ct-hide-xs`) (dict `key` `created` `label` `Added` `sort` true `class` `ct-hide-sm`) }}
+        {{ if .sort }}{{ $on := eq .key $v.sort }}<th class="{{ .class }}" aria-sort="{{ if $on }}{{ cond (eq $v.dir `asc`) `ascending` `descending` }}{{ else }}none{{ end }}"><button type="button" class="ct-sort" brick:click='contacts.sort_by("{{ .key }}")'>{{ .label }}<Icon :name="cond $on (cond (eq $v.dir `asc`) `arrow-up` `arrow-down`) `chevrons-up-down`" :size="12" /></button></th>{{ else }}<th class="{{ .class }}">{{ .label }}</th>{{ end }}
+        {{ end }}
+        <th class="ct-actions"><span class="bk-sr-only">Actions</span></th>
+      </tr></thead>
+      <tbody>
+        {{ range $v.rows }}
+        <tr class="{{ if .selected }}ct-row--selected{{ end }}" id="{{ print $.ID `-row-` .id }}">
+          <td class="ct-check"><Checkbox :aria-label="print `Select ` .name" :checked=".selected" brick:change="{{ print `contacts.toggle(` .id `)` }}" /></td>
+          <td><div class="ct-person"><Avatar :name=".name" size="sm" /><div class="ct-person__text"><button type="button" class="ct-name" brick:click="{{ print `contacts.show(` .id `)` }}">{{ .name }}</button><span class="ct-email">{{ .email }}</span></div></div></td>
+          <td class="ct-hide-sm">{{ .company }}</td>
+          <td class="ct-hide-md ct-muted">{{ .role }}</td>
+          <td class="ct-hide-xs"><Badge :tone="index $tones .status" dot>{{ index $labels .status }}</Badge></td>
+          <td class="ct-hide-sm ct-muted ct-num">{{ dateFormat "2 Jan 2006" .created }}</td>
+          <td class="ct-actions">
+            <DropdownMenu :label="print `Actions for ` .name" icon="more-horizontal" square :caret="false" variant="ghost" size="sm" align="end">
+              <MenuItem icon="eye" brick:click="{{ print `contacts.show(` .id `)` }}">View details</MenuItem>
+              <MenuItem icon="pencil" brick:click="{{ print `contacts.edit(` .id `)` }}">Edit</MenuItem>
+              <MenuItem icon="copy" brick:click="{{ print `contacts.duplicate(` .id `)` }}">Duplicate</MenuItem>
+              <MenuSeparator />
+              <MenuItem icon="trash" danger data-bk-open="{{ print $.ID `-del-` .id }}">Delete</MenuItem>
+            </DropdownMenu>
+            <ConfirmDialog id="{{ print $.ID `-del-` .id }}" title="Delete contact?" :message="print .name ` will be removed from your workspace. This cannot be undone.`" confirmLabel="Delete" :action="print `contacts.remove(` .id `)`" />
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </Table>
+    <div class="ct-foot"><Pagination :page="$v.page" :total="$v.total" :perPage="$v.per" href="#page-%d" action="contacts.goto" size="sm" label="Contacts pages" /></div>
+  </div>
+  {{ else if $v.everyone }}
+  <EmptyState icon="search" :title="cond (ne (trim .State.q) ``) (print `No contacts match “` (trim .State.q) `”`) (print `No ` (index $labels .State.status | lower) ` contacts`)" description="Try another search, or clear the filters to see everyone." bordered>
+    <Button variant="outline" icon="x" brick:click="contacts.clear_filters">Clear filters</Button>
+  </EmptyState>
+  {{ else }}
+  <EmptyState icon="users" title="No contacts yet" description="Add the people you work with to keep track of them." bordered>
+    <Button icon="plus" brick:click="contacts.new_contact">New contact</Button>
+  </EmptyState>
+  {{ end }}
+
+  <Dialog id="{{ $.ID }}-form" :title="cond .State.form.id `Edit contact` `New contact`" :description="cond .State.form.id `Changes are saved to the database.` `Add someone to your workspace.`" :open=".State.form.open" closeAction="contacts.close_form" :dismissible="false">
+    <form id="{{ $.ID }}-form-fields" class="ct-form" brick:submit="contacts.save" novalidate>
+      <Field label="Name" :error=".Errors.name" required><Input name="name" value="{{ .State.form.name }}" placeholder="Ada Lovelace" autocomplete="off" /></Field>
+      <Field label="E-mail" :error=".Errors.email" required><Input type="email" name="email" value="{{ .State.form.email }}" placeholder="ada@example.com" icon="mail" autocomplete="off" /></Field>
+      <div class="ct-form__row">
+        <Field label="Company" optional><Input name="company" value="{{ .State.form.company }}" placeholder="Analytical Engines" icon="briefcase" /></Field>
+        <Field label="Role" optional><Input name="role" value="{{ .State.form.role }}" placeholder="Engineer" /></Field>
+      </div>
+      <Field label="Status" :error=".Errors.status"><Select name="status" :value=".State.form.status" :options="$statusOptions" /></Field>
+    </form>
+    <brick:prop name="footer">
+      <span class="ct-saving" brick:loading hidden><Spinner size="xs" label="Saving" />Saving…</span>
+      <Button variant="ghost" data-bk-close>Cancel</Button>
+      <Button type="submit" form="{{ $.ID }}-form-fields">{{ cond .State.form.id `Save changes` `Create contact` }}</Button>
+    </brick:prop>
+  </Dialog>
+
+  <Drawer id="{{ $.ID }}-detail" :title="default `Contact` (index $v.detail `name`)" :description="default `` (index $v.detail `email`)" :open="ne .State.detail 0" closeAction="contacts.close_detail" size="md">
+    {{ with $v.detail }}
+    <div class="ct-profile">
+      <Avatar :name=".name" size="lg" />
+      <div class="ct-profile__text">
+        <span class="ct-profile__name">{{ .role }}{{ with .company }} at {{ . }}{{ end }}</span>
+        <span><Badge :tone="index $tones .status" dot>{{ index $labels .status }}</Badge></span>
+      </div>
+    </div>
+    <DescriptionList layout="stacked" :items="list (dict `term` `E-mail` `desc` .email) (dict `term` `Company` `desc` (default `—` .company)) (dict `term` `Role` `desc` (default `—` .role)) (dict `term` `Added` `desc` (dateFormat `Monday, 2 January 2006` .created))" />
+    <h3 class="ct-section">Activity</h3>
+    <Timeline :items="$v.activity" size="sm" label="Recent activity" />
+    <ConfirmDialog id="{{ $.ID }}-del-detail" title="Delete contact?" :message="print .name ` will be removed from your workspace. This cannot be undone.`" confirmLabel="Delete" :action="print `contacts.remove(` .id `)`" />
+    {{ end }}
+    <brick:prop name="footer">
+      {{ with $v.detail }}<Button variant="outline" icon="trash" data-bk-open="{{ $.ID }}-del-detail">Delete</Button><Button icon="pencil" brick:click="{{ print `contacts.edit(` .id `)` }}">Edit</Button>{{ end }}
+    </brick:prop>
+  </Drawer>
+
+</div>

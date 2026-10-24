@@ -1,0 +1,20 @@
+---
+state:
+  q: ""
+  answer: ""
+---
+<brick:script>
+PARTS = ["Hel", "lo, ", "Ada!"]
+
+def ask(state, props):
+    text = ""
+    for part in PARTS:
+        brick.stream("answer", part)
+        text += part
+    return dict(state, answer = text)
+</brick:script>
+<div class="ask">
+  <p id="answer" brick:ref="answer">{{ .State.answer }}</p>
+  <input brick:model.defer="q">
+  <button id="ask" brick:click="ask">Ask</button>
+</div>

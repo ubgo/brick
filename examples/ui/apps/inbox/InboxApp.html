@@ -1,0 +1,168 @@
+---
+use:
+  inbox: ~/apps/inbox/inbox.star
+state:
+  folder: inbox
+  selected: 0
+  q: ""
+  flash: ""
+  flashes: 0
+  compose_open: false
+  draft: {to: "", subject: "", body: ""}
+---
+{{/*
+InboxApp: the Inbox app as one stateful component — folders with unread
+counts, the message list and the reading pane, over the messages table
+(apps/inbox/inbox.star).
+
+  <InboxApp />
+
+State is {folder, selected, q}: which folder, which message is open (0 for
+none) and the search. Opening a message marks it read. Archive, delete
+(after a ConfirmDialog; a second delete from Trash is for good), star and
+mark-unread write the table and re-render. Compose and Reply fill a Dialog
+whose form is validated by the compose action; the dialog renders open
+only while the action has errors to show, and the "sent" toast comes from
+state.flash, which every other action clears.
+
+Below 900px the panes stack: folders become a row of chips, and an open
+message replaces the list, with a back button.
+*/}}
+<brick:style>
+.inbox { display: grid; grid-template-columns: 12.5rem 22rem minmax(0, 1fr); height: calc(100dvh - 7rem); min-height: 32rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); overflow: hidden; }
+.inbox__folders { display: flex; flex-direction: column; gap: .15rem; padding: .75rem .5rem; border-right: 1px solid var(--bk-border); background: var(--bk-surface-2); overflow-y: auto; }
+.inbox__compose { margin: 0 .25rem .75rem; }
+.inbox__folder { display: flex; align-items: center; gap: .6rem; width: 100%; height: 2rem; padding: 0 .6rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); text-align: left; cursor: pointer; }
+.inbox__folder:hover { background: var(--bk-accent); }
+.inbox__folder[aria-current=true] { background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); font-weight: 600; }
+.inbox__folder .bk-icon { flex: none; opacity: .8; }
+.inbox__folder-label { flex: 1; }
+.inbox__folder-n { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-variant-numeric: tabular-nums; }
+.inbox__list { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--bk-border); }
+.inbox__list-head { display: flex; flex-direction: column; gap: .5rem; padding: .75rem; border-bottom: 1px solid var(--bk-border); }
+.inbox__list-title { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.inbox__list-title h2 { font-size: var(--bk-text-lg); }
+.inbox__list-title small { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.inbox__rows { flex: 1; min-height: 0; margin: 0; padding: 0; list-style: none; overflow-y: auto; }
+.inbox-row { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .15rem .65rem; padding: .7rem .75rem .7rem 1rem; border-bottom: 1px solid var(--bk-border); }
+.inbox-row:hover { background: color-mix(in oklab, var(--bk-muted) 60%, transparent); }
+.inbox-row[aria-current=true] { background: color-mix(in oklab, var(--bk-primary) 8%, transparent); box-shadow: inset 2px 0 0 var(--bk-primary); }
+.inbox-row__avatar { grid-row: 1 / span 3; padding-top: .1rem; }
+.inbox-row__open { all: unset; grid-column: 2; min-width: 0; overflow: hidden; color: var(--bk-fg); font-size: var(--bk-text-sm); text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.inbox-row__open::after { content: ""; position: absolute; inset: 0; }
+.inbox-row__open:focus-visible::after { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.inbox-row__date { grid-column: 3; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.inbox-row__subject { grid-column: 2; overflow: hidden; font-size: var(--bk-text-sm); text-overflow: ellipsis; white-space: nowrap; }
+.inbox-row__snippet { grid-column: 2; overflow: hidden; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-overflow: ellipsis; white-space: nowrap; }
+.inbox-row__star { position: relative; z-index: 1; grid-column: 3; grid-row: 2 / span 2; align-self: center; justify-self: end; }
+.inbox-row--unread .inbox-row__open, .inbox-row--unread .inbox-row__subject { font-weight: 650; }
+.inbox-row--unread::before { content: ""; position: absolute; top: 1.05rem; left: .4rem; width: .4rem; height: .4rem; border-radius: 50%; background: var(--bk-primary); }
+.bk-btn.inbox-star--on { color: var(--bk-warning); }
+.bk-btn.inbox-star--on .bk-icon { fill: currentColor; }
+.inbox__reader { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.inbox__toolbar { display: flex; align-items: center; gap: .25rem; min-height: 3.25rem; padding: .5rem .75rem; border-bottom: 1px solid var(--bk-border); }
+.inbox__toolbar-sep { flex: 1; }
+.inbox .inbox__back { display: none; }
+.inbox__mail { flex: 1; min-height: 0; overflow-y: auto; padding: 1.5rem 1.75rem 2rem; }
+.inbox__subject { font-size: var(--bk-text-2xl); font-weight: 650; letter-spacing: -.02em; line-height: 1.25; }
+.inbox__meta { display: flex; align-items: center; gap: .75rem; margin: 1.1rem 0 1.5rem; }
+.inbox__from { flex: 1; min-width: 0; line-height: 1.35; }
+.inbox__from b { font-size: var(--bk-text-sm); }
+.inbox__from small { display: block; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.inbox__when { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); white-space: nowrap; }
+.inbox__body { max-width: 42rem; font-size: var(--bk-text-base); line-height: 1.7; white-space: pre-line; }
+.inbox__reply { display: flex; gap: .5rem; margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--bk-border); }
+.inbox__nothing { flex: 1; display: grid; place-items: center; padding: 2rem; }
+.inbox__form { display: flex; flex-direction: column; gap: .9rem; }
+@media (max-width: 1180px) { .inbox { grid-template-columns: 11rem 19rem minmax(0, 1fr); } }
+@media (max-width: 900px) {
+  .inbox { display: flex; flex-direction: column; height: auto; min-height: 0; border: 0; border-radius: 0; background: none; overflow: visible; }
+  .inbox__folders { flex-direction: row; flex-wrap: nowrap; align-items: center; gap: .35rem; padding: 0 0 .75rem; border: 0; background: none; overflow-x: auto; scrollbar-width: none; }
+  .inbox__compose { flex: none; margin: 0; }
+  .inbox__folder { width: auto; flex: none; height: 1.9rem; padding: 0 .7rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-full); background: var(--bk-surface); }
+  .inbox__folder-label { flex: none; }
+  .inbox__list, .inbox__reader { border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); overflow: hidden; }
+  .inbox__rows { overflow: visible; }
+  .inbox--reading .inbox__list, .inbox:not(.inbox--reading) .inbox__reader { display: none; }
+  .inbox .inbox__back { display: inline-flex; }
+  .inbox__mail { padding: 1.1rem 1rem 1.5rem; }
+  .inbox__subject { font-size: var(--bk-text-xl); }
+}
+</brick:style>
+{{- $folders := inbox.folders .State -}}
+{{- $rows := inbox.messages .State -}}
+{{- $m := inbox.message .State -}}
+{{- $label := "" -}}{{- range $folders }}{{ if .on }}{{ $label = .label }}{{ end }}{{ end -}}
+<div class="{{ cx `inbox` (cond $m `inbox--reading` ``) }}">
+  <nav class="inbox__folders" aria-label="Folders">
+    <Button icon="square-pen" class="inbox__compose" brick:click="inbox.new_message">Compose</Button>
+    {{ range $folders }}<button type="button" class="inbox__folder" brick:click="inbox.open_folder({{ .i }})"{{ if .on }} aria-current="true"{{ end }}><Icon :name=".icon" :size="16" /><span class="inbox__folder-label">{{ .label }}</span>{{ if and .unread (ne .id `sent`) }}<Badge :tone="cond .on `primary` `neutral`" size="sm" pill :aria-label="print .unread ` unread`">{{ .unread }}</Badge>{{ else if .n }}<span class="inbox__folder-n">{{ .n }}</span>{{ end }}</button>{{ end }}
+  </nav>
+
+  <section class="inbox__list" aria-label="{{ $label }}">
+    <div class="inbox__list-head">
+      <div class="inbox__list-title"><h2>{{ $label }}</h2><small>{{ len $rows }} {{ pluralize (len $rows) "conversation" "conversations" }}</small></div>
+      <SearchInput size="sm" value="{{ .State.q }}" placeholder="Search mail" aria-label="Search mail" brick:change="inbox.search" />
+    </div>
+    {{ if $rows }}
+    <ul class="inbox__rows" aria-label="Messages">
+      {{ range $rows }}
+      <li class="{{ cx `inbox-row` (cond .unread `inbox-row--unread` ``) }}"{{ if eq .id $.State.selected }} aria-current="true"{{ end }}>
+        <span class="inbox-row__avatar"><Avatar :name="cond (eq .folder `sent`) .email .sender" size="sm" /></span>
+        <button type="button" class="inbox-row__open" brick:click="inbox.select({{ .id }})">{{ if eq .folder "sent" }}To: {{ .email }}{{ else }}{{ .sender }}{{ end }}{{ if .unread }}<span class="bk-sr-only">, unread</span>{{ end }}</button>
+        <time class="inbox-row__date" datetime="{{ .sent }}">{{ dateFormat "Jan 2" .sent }}</time>
+        <span class="inbox-row__subject">{{ .subject }}</span>
+        <Button variant="ghost" size="xs" square icon="star" :label="cond .starred `Unstar` `Star`" aria-pressed="{{ .starred }}" class="{{ cx `inbox-row__star` (cond .starred `inbox-star--on` ``) }}" brick:click="inbox.star({{ .id }})" />
+        <span class="inbox-row__snippet">{{ .snippet }}</span>
+      </li>
+      {{ end }}
+    </ul>
+    {{ else if .State.q }}
+    <div class="inbox__nothing"><EmptyState icon="search" title="No matches" :description="print `Nothing in ` $label ` matches “` .State.q `”.`" size="sm"><Button size="sm" variant="outline" brick:click="inbox.clear_search">Clear search</Button></EmptyState></div>
+    {{ else }}
+    <div class="inbox__nothing"><EmptyState :icon="cond (eq .State.folder `trash`) `trash` (cond (eq .State.folder `sent`) `send` `inbox`)" :title="print $label ` is empty`" :description="cond (eq .State.folder `sent`) `Messages you send appear here.` `Nothing here right now.`" size="sm" /></div>
+    {{ end }}
+  </section>
+
+  <section class="inbox__reader" aria-label="Message">
+    {{ with $m }}
+    <div class="inbox__toolbar" role="toolbar" aria-label="Message actions">
+      <Button variant="ghost" size="sm" icon="arrow-left" class="inbox__back" brick:click="inbox.back">Back</Button>
+      <Button variant="ghost" size="sm" square icon="archive" :label="cond (eq .folder `archive`) `Move to Inbox` `Archive`" brick:click="inbox.archive({{ .id }})" />
+      <ConfirmDialog id="inbox-delete" :title="cond (eq .folder `trash`) `Delete forever?` `Move to Trash?`" :message="cond (eq .folder `trash`) (print `“` .subject `” will be deleted permanently.`) (print `“` .subject `” moves to Trash. You can restore it from there.`)" :confirmLabel="cond (eq .folder `trash`) `Delete forever` `Move to Trash`" :action="print `inbox.delete(` .id `)`">
+        <brick:prop name="trigger"><Button variant="ghost" size="sm" square icon="trash" label="Delete" /></brick:prop>
+      </ConfirmDialog>
+      <Button variant="ghost" size="sm" square icon="mail" label="Mark as unread" brick:click="inbox.mark_unread({{ .id }})" />
+      <Button variant="ghost" size="sm" square icon="star" :label="cond .starred `Unstar` `Star`" aria-pressed="{{ .starred }}" class="{{ cond .starred `inbox-star--on` `` }}" brick:click="inbox.star({{ .id }})" />
+      <span class="inbox__toolbar-sep"></span>
+      <Button variant="outline" size="sm" icon="reply" brick:click="inbox.reply({{ .id }})">Reply</Button>
+    </div>
+    <article class="inbox__mail">
+      <h1 class="inbox__subject">{{ .subject }}</h1>
+      <div class="inbox__meta">
+        <Avatar :name="cond (eq .folder `sent`) .email .sender" />
+        <div class="inbox__from">{{ if eq .folder "sent" }}<b>To {{ .email }}</b><small>From you</small>{{ else }}<b>{{ .sender }}</b><small>{{ .email }}</small>{{ end }}</div>
+        <time class="inbox__when" datetime="{{ .sent }}">{{ dateFormat "Mon, Jan 2, 2006" .sent }}</time>
+      </div>
+      <div class="inbox__body">{{ .body }}</div>
+      {{ if ne .folder "sent" }}<div class="inbox__reply"><Button variant="outline" icon="reply" brick:click="inbox.reply({{ .id }})">Reply</Button><Button variant="ghost" icon="forward" brick:click="inbox.new_message">Forward</Button></div>{{ end }}
+    </article>
+    {{ else }}
+    <h1 class="bk-sr-only">{{ $label }}</h1>
+    <div class="inbox__nothing"><EmptyState icon="mail-open" title="No message selected" description="Choose a conversation to read it here." /></div>
+    {{ end }}
+  </section>
+
+  <Dialog id="inbox-compose" title="New message" description="Sent from ada@example.com" size="lg" :open=".State.compose_open" :dismissible="false">
+    <form id="inbox-compose-form" class="inbox__form" brick:submit="inbox.compose" novalidate>
+      <Field label="To" :error=".Errors.to" required><Input type="email" name="to" value="{{ .State.draft.to }}" placeholder="grace@example.com" icon="mail" autocomplete="email" /></Field>
+      <Field label="Subject" :error=".Errors.subject" required><Input name="subject" value="{{ .State.draft.subject }}" placeholder="What is it about?" /></Field>
+      <Field label="Message" :error=".Errors.body" required><Textarea name="body" :value=".State.draft.body" :rows="8" placeholder="Write your message…" /></Field>
+    </form>
+    <brick:prop name="footer">
+      <Button variant="ghost" data-bk-close>Discard</Button>
+      <Button type="submit" form="inbox-compose-form" icon="send">Send</Button>
+    </brick:prop>
+  </Dialog>
+  {{ with .State.flash }}<Toast id="{{ print `inbox-flash-` $.State.flashes }}" variant="success" :title="." :duration="3000" />{{ end }}
+</div>

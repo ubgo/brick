@@ -1,0 +1,7 @@
+---
+use:
+  people: ~/data/demo-people.yaml
+---
+<List style="width: 100%; max-width: 30rem" label="Team">
+  {{ range .Data.people }}<ListItem :title=".name" :description=".email" :avatar=".name" :meta=".role" />{{ end }}
+</List>

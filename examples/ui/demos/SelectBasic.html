@@ -1,0 +1,9 @@
+<div style="display: grid; gap: 1rem; width: 100%; max-width: 24rem">
+  <Field label="Role">
+    <Select name="role" value="Editor" :options="list `Owner` `Admin` `Editor` `Viewer`" />
+  </Field>
+  <Field label="Country" required>
+    <Select name="country" placeholder="Choose a country" :options="list (dict `value` `in` `label` `India`) (dict `value` `de` `label` `Germany`) (dict `value` `jp` `label` `Japan`) (dict `value` `us` `label` `United States`)" />
+  </Field>
+  <Select name="size" size="sm" aria-label="Size"><option value="s">Small</option><option value="m" selected>Medium</option><option value="l">Large</option></Select>
+</div>

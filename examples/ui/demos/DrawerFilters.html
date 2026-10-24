@@ -1,0 +1,16 @@
+<Drawer title="Filters" description="Narrow the contact list." side="right" size="sm">
+  <brick:prop name="trigger"><Button variant="outline" icon="filter">Filters</Button></brick:prop>
+  <form id="demo-filters" style="display: grid; gap: 1.1rem">
+    <Field label="Company"><Input name="company" placeholder="Any company" icon="briefcase" /></Field>
+    <div style="display: grid; gap: .5rem">
+      <b style="font-size: var(--bk-text-sm)">Status</b>
+      <Checkbox name="status" value="active" label="Active" checked />
+      <Checkbox name="status" value="invited" label="Invited" />
+      <Checkbox name="status" value="archived" label="Archived" />
+    </div>
+  </form>
+  <brick:prop name="footer">
+    <Button variant="ghost" type="reset" form="demo-filters">Reset</Button>
+    <Button data-bk-close>Show 24 results</Button>
+  </brick:prop>
+</Drawer>

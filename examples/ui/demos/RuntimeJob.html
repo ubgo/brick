@@ -1,0 +1,30 @@
+---
+# A background job: start() answers at once, the job
+# runs after the response and publishes demo:jobs when it ends, and this
+# component listens to that topic, so it refreshes and reads the row.
+state:
+  job: ""
+brick: {listen: "demo:jobs"}
+---
+<brick:script>
+def start(state, props, fail = False):
+    # The job only starts once this action succeeded, so the row it
+    # updates always exists first.
+    id = brick.start_job("demo.report", {"fail": fail}, topic = "demo:jobs")
+    db.exec("insert into demo_jobs (id, status) values (?, 'running')", id)
+    return dict(state, job = id)
+
+def row(state):
+    if not state["job"]:
+        return None
+    rows = db.query("select status, result from demo_jobs where id = ?", state["job"])
+    return rows[0] if rows else None
+</brick:script>
+{{ $r := row .State }}
+<div style="display: flex; gap: .5rem; align-items: center; flex-wrap: wrap">
+  <Button id="rj-start" brick:click="start">Run report</Button>
+  <Button id="rj-fail" variant="outline" brick:click="start(true)">Run a failing report</Button>
+  <span id="rj-status" data-status="{{ with $r }}{{ .status }}{{ end }}" style="font-size: var(--bk-text-sm)">
+    {{- with $r }}{{ if eq .status "running" }}Working… the button is free, the page updates when the job ends.{{ else if eq .status "done" }}Done: {{ .result }}{{ else }}Failed: {{ .result }}{{ end }}{{ else }}No job yet.{{ end -}}
+  </span>
+</div>

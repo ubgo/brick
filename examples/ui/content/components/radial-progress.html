@@ -1,0 +1,19 @@
+---
+title: RadialProgress
+category: Feedback
+description: "Progress as a ring with the value in its centre, for scores, goals and quotas on dashboard cards."
+api:
+  - {name: value, type: float, default: "0", desc: "From 0 to max; clamped."}
+  - {name: max, type: float, default: "100", desc: "A full ring."}
+  - {name: size, type: int, default: "48", desc: "Diameter in pixels."}
+  - {name: thickness, type: int, default: "4", desc: "The ring's stroke on a 36-unit box, so it scales with size."}
+  - {name: tone, type: "primary | success | warning | danger | info | neutral", default: primary, desc: "The ring's colour."}
+  - {name: label, type: string, desc: "The accessible name."}
+  - {name: showValue, type: bool, default: "true", desc: "The percentage in the centre; children replace it."}
+---
+<h1>RadialProgress</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Values, tones and a custom centre"><RadialProgressBasic /><brick:prop name="code"><Source src="~/demos/RadialProgressBasic.html" /></brick:prop></Example>
+<Example title="Sizes and thickness"><RadialProgressSizes /><brick:prop name="code"><Source src="~/demos/RadialProgressSizes.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

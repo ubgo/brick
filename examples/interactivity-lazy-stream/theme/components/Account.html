@@ -1,0 +1,5 @@
+---
+brick:
+  island: true
+---
+{{ with .Ctx.user }}<a id="account" href="/account">Hi, {{ . }}</a>{{ else }}<a id="account" href="/login">Sign in</a>{{ end }}

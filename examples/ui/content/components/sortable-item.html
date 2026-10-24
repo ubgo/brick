@@ -1,0 +1,15 @@
+---
+title: SortableItem
+category: Data display
+description: "One row of a Sortable: a drag handle, the content, and move up/down buttons as the fallback."
+api:
+  - {name: id, type: any, desc: "The row's id, written as data-id and reported by the Sortable. Required."}
+  - {name: label, type: string, desc: "Names the handle and the announcements."}
+  - {name: index, type: int, desc: "Its position; with an action on the Sortable, adds move up / move down buttons shown until the script runs."}
+---
+<h1>SortableItem</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>Items live inside a <a href="/components/sortable/">Sortable</a>.</p>
+<Example title="In a list" block><SortableTasks /><brick:prop name="code"><Source src="~/demos/SortableTasks.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

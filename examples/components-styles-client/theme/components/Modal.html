@@ -1,0 +1,6 @@
+<brick:client>
+export function openModal(id) {
+  document.getElementById(id)?.showModal()
+}
+</brick:client>
+<dialog id="{{ .Props.id }}">{{ children }}</dialog>

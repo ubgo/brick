@@ -1,0 +1,50 @@
+---
+props:
+  side: {type: string, default: bottom, oneof: [bottom, top]}
+  align: {type: string, default: start, oneof: [start, center, end]}
+  delay: {type: int, default: 500}
+  closeDelay: {type: int, default: 150}
+---
+{{/*
+HoverCard: a rich preview card that appears when the pointer rests on a
+trigger or the trigger gets keyboard focus — a user's profile behind an
+@mention, a link's preview, a product behind its name.
+
+  <HoverCard>
+    <brick:prop name="trigger"><a href="/u/ada/">@ada</a></brick:prop>
+    <b>Ada Lovelace</b> <p>Analyst. Writes the first programs.</p>
+  </HoverCard>
+  <HoverCard side="top" align="center" :delay="200">…</HoverCard>
+
+Pure CSS, so it works without JavaScript (with CSS anchor positioning the
+card is fixed to the trigger, so no overflow: hidden ancestor clips it): it opens after delay
+milliseconds of hover or on :focus-visible, and stays open while the
+pointer or focus is on the trigger or inside the card (so its links can
+be clicked and tabbed to), closing closeDelay milliseconds after both
+leave. The card is supplementary: the trigger should work on its own (a
+link to the full profile), because touch screens have no hover.
+*/}}
+<brick:style>
+.bk-hovercard { position: relative; display: inline-block; --bk-hc-open: .5s; --bk-hc-close: .15s; }
+.bk-hovercard__card { position: absolute; top: calc(100% + 8px); left: 0; z-index: var(--bk-z-dropdown); width: max-content; max-width: min(20rem, calc(100vw - 2rem)); padding: .85rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); font-size: var(--bk-text-sm); line-height: 1.5; text-align: left; opacity: 0; visibility: hidden; transition: opacity var(--bk-duration) ease var(--bk-hc-close), visibility 0s linear calc(var(--bk-hc-close) + var(--bk-duration)); }
+.bk-hovercard__card::before { content: ""; position: absolute; left: 0; right: 0; top: -9px; height: 9px; }
+.bk-hovercard--top > .bk-hovercard__card { top: auto; bottom: calc(100% + 8px); }
+.bk-hovercard--top > .bk-hovercard__card::before { top: auto; bottom: -9px; }
+.bk-hovercard--center > .bk-hovercard__card { left: 50%; transform: translateX(-50%); }
+.bk-hovercard--end > .bk-hovercard__card { left: auto; right: 0; }
+.bk-hovercard:hover > .bk-hovercard__card { opacity: 1; visibility: visible; transition-delay: var(--bk-hc-open); }
+.bk-hovercard:has(:focus-visible) > .bk-hovercard__card { opacity: 1; visibility: visible; transition-delay: var(--bk-hc-open); }
+@supports (anchor-name: --a) {
+  .bk-hovercard { anchor-name: var(--bk-hc-anchor); }
+  .bk-hovercard > .bk-hovercard__card { position: fixed; position-anchor: var(--bk-hc-anchor); inset: auto; transform: none; margin: 8px 0; position-area: bottom span-right; position-try-fallbacks: flip-block; }
+  .bk-hovercard--center > .bk-hovercard__card { position-area: bottom; }
+  .bk-hovercard--end > .bk-hovercard__card { position-area: bottom span-left; }
+  .bk-hovercard--top > .bk-hovercard__card { position-area: top span-right; }
+  .bk-hovercard--top.bk-hovercard--center > .bk-hovercard__card { position-area: top; }
+  .bk-hovercard--top.bk-hovercard--end > .bk-hovercard__card { position-area: top span-left; }
+}
+</brick:style>
+<div class="{{ cx `bk-hovercard` (cond (eq .Props.side `top`) `bk-hovercard--top` ``) (cond (ne .Props.align `start`) (print `bk-hovercard--` .Props.align) ``) .Attrs.class }}" style="--bk-hc-open: {{ .Props.delay }}ms; --bk-hc-close: {{ .Props.closeDelay }}ms; --bk-hc-anchor: --{{ .ID }}-hc{{ with .Attrs.style }}; {{ . }}{{ end }}" {{ attrs `class` `style` }}>
+  <span class="bk-hovercard__trigger">{{ node "trigger" }}</span>
+  <div class="bk-hovercard__card">{{ children }}</div>
+</div>

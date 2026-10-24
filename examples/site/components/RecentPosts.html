@@ -1,0 +1,8 @@
+---
+use:
+  posts: ~/lib/posts.star
+load: posts.recent
+props:
+  limit: {type: int, default: 2}
+---
+<ul class="recent">{{ range .Props.items }}<li>{{ .title }}</li>{{ end }}</ul>

@@ -1,0 +1,39 @@
+# Fixed data for the Settings demo app (content/apps/settings.html). The
+# per-visitor settings themselves live in each section's state:.
+languages:
+  - {value: en, label: English}
+  - {value: de, label: Deutsch}
+  - {value: fr, label: Français}
+  - {value: es, label: Español}
+  - {value: hi, label: हिन्दी}
+  - {value: ja, label: 日本語}
+timezones:
+  - {value: America/Los_Angeles, label: "Pacific Time — Los Angeles (UTC−8)"}
+  - {value: America/Denver, label: "Mountain Time — Denver (UTC−7)"}
+  - {value: America/Chicago, label: "Central Time — Chicago (UTC−6)"}
+  - {value: America/New_York, label: "Eastern Time — New York (UTC−5)"}
+  - {value: America/Sao_Paulo, label: "Brasília Time — São Paulo (UTC−3)"}
+  - {value: Europe/London, label: "Greenwich Time — London (UTC+0)"}
+  - {value: Europe/Berlin, label: "Central European — Berlin (UTC+1)"}
+  - {value: Europe/Athens, label: "Eastern European — Athens (UTC+2)"}
+  - {value: Asia/Dubai, label: "Gulf Time — Dubai (UTC+4)"}
+  - {value: Asia/Kolkata, label: "India Time — Kolkata (UTC+5:30)"}
+  - {value: Asia/Singapore, label: "Singapore Time (UTC+8)"}
+  - {value: Asia/Tokyo, label: "Japan Time — Tokyo (UTC+9)"}
+  - {value: Australia/Sydney, label: "Eastern Australia — Sydney (UTC+10)"}
+plans:
+  - {value: hobby, label: Hobby, description: "Free · 1 project · 1 GB"}
+  - {value: pro, label: Pro, description: "$12 / month · 10 projects · 10 GB"}
+  - {value: team, label: Team, description: "$49 / month · unlimited · 100 GB"}
+invoiceColumns:
+  - {key: number, label: Invoice}
+  - {key: date, label: Date}
+  - {key: amount, label: Amount, align: right}
+  - {key: status, label: Status}
+  - {key: download, label: "", align: right, width: 3rem}
+invoices:
+  - {number: INV-1042, date: "Sep 1, 2026", amount: "$12.00", status: Paid}
+  - {number: INV-1031, date: "Aug 1, 2026", amount: "$12.00", status: Paid}
+  - {number: INV-1019, date: "Jul 1, 2026", amount: "$12.00", status: Paid}
+  - {number: INV-1007, date: "Jun 1, 2026", amount: "$12.00", status: Refunded}
+  - {number: INV-0994, date: "May 1, 2026", amount: "$12.00", status: Paid}

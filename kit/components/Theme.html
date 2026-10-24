@@ -1,0 +1,120 @@
+{{/*
+Theme: the kit's design tokens, light and dark, and a small base. Put
+<Theme /> once in the layout, before any other kit component. Every kit
+component reads only these --bk-* custom properties, so re-theming is
+overriding tokens, never editing a component.
+
+  <html data-theme="dark">     force dark (default: follows the system)
+  <html data-accent="emerald"> another primary colour: indigo (default),
+                               blue, emerald, rose, amber, violet, zinc
+  <body class="bk-base">      opt in to the base: font, colours, box
+                               sizing and focus rings for the page
+
+The <template> root is inert markup: the component needs a root element
+for the engine, and a template renders nothing.
+*/}}
+<brick:style>
+:root {
+  --bk-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --bk-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --bk-text-xs: .75rem; --bk-text-sm: .8125rem; --bk-text-base: .875rem; --bk-text-lg: 1rem; --bk-text-xl: 1.125rem; --bk-text-2xl: 1.375rem; --bk-text-3xl: 1.75rem; --bk-text-4xl: 2.25rem;
+  --bk-h-xs: 1.5rem; --bk-h-sm: 1.75rem; --bk-h-md: 2rem; --bk-h-lg: 2.375rem; --bk-h-xl: 2.75rem;
+  --bk-radius-sm: .3rem; --bk-radius: .45rem; --bk-radius-lg: .7rem; --bk-radius-full: 9999px;
+  --bk-space-1: .25rem; --bk-space-2: .5rem; --bk-space-3: .75rem; --bk-space-4: 1rem; --bk-space-6: 1.5rem; --bk-space-8: 2rem;
+  --bk-shadow-sm: 0 1px 2px rgb(0 0 0 / .05);
+  --bk-shadow: 0 1px 3px rgb(0 0 0 / .08), 0 1px 2px rgb(0 0 0 / .04);
+  --bk-shadow-lg: 0 10px 30px -5px rgb(0 0 0 / .15), 0 4px 10px -5px rgb(0 0 0 / .08);
+  --bk-duration: .15s;
+  --bk-z-dropdown: 50; --bk-z-sticky: 40; --bk-z-overlay: 60; --bk-z-toast: 70; --bk-z-tooltip: 80;
+
+  /* The accent palette, one swatch per data-accent value: AccentPicker paints its
+     swatches from these, and each :root[data-accent] rule below takes its primary here. */
+  --bk-swatch-indigo: #4f46e5; --bk-swatch-blue: #2563eb; --bk-swatch-emerald: #047857; --bk-swatch-rose: #e11d48; --bk-swatch-amber: #b45309; --bk-swatch-violet: #7c3aed; --bk-swatch-zinc: #18181b;
+  --bk-primary: var(--bk-swatch-indigo); --bk-primary-hover: #4338ca; --bk-primary-fg: #fff;
+  --bk-bg: #fff; --bk-fg: #09090b;
+  --bk-surface: #fff; --bk-surface-2: #fafafa;
+  --bk-muted: #f4f4f5; --bk-muted-fg: #67676f;
+  --bk-accent: #f4f4f5; --bk-accent-fg: #18181b;
+  --bk-border: #e4e4e7; --bk-input: #d4d4d8;
+  --bk-danger: #dc2626; --bk-danger-fg: #fff;
+  /* Fills carry white labels at 4.5:1 or more (WCAG AA): success, warning and
+     info are the 700 steps, not the brighter 600s, which fail with white. */
+  --bk-success: #15803d; --bk-success-fg: #fff;
+  --bk-warning: #b45309; --bk-warning-fg: #fff;
+  --bk-info: #0369a1; --bk-info-fg: #fff;
+  /* Status colours as text: a step darker in light mode and lighter in dark, so small status text keeps 4.5:1 on the surfaces (the fills above stay the shade their white labels need). */
+  --bk-danger-text: #b91c1c; --bk-warning-text: #92400e; --bk-success-text: #166534; --bk-info-text: #075985;
+  /* The primary colour as text on a surface or its own tint (an active tab, nav item or link): pulled toward the text colour, so it reads in both modes and every accent. */
+  --bk-primary-text: color-mix(in oklab, var(--bk-primary) 80%, var(--bk-fg));
+  /* The charts' categorical palette, validated for colour-blind separation
+     on these surfaces (see BarChart). It is not the status fills: those are
+     darker for their white labels, and a palette of dark hues reads as one. */
+  --bk-chart-1: var(--bk-primary); --bk-chart-2: #009690; --bk-chart-3: #d97706; --bk-chart-4: #a54f82; --bk-chart-5: #889639; --bk-chart-6: #0284c7;
+  --bk-neutral: #18181b; --bk-neutral-fg: #fafafa;
+  --bk-ring: color-mix(in oklab, var(--bk-primary) 45%, transparent);
+  --bk-backdrop: rgb(9 9 11 / .5);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme=light]) {
+    --bk-bg: #09090b; --bk-fg: #fafafa;
+    --bk-surface: #111113; --bk-surface-2: #0c0c0e;
+    --bk-muted: #1c1c20; --bk-muted-fg: #a1a1aa;
+    --bk-accent: #232329; --bk-accent-fg: #fafafa;
+    --bk-border: #27272a; --bk-input: #3f3f46;
+    --bk-primary: #5b5ef0; --bk-primary-hover: #4f46e5; --bk-swatch-zinc: #fafafa; --bk-chart-4: #b15885;
+    --bk-neutral: #fafafa; --bk-neutral-fg: #18181b;
+    --bk-danger-text: #f87171; --bk-warning-text: #f59e0b; --bk-success-text: #22c55e; --bk-info-text: #38bdf8;
+    --bk-shadow: 0 1px 3px rgb(0 0 0 / .5); --bk-shadow-lg: 0 10px 30px -5px rgb(0 0 0 / .6);
+    --bk-backdrop: rgb(0 0 0 / .65);
+    color-scheme: dark;
+  }
+}
+:root[data-theme=dark] {
+  --bk-bg: #09090b; --bk-fg: #fafafa;
+  --bk-surface: #111113; --bk-surface-2: #0c0c0e;
+  --bk-muted: #1c1c20; --bk-muted-fg: #a1a1aa;
+  --bk-accent: #232329; --bk-accent-fg: #fafafa;
+  --bk-border: #27272a; --bk-input: #3f3f46;
+  --bk-primary: #5b5ef0; --bk-primary-hover: #4f46e5; --bk-swatch-zinc: #fafafa; --bk-chart-4: #b15885;
+  --bk-neutral: #fafafa; --bk-neutral-fg: #18181b;
+  --bk-danger-text: #f87171; --bk-warning-text: #f59e0b; --bk-success-text: #22c55e; --bk-info-text: #38bdf8;
+  --bk-shadow: 0 1px 3px rgb(0 0 0 / .5); --bk-shadow-lg: 0 10px 30px -5px rgb(0 0 0 / .6);
+  --bk-backdrop: rgb(0 0 0 / .65);
+  color-scheme: dark;
+}
+:root[data-accent=blue] { --bk-primary: var(--bk-swatch-blue); --bk-primary-hover: #1d4ed8; }
+:root[data-accent=emerald] { --bk-primary: var(--bk-swatch-emerald); --bk-primary-hover: #065f46; }
+:root[data-accent=rose] { --bk-primary: var(--bk-swatch-rose); --bk-primary-hover: #be123c; }
+:root[data-accent=amber] { --bk-primary: var(--bk-swatch-amber); --bk-primary-hover: #92400e; }
+:root[data-accent=violet] { --bk-primary: var(--bk-swatch-violet); --bk-primary-hover: #6d28d9; }
+:root[data-accent=zinc] { --bk-primary: var(--bk-swatch-zinc); --bk-primary-hover: #3f3f46; }
+:root[data-theme=dark][data-accent=zinc] { --bk-primary: #fafafa; --bk-primary-hover: #e4e4e7; --bk-primary-fg: #18181b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme=light])[data-accent=zinc] { --bk-primary: #fafafa; --bk-primary-hover: #e4e4e7; --bk-primary-fg: #18181b; } }
+
+/* Kit elements size with border-box whether or not the page opts in to the
+   base: set directly, not inherited, because a <details> element's children
+   inherit through its shadow slot and would miss an inherited value. */
+:where(.bk-base, [class*="bk-"]), :where(.bk-base, [class*="bk-"]) *, :where(.bk-base, [class*="bk-"]) *::before, :where(.bk-base, [class*="bk-"]) *::after { box-sizing: border-box; }
+/* A kit class that sets display would otherwise override the hidden
+   attribute, and a control meant to appear only with JavaScript would show
+   without it. */
+[class*="bk-"][hidden]:not([hidden=until-found]) { display: none !important; }
+/* Base rules for descendants have zero specificity (:where around .bk-base
+   too), so any component class — .bk-link, .bk-btn--link — wins over them
+   whatever order the stylesheets load in. */
+body.bk-base { margin: 0; background: var(--bk-bg); color: var(--bk-fg); font: var(--bk-text-base)/1.5 var(--bk-font); -webkit-font-smoothing: antialiased; }
+:where(.bk-base) :where(h1, h2, h3, h4) { margin: 0; line-height: 1.25; font-weight: 600; letter-spacing: -.01em; }
+:where(.bk-base) :where(p) { margin: 0; }
+:where(.bk-base) :where(a) { color: inherit; }
+:where(.bk-base) :where(code, kbd, pre, samp) { font-family: var(--bk-mono); font-size: .92em; }
+:where(.bk-base) :where(:focus-visible) { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+:where(.bk-base) :where(img, svg) { vertical-align: middle; }
+.bk-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@keyframes bk-spin { to { transform: rotate(360deg); } }
+@keyframes bk-fade-in { from { opacity: 0; } }
+@keyframes bk-pop-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } }
+@keyframes bk-pulse { 50% { opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { :root { --bk-duration: 0s; } }
+</brick:style>
+<template class="bk-theme"></template>

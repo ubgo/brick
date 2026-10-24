@@ -1,0 +1,11 @@
+{{/*
+MenuSeparator: a thin rule between groups of items in a <DropdownMenu>.
+
+  <MenuItem>Edit</MenuItem>
+  <MenuSeparator />
+  <MenuItem danger>Delete</MenuItem>
+*/}}
+<brick:style>
+.bk-menu-sep { height: 1px; margin: .25rem -.25rem; background: var(--bk-border); }
+</brick:style>
+<div class="{{ cx `bk-menu-sep` .Attrs.class }}" role="separator" {{ attrs `class` }}></div>

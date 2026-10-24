@@ -1,0 +1,20 @@
+---
+title: Sparkline
+category: Charts
+description: "A word-sized trend for stat cards, tables and sentences — a line, an area or bars."
+api:
+  - {name: data, type: "list", desc: "Numbers, or maps read at y."}
+  - {name: y, type: "string", default: "value", desc: "The value key for maps."}
+  - {name: variant, type: "line | area | bar", default: "line", desc: "The mark."}
+  - {name: tone, type: "string", default: "1", desc: "1–6 or a token name."}
+  - {name: width, type: "int", default: "96", desc: "Width in px."}
+  - {name: height, type: "int", default: "28", desc: "Height in px."}
+  - {name: dot, type: "bool", default: "true", desc: "Mark the latest value."}
+  - {name: label, type: "string", default: "Trend", desc: "The accessible name; first, last, low and high are added."}
+---
+<h1>Sparkline</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Variants and tones"><SparklineVariants /><brick:prop name="code"><Source src="~/demos/SparklineVariants.html" /></brick:prop></Example>
+<Example title="In stat cards" block><SparklineStats /><brick:prop name="code"><Source src="~/demos/SparklineStats.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

@@ -1,0 +1,11 @@
+---
+state:
+  liked: false
+  likes: 41
+---
+<div style="display: flex; align-items: center; gap: .75rem">
+  <Button id="rl-like" variant="outline" brick:click.optimistic='$toggle("liked")'>
+    <span id="rl-on" brick:show="liked" {{ if not .State.liked }}hidden{{ end }}>♥ Liked</span><span id="rl-off" brick:show="!liked" {{ if .State.liked }}hidden{{ end }}>♡ Like</span>
+  </Button>
+  <span id="rl-count" style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">{{ if .State.liked }}{{ add .State.likes 1 }}{{ else }}{{ .State.likes }}{{ end }} likes</span>
+</div>

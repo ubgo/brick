@@ -1,0 +1,5 @@
+---
+props:
+  depth: {type: int, default: 0}
+---
+<div class="nest">{{ if lt .Props.depth 1000 }}<Nest :depth="add .Props.depth 1" />{{ end }}</div>

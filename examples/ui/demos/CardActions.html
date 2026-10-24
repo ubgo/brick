@@ -1,0 +1,19 @@
+<Grid :md="2" style="width: 100%">
+  <Card title="Delete project" description="The project and all of its deployments will be removed. This cannot be undone.">
+    <brick:prop name="actions">
+      <Button variant="ghost" size="sm">Cancel</Button>
+      <Button variant="danger" size="sm" icon="trash">Delete</Button>
+    </brick:prop>
+  </Card>
+  <Card variant="elevated">
+    <brick:prop name="header">
+      <Stack direction="row" justify="between">
+        <Heading :level="3" size="md">Pro plan</Heading>
+        <Text as="span" size="xs" tone="primary" weight="semibold">Current</Text>
+      </Stack>
+    </brick:prop>
+    <Heading :level="4" size="xl" weight="bold">$19<Text as="span" tone="muted" size="sm" weight="normal"> / month</Text></Heading>
+    <brick:prop name="footer">Renews on Oct 1</brick:prop>
+    <brick:prop name="actions"><Button size="sm" variant="outline">Change plan</Button></brick:prop>
+  </Card>
+</Grid>

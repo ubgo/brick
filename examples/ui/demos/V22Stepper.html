@@ -1,0 +1,24 @@
+---
+state:
+  value: 1
+brick:
+  model: value
+---
+<brick:script>
+def dec(state, props):
+    return dict(state, value = max(0, state["value"] - 1))
+
+def inc(state, props):
+    return dict(state, value = state["value"] + 1)
+</brick:script>
+{{/*
+A modelable stepper: brick: {model: value} names the field a parent can
+bind with <V22Stepper brick:model="qty">. The stepper owns its buttons;
+the parent's field follows every change, and the parent's own writes
+come back down.
+*/}}
+<div style="display: inline-flex; align-items: center; gap: .4rem">
+  <Button id="v22-dec" size="sm" variant="outline" brick:click="dec">−</Button>
+  <b id="v22-value" style="min-width: 2ch; text-align: center">{{ .State.value }}</b>
+  <Button id="v22-inc" size="sm" variant="outline" brick:click="inc">+</Button>
+</div>

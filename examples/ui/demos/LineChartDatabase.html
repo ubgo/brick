@@ -1,0 +1,6 @@
+---
+use:
+  demo: ~/demos/demo_charts.star
+load: demo.revenue_by_month
+---
+<LineChart :data=".Props.data" x="month" y="orders" name="Paid orders" smooth area label="Paid orders per month" :height="200" style="width: 100%" />

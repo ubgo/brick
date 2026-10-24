@@ -1,0 +1,66 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  name: {type: string, required: true}
+  colors: {type: list, default: ["#4f46e5", "#2563eb", "#0891b2", "#059669", "#65a30d", "#d97706", "#dc2626", "#db2777", "#7c3aed", "#52525b"]}
+  value: {type: string, default: ""}
+  custom: {type: bool, default: false}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  label: {type: string, default: Colour}
+  customLabel: {type: string, default: Custom colour}
+---
+{{/*
+ColorPicker: a row of colour swatches (native radios sharing one name),
+with an optional custom colour from the browser's own colour picker.
+
+  <ColorPicker name="accent" value="#059669" />
+  <ColorPicker name="label" :colors="list `#ef4444` `#f59e0b` `#10b981`" custom />
+  <ColorPicker name="brand" :colors=".Params.brand" size="sm" />
+
+colors items are CSS colour strings or maps {value, label}; the submitted
+value is the string. The swatch colours are data, so they are the one place
+a kit component carries literal colours. custom adds a last swatch holding
+an <input type="color">: choosing a colour there (JavaScript) copies it into
+that swatch's radio and checks it. A value not among colors starts in the
+custom swatch. The caller's attributes go on the radiogroup root.
+*/}}
+<brick:client>
+brick.mount("ColorPicker", (el) => {
+  const picker = el.querySelector(".bk-color__picker");
+  if (!picker) return;
+  const swatch = picker.closest(".bk-color__swatch");
+  const radio = swatch.querySelector(".bk-color__input");
+  const pick = () => {
+    radio.value = picker.value;
+    swatch.style.setProperty("--bk-swatch", picker.value);
+    swatch.classList.add("bk-color__custom--set");
+    radio.checked = true;
+    radio.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  picker.addEventListener("input", pick);
+  return () => picker.removeEventListener("input", pick);
+})
+</brick:client>
+<brick:style>
+.bk-color { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0; padding: 0; border: 0; }
+.bk-color__swatch { position: relative; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: var(--bk-radius-full); background: var(--bk-swatch); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--bk-fg) 12%, transparent); cursor: pointer; transition: transform var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-color__swatch:hover { transform: scale(1.08); }
+.bk-color__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.bk-color__swatch:has(.bk-color__input:checked) { box-shadow: 0 0 0 2px var(--bk-bg), 0 0 0 4px var(--bk-swatch); }
+.bk-color__swatch:has(.bk-color__input:focus-visible) { outline: 2px solid var(--bk-ring); outline-offset: 5px; }
+.bk-color__custom { background: conic-gradient(from 180deg, var(--bk-danger), var(--bk-warning), var(--bk-success), var(--bk-info), var(--bk-primary), var(--bk-danger)); color: var(--bk-primary-fg); }
+.bk-color__custom.bk-color__custom--set { background: var(--bk-swatch); }
+.bk-color__picker { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.bk-color__custom .bk-icon { position: relative; pointer-events: none; filter: drop-shadow(0 1px 1px color-mix(in oklab, var(--bk-neutral) 50%, transparent)); }
+.bk-color--sm .bk-color__swatch { width: 1.35rem; height: 1.35rem; }
+.bk-color--sm { gap: .4rem; }
+.bk-color--lg .bk-color__swatch { width: 2.25rem; height: 2.25rem; }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $v := .Props.value }}{{ $name := .Props.name }}{{ $found := false }}
+{{ range .Props.colors }}{{ if has . "value" }}{{ if eq (print .value) $v }}{{ $found = true }}{{ end }}{{ else if eq (print .) $v }}{{ $found = true }}{{ end }}{{ end }}
+{{ $isCustom := and .Props.custom $v (not $found) }}
+<div role="radiogroup" class="{{ cx `bk-color` (cond (ne .Props.size `md`) (print `bk-color--` .Props.size) ``) .Attrs.class }}"{{ with index $f "labelledby" }} aria-labelledby="{{ . }}"{{ else }} aria-label="{{ .Props.label }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }} {{ attrs `class` }}>{{ range .Props.colors }}{{ $c := . }}{{ $l := . }}{{ if has . "value" }}{{ $c = .value }}{{ $l = default .value .label }}{{ end }}<label class="bk-color__swatch" style="--bk-swatch: {{ $c }}" title="{{ $l }}"><input type="radio" class="bk-color__input" name="{{ $name }}" value="{{ $c }}"{{ if eq (print $c) $v }} checked{{ end }} aria-label="{{ $l }}"></label>{{ end }}{{ if .Props.custom }}<label class="bk-color__swatch bk-color__custom{{ if $isCustom }} bk-color__custom--set{{ end }}"{{ if $isCustom }} style="--bk-swatch: {{ $v }}"{{ end }} title="{{ .Props.customLabel }}"><input type="radio" class="bk-color__input" name="{{ $name }}" value="{{ if $isCustom }}{{ $v }}{{ else }}#000000{{ end }}"{{ if $isCustom }} checked{{ end }} aria-label="{{ .Props.customLabel }}"><input type="color" class="bk-color__picker" value="{{ if $isCustom }}{{ $v }}{{ else }}#000000{{ end }}" aria-label="{{ .Props.customLabel }}" tabindex="-1"><Icon name="palette" :size="14" /></label>{{ end }}</div>

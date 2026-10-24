@@ -1,0 +1,17 @@
+---
+title: Validated forms
+category: Forms
+description: Rules declared once in frontmatter. A field shows its error only after you leave it; the submit validates every field at once; an action's own error (a taken e-mail) wins over the rules.
+---
+<h1>Validated forms</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Leave a field to see its error, then submit — try an address @taken.example" block><ValidatedSignup /><brick:prop name="code"><Source src="~/demos/ValidatedSignup.html" /></brick:prop></Example>
+<Example title="Form objects: one value per field, list items included — save with an empty todo" block><FormObjectTodos /><brick:prop name="code"><Source src="~/demos/FormObjectTodos.html" /></brick:prop></Example>
+<h2>How it works</h2>
+<ul>
+  <li><b><code>brick: {rules:}</code></b> maps a state path to its rules: <code>required</code>, <code>min</code>, <code>max</code>, <code>email</code>, <code>url</code>, <code>pattern</code>, <code>in</code> and <code>same</code>. An unknown rule or a path that is not in <code>state:</code> is a compile error. <code>messages:</code> replaces one rule's message.</li>
+  <li><b>Touched fields.</b> A field becomes touched when the browser first sends it. With <code>brick:model.lazy</code> that is when you leave it, so a half-typed address is not flagged while you type. Errors are computed at every render from the state, the rules and the touched set, so <code>confirm</code> re-checks when <code>password</code> changes.</li>
+  <li><b>Submit.</b> <code>brick.validate()</code> touches and checks every field and returns the errors; the action returns <code>[state, errors]</code> to stop. After a successful sign-up, <code>brick.untouch()</code> clears the touched set so the emptied form does not light up with "required".</li>
+  <li><b>Action errors win.</b> An error the action returns (the taken address) replaces the rule error for that field for one render.</li>
+  <li><b>Form objects.</b> <code>.Form.email</code> is one value per field: <code>.Name</code> (the path <code>brick:model</code> takes), <code>.ID</code> (for <code>label for=</code>), <code>.Value</code>, <code>.Error</code>, <code>.Touched</code> and <code>.Invalid</code>. <code>.Items</code> walks a list and <code>.Fields</code> a dict, so the third todo's title is <code>todos.2.title</code>, the same path its <code>todos.*.title</code> rule reports under.</li>
+</ul>

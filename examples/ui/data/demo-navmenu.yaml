@@ -1,0 +1,19 @@
+# The NavigationMenu demo's items: two panels of links with icons and
+# descriptions, and plain links.
+items:
+  - label: Product
+    columns: 2
+    description: "A component engine for Go — pages, layouts and components as HTML files, no build step."
+    links:
+      - {label: Components, href: /components/button/, icon: grid, description: "100 kit components that work without JavaScript."}
+      - {label: Actions, href: /components/dialog/, icon: zap, description: "Server state from a click, patched in place."}
+      - {label: Islands, href: /, icon: layout-dashboard, description: "Per-request parts of a cached page."}
+      - {label: Navigation, href: /components/navigation-menu/, icon: globe, description: "Links that fetch and patch, no reload."}
+  - label: Resources
+    columns: 1
+    links:
+      - {label: Guide, href: /, icon: file, description: "Every feature, problem first."}
+      - {label: Cookbook, href: /, icon: code, description: "Real tasks with every file."}
+      - {label: Demo apps, href: /apps/contacts/, icon: users, description: "A CRUD app, a board, a dashboard."}
+  - {label: Pricing, href: /components/navigation-menu/}
+  - {label: Blog, href: /}

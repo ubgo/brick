@@ -1,0 +1,18 @@
+---
+state:
+  likes: 0
+inject:
+  user: {default: "guest"}
+---
+<brick:script>
+def like(state, props):
+    return dict(state, likes = state["likes"] + 1)
+
+def wipe(state, props):
+    return dict(state, likes = 0)
+</brick:script>
+<div class="likes">
+  <p>{{ .State.likes }} likes, seen by {{ .Ctx.user }}</p>
+  <button brick:click="like">Like</button>
+  <button brick:click="wipe">Wipe (admins)</button>
+</div>

@@ -1,0 +1,37 @@
+---
+use:
+  Avatar: ~/components/Avatar.html
+props:
+  items: {type: list, default: []}
+  max: {type: int, default: 0}
+  total: {type: int, default: 0}
+  size: {type: string, default: md, oneof: [xs, sm, md, lg, xl]}
+  label: {type: string, default: ""}
+---
+{{/*
+AvatarGroup: overlapping avatars with a "+N" for the rest.
+
+  <AvatarGroup :items=".Params.team" max="4" />       items: [{name, src}]
+  <AvatarGroup max="3" size="sm">
+    <Avatar name="Ava Patel" /><Avatar name="Liam Kim" /> …
+  </AvatarGroup>
+  <AvatarGroup :items=".Params.team" max="3" total="48" />   "+45"
+
+With :items it renders an Avatar per entry (name, src, status). With
+children it shows the first max of the <Avatar> tags written literally;
+children produced by a {{ range }} are not countable before rendering, so
+they all show — pass :items for a counted list. total overrides the count
+the "+N" is computed from, for a page that only loaded the first few.
+*/}}
+<brick:style>
+.bk-avatar-group { display: inline-flex; align-items: center; flex-direction: row; }
+.bk-avatar-group > .bk-avatar { box-shadow: 0 0 0 2px var(--bk-bg); }
+.bk-avatar-group > .bk-avatar + .bk-avatar { margin-left: calc(var(--bk-avatar-s) * -.3); }
+.bk-avatar-group > .bk-avatar:hover { z-index: 1; }
+.bk-avatar-group__more { background: var(--bk-muted); color: var(--bk-fg); font-weight: 600; }
+</brick:style>
+{{- $items := .Props.items -}}
+{{- $count := cond $items (len $items) (len .Children) -}}
+{{- $total := cond .Props.total .Props.total $count -}}
+{{- $shown := cond (and .Props.max (lt .Props.max $count)) .Props.max $count -}}
+<div class="{{ cx `bk-avatar-group` .Attrs.class }}" role="group"{{ with .Props.label }} aria-label="{{ . }}"{{ end }} {{ attrs `class` }}>{{ if $items }}{{ range $i, $p := $items }}{{ if lt $i $shown }}<Avatar :name="$p.name" :src="default `` $p.src" :status="default `` $p.status" :size="$.Props.size" />{{ end }}{{ end }}{{ else if .Children }}{{ range $i, $c := .Children }}{{ if lt $i $shown }}{{ child $c }}{{ end }}{{ end }}{{ else }}{{ children }}{{ end }}{{ if gt $total $shown }}{{ if $shown }}<span class="bk-avatar bk-avatar-group__more{{ if ne .Props.size `md` }} bk-avatar--{{ .Props.size }}{{ end }}" role="img" aria-label="{{ sub $total $shown }} more">+{{ sub $total $shown }}</span>{{ end }}{{ end }}</div>

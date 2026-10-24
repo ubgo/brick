@@ -1,0 +1,424 @@
+---
+state:
+  view: list
+  status: all
+  q: ""
+  sort: newest
+  page: 1
+  id: 0
+  customer: ""
+  issued: ""
+  due: ""
+  invStatus: draft
+  notes: ""
+  taxRate: "10"
+  lines: []
+  flash: ""
+  flashN: 0
+---
+{{/*
+InvoicesApp: the Invoices app — one stateful component with three views:
+the list (status tabs with counts, search, sort, pages, totals), the
+editor (create and edit, with a line-items table whose totals the server
+recomputes on every change) and the document (a clean printable invoice
+with its actions). apps/invoices/invoices.star owns the tables; this file owns the
+screen.
+
+State is only what the viewer chose (view, filters, page, the open
+invoice) plus the editor's fields as typed, so a failed save keeps them.
+Header fields bind with brick:model; line cells call setDesc/setQty/
+setPrice(i) on change; save(fields) validates everything and returns
+[state, errors] or writes the invoice and opens it with a toast.
+
+The status tabs and the pages are kit link components, so the client
+module turns their clicks into the filter and page actions; without
+JavaScript they are plain links and the list shows its first page.
+*/}}
+<brick:script>
+load("~/apps/invoices/invoices.star", inv_listing = "listing", inv_get = "get", inv_customers = "customers", inv_validate = "validate", inv_save = "save", inv_set_status = "set_status", inv_duplicate = "duplicate", inv_remove = "remove", inv_totals = "totals", inv_money = "parse_money", inv_rate = "parse_rate", inv_dollars = "dollars", inv_add_days = "add_days", inv_next = "next_number", INV_TODAY = "TODAY", INV_TERMS = "TERMS", INV_STATUSES = "STATUSES", INV_LABELS = "LABELS")
+
+EMPTY_LINE = {"desc": "", "qty": "1", "price": ""}
+
+def _go(state, **kw):
+    # Every action clears the last toast unless it sets a new one.
+    return dict(state, flash = "", **kw)
+
+def _flash(state, text, **kw):
+    return dict(state, flash = text, flashN = state["flashN"] + 1, **kw)
+
+# ---- data for the template ------------------------------------------------
+
+def listData(state):
+    return inv_listing(state["status"], state["q"], state["sort"], state["page"])
+
+def docData(id):
+    return inv_get(id)
+
+def editorData(state):
+    """The customers, the invoice number and the live totals of the lines as
+    typed: an unreadable qty or price counts as 0 until it is fixed."""
+    lines = []
+    for l in state["lines"]:
+        qty = int(l["qty"], 10) if l["qty"].strip().isdigit() else 0
+        lines.append({"qty": qty, "cents": inv_money(l["price"]) or 0})
+    bp = inv_rate(state["taxRate"])
+    t = inv_totals(lines, bp or 0)
+    t["amounts"] = [l["qty"] * l["cents"] for l in lines]
+    t["customers"] = inv_customers()
+    t["number"] = inv_get(state["id"])["number"] if state["id"] else inv_next()
+    t["statuses"] = [{"value": s, "label": INV_LABELS[s]} for s in INV_STATUSES]
+    return t
+
+# ---- list -----------------------------------------------------------------
+
+def filter(state, props, status):
+    if status != "all" and status not in INV_STATUSES:
+        return state
+    return _go(state, status = status, page = 1)
+
+def page(state, props, n):
+    return _go(state, page = max(1, int(n)))
+
+def back(state, props):
+    return _go(state, view = "list", id = 0)
+
+def open(state, props, id):
+    return _go(state, view = "detail", id = int(id))
+
+# ---- editor ---------------------------------------------------------------
+
+def newInvoice(state, props):
+    return _go(state, view = "edit", id = 0, customer = "", issued = INV_TODAY, due = inv_add_days(INV_TODAY, INV_TERMS), invStatus = "draft", notes = "", taxRate = "10", lines = [dict(EMPTY_LINE)])
+
+def edit(state, props, id):
+    inv = inv_get(int(id))
+    if not inv:
+        return back(state, props)
+    lines = [{"desc": l["desc"], "qty": str(l["qty"]), "price": inv_dollars(l["cents"])} for l in inv["lines"]]
+    rate = str(inv["tax_rate"])
+    if rate.endswith(".0"):
+        rate = rate[:-2]
+    return _go(state, view = "edit", id = inv["id"], customer = inv["customer"], issued = inv["issued"], due = inv["due"], invStatus = inv["status"], notes = inv["notes"], taxRate = rate, lines = lines)
+
+def _line(state, i, key, value):
+    lines = [dict(l) for l in state["lines"]]
+    i = int(i)
+    if i >= 0 and i < len(lines):
+        lines[i][key] = str(value)
+    return _go(state, lines = lines)
+
+def setDesc(state, props, i, value):
+    return _line(state, i, "desc", value)
+
+def setQty(state, props, i, value):
+    return _line(state, i, "qty", value)
+
+def setPrice(state, props, i, value):
+    return _line(state, i, "price", value)
+
+def addLine(state, props):
+    return _go(state, lines = [dict(l) for l in state["lines"]] + [dict(EMPTY_LINE)])
+
+def removeLine(state, props, i):
+    i = int(i)
+    return _go(state, lines = [dict(l) for n, l in enumerate(state["lines"]) if n != i])
+
+def save(state, props, fields):
+    lines = []
+    for i in range(len(state["lines"])):
+        n = str(i)
+        lines.append({"desc": fields.get("desc_" + n, ""), "qty": fields.get("qty_" + n, ""), "price": fields.get("price_" + n, "")})
+    draft = _go(state, customer = fields.get("customer", ""), issued = fields.get("issued", ""), due = fields.get("due", ""), invStatus = fields.get("invStatus", ""), notes = fields.get("notes", ""), taxRate = fields.get("taxRate", ""), lines = lines)
+    inv, errors = inv_validate(draft)
+    if errors:
+        return [draft, errors]
+    was = state["id"]
+    id = inv_save(was, inv)
+    return _flash(draft, "Invoice saved" if was else "Invoice created", view = "detail", id = id)
+
+# ---- document actions -----------------------------------------------------
+
+def markSent(state, props, id):
+    inv_set_status(int(id), "sent")
+    return _flash(state, "Marked as sent")
+
+def markPaid(state, props, id):
+    inv_set_status(int(id), "paid")
+    return _flash(state, "Marked as paid")
+
+def duplicate(state, props, id):
+    new = inv_duplicate(int(id))
+    if not new:
+        return _go(state)
+    return _flash(state, "Duplicated as a draft", view = "detail", id = new)
+
+def remove(state, props, id):
+    inv_remove(int(id))
+    return _flash(state, "Invoice deleted", view = "list", id = 0)
+</brick:script>
+<brick:client>
+// The status tabs (#inv-<status>) and the pages (#inv-page-<n>) are kit
+// link components; here their clicks become the filter and page actions.
+// A [data-print] button prints the document.
+brick.mount("InvoicesApp", (el) => {
+  const click = (e) => {
+    const a = e.target.closest("a[href^='#inv-'], [data-print]");
+    if (!a || !el.contains(a)) return;
+    e.preventDefault();
+    if (a.hasAttribute("data-print")) { window.print(); return; }
+    const h = a.getAttribute("href").slice(5);
+    if (h.startsWith("page-")) brick.action(el, "page", [Number(h.slice(5))]);
+    else brick.action(el, "filter", [h]);
+  };
+  el.addEventListener("click", click);
+  return () => el.removeEventListener("click", click);
+})
+</brick:client>
+<div class="inv">
+{{ if eq .State.view "list" }}
+  {{ $d := listData .State }}
+  <PageHeader title="Invoices" description="Bill customers, track what is owed and get paid.">
+    <brick:prop name="actions"><Button icon="plus" brick:click="newInvoice">New invoice</Button></brick:prop>
+  </PageHeader>
+  <Stats :columns="4" class="inv-stats">
+    <Stat label="Outstanding" value="${{ numberFormat (div (add $d.sums.sent $d.sums.overdue) 100.0) 2 }}" description="{{ add $d.counts.sent $d.counts.overdue }} sent and unpaid" icon="clock" />
+    <Stat label="Overdue" value="${{ numberFormat (div $d.sums.overdue 100.0) 2 }}" description="{{ $d.counts.overdue }} past their due date" icon="alert-triangle" />
+    <Stat label="Paid" value="${{ numberFormat (div $d.sums.paid 100.0) 2 }}" description="{{ $d.counts.paid }} invoices" icon="check-circle" />
+    <Stat label="Drafts" value="{{ $d.counts.draft }}" description="${{ numberFormat (div $d.sums.draft 100.0) 2 }} not yet sent" icon="file-text" />
+  </Stats>
+  <Card padding="none" class="inv-list">
+    <div class="inv-list__bar">
+      <Tabs label="Status" current="#inv-{{ .State.status }}" variant="pills" size="sm">
+        <Tab title="All" href="#inv-all" :badge="print $d.counts.all" />
+        <Tab title="Draft" href="#inv-draft" :badge="print $d.counts.draft" />
+        <Tab title="Sent" href="#inv-sent" :badge="print $d.counts.sent" />
+        <Tab title="Paid" href="#inv-paid" :badge="print $d.counts.paid" />
+        <Tab title="Overdue" href="#inv-overdue" :badge="print $d.counts.overdue" />
+      </Tabs>
+      <div class="inv-list__tools">
+        <SearchInput name="q" value="{{ .State.q }}" placeholder="Search number, customer…" size="sm" brick:model.debounce.300ms="q" />
+        <Select name="sort" size="sm" aria-label="Sort" :value=".State.sort" :options="$d.sorts" brick:model.lazy="sort" />
+      </div>
+    </div>
+    <Table hover>
+      <thead><tr><th>Invoice</th><th>Customer</th><th class="inv-hide-sm">Issued</th><th class="inv-hide-sm">Due</th><th class="inv-num">Amount</th><th class="inv-hide-sm">Status</th><th><span class="bk-sr-only">Actions</span></th></tr></thead>
+      <tbody>{{ range $d.rows }}<tr>
+        <td><button type="button" class="inv-link" brick:click="open({{ .id }})">{{ .number }}</button></td>
+        <td><div class="inv-cust"><b>{{ .customer }}</b><small>{{ .email }}</small></div></td>
+        <td class="inv-hide-sm">{{ .issuedLabel }}</td>
+        <td class="inv-hide-sm">{{ .dueLabel }}</td>
+        <td class="inv-num">${{ numberFormat (div .total 100.0) 2 }}<span class="inv-show-sm"><Badge :tone=".tone" size="sm" dot>{{ .label }}</Badge></span></td>
+        <td class="inv-hide-sm"><Badge :tone=".tone" size="sm" dot>{{ .label }}</Badge></td>
+        <td class="inv-act"><DropdownMenu icon="more-horizontal" label="Actions for {{ .number }}" square :caret="false" variant="ghost" size="sm" align="end">
+          <MenuItem icon="eye" brick:click="open({{ .id }})">View</MenuItem>
+          <MenuItem icon="pencil" brick:click="edit({{ .id }})">Edit</MenuItem>
+          <MenuItem icon="copy" brick:click="duplicate({{ .id }})">Duplicate</MenuItem>
+          <MenuSeparator />
+          <MenuItem icon="send" :disabled="ne .status `draft`" brick:click="markSent({{ .id }})">Mark as sent</MenuItem>
+          <MenuItem icon="check-circle" :disabled="eq .status `paid`" brick:click="markPaid({{ .id }})">Mark as paid</MenuItem>
+        </DropdownMenu></td>
+      </tr>{{ end }}</tbody>
+    </Table>
+    <div class="inv-list__foot"><Pagination :page="$d.page" :total="$d.total" :perPage="$d.perPage" href="#inv-page-%d" size="sm" /></div>
+  </Card>
+  {{ if not $d.total }}<EmptyState icon="search" title="No invoices match" description="Try another status or search." size="sm" bordered />{{ end }}
+{{ else if eq .State.view "edit" }}
+  {{ $e := editorData .State }}
+  <PageHeader :title="cond .State.id (print `Edit ` $e.number) `New invoice`" :description="cond .State.id `Changes apply when you save.` (print $e.number ` · a draft until you mark it sent.`)">
+    <brick:prop name="breadcrumbs"><button type="button" class="inv-back" brick:click="back"><Icon name="arrow-left" :size="14" />Invoices</button></brick:prop>
+  </PageHeader>
+  <form brick:submit="save" novalidate class="inv-editor">
+    <div class="inv-editor__main">
+      <Card title="Details" padding="lg">
+        <div class="inv-grid">
+          <Field label="Customer" :error=".Errors.customer" required class="inv-wide"><Combobox name="customer" :value=".State.customer" :options="$e.customers" placeholder="Search contacts…" brick:model.lazy="customer" /></Field>
+          <Field label="Issued" :error=".Errors.issued" required><DatePicker name="issued" value="{{ .State.issued }}" brick:model.lazy="issued" /></Field>
+          <Field label="Due" :error=".Errors.due" required><DatePicker name="due" value="{{ .State.due }}" min="{{ .State.issued }}" brick:model.lazy="due" /></Field>
+          <Field label="Status" :error=".Errors.invStatus"><Select name="invStatus" :value=".State.invStatus" :options="$e.statuses" brick:model.lazy="invStatus" /></Field>
+          <Field label="Tax rate" hint="Percent of the subtotal." :error=".Errors.taxRate"><Input name="taxRate" value="{{ .State.taxRate }}" suffix="%" inputmode="decimal" brick:model.lazy="taxRate" /></Field>
+        </div>
+      </Card>
+      <Card title="Line items" description="Quantities and prices update the totals as you go." padding="lg">
+        <div class="inv-lines" role="table" aria-label="Line items">
+          <div class="inv-line inv-line--head" role="row"><span role="columnheader">Description</span><span role="columnheader">Qty</span><span role="columnheader">Unit price</span><span role="columnheader" class="inv-num">Amount</span><span role="columnheader"><span class="bk-sr-only">Remove</span></span></div>
+          {{ range $i, $l := .State.lines }}
+          <div class="inv-line" role="row" brick:key="{{ $i }}">
+            <span role="cell"><Input name="desc_{{ $i }}" value="{{ $l.desc }}" placeholder="What you did or sold" aria-label="Description, line {{ add $i 1 }}" :invalid="cond (index $.Errors (print `desc_` $i)) true false" brick:change="setDesc({{ $i }})" /></span>
+            <span role="cell"><Input name="qty_{{ $i }}" value="{{ $l.qty }}" inputmode="numeric" aria-label="Quantity, line {{ add $i 1 }}" :invalid="cond (index $.Errors (print `qty_` $i)) true false" brick:change="setQty({{ $i }})" /></span>
+            <span role="cell"><Input name="price_{{ $i }}" value="{{ $l.price }}" prefix="$" inputmode="decimal" placeholder="0.00" aria-label="Unit price, line {{ add $i 1 }}" :invalid="cond (index $.Errors (print `price_` $i)) true false" brick:change="setPrice({{ $i }})" /></span>
+            <span role="cell" class="inv-num inv-line__amount">${{ numberFormat (div (index $e.amounts $i) 100.0) 2 }}</span>
+            <span role="cell"><button type="button" class="bk-btn bk-btn--ghost bk-btn--sm bk-btn--square" aria-label="Remove line {{ add $i 1 }}" brick:click="removeLine({{ $i }})"><Icon name="trash" :size="14" /></button></span>
+            {{ with or (index $.Errors (print `desc_` $i)) (index $.Errors (print `qty_` $i)) (index $.Errors (print `price_` $i)) }}<p class="inv-line__error" role="alert"><Icon name="alert-circle" :size="13" />{{ . }}</p>{{ end }}
+          </div>
+          {{ end }}
+        </div>
+        {{ with .Errors.lines }}<p class="inv-line__error" role="alert"><Icon name="alert-circle" :size="13" />{{ . }}</p>{{ end }}
+        <button type="button" class="bk-btn bk-btn--outline bk-btn--sm inv-add" brick:click="addLine"><Icon name="plus" :size="14" />Add line</button>
+      </Card>
+      <Card title="Notes" padding="lg"><Field :error=".Errors.notes"><Textarea name="notes" :value=".State.notes" :rows="3" :maxlength="500" placeholder="Payment terms, a thank-you, bank details…" brick:model.lazy="notes" /></Field></Card>
+    </div>
+    <aside class="inv-editor__side">
+      <Card title="Summary" padding="lg">
+        <dl class="inv-sum">
+          <div><dt>Subtotal</dt><dd>${{ numberFormat (div $e.subtotal 100.0) 2 }}</dd></div>
+          <div><dt>Tax ({{ .State.taxRate }}%)</dt><dd>${{ numberFormat (div $e.tax 100.0) 2 }}</dd></div>
+          <div class="inv-sum__total"><dt>Total</dt><dd>${{ numberFormat (div $e.total 100.0) 2 }}</dd></div>
+        </dl>
+        <div class="inv-side-actions">
+          <Button type="submit" block icon="check">{{ if .State.id }}Save changes{{ else }}Create invoice{{ end }}</Button>
+          <button type="button" class="bk-btn bk-btn--ghost bk-btn--block" brick:click="back">Cancel</button>
+          <span brick:loading hidden><span class="inv-busy"><Icon name="loader" :size="14" class="bk-btn__spin" />Saving…</span></span>
+        </div>
+      </Card>
+    </aside>
+  </form>
+{{ else }}
+  {{ $v := docData .State.id }}
+  {{ if $v }}
+  <div class="inv-toolbar">
+    <button type="button" class="inv-back" brick:click="back"><Icon name="arrow-left" :size="14" />Invoices</button>
+    <div class="inv-toolbar__actions">
+      {{ if eq $v.status "draft" }}<Button variant="outline" size="sm" icon="send" brick:click="markSent({{ $v.id }})">Mark as sent</Button>{{ end }}
+      {{ if ne $v.status "paid" }}<Button variant="outline" size="sm" icon="check-circle" brick:click="markPaid({{ $v.id }})">Mark as paid</Button>{{ end }}
+      <Button variant="outline" size="sm" icon="pencil" brick:click="edit({{ $v.id }})">Edit</Button>
+      <Button variant="outline" size="sm" icon="copy" brick:click="duplicate({{ $v.id }})">Duplicate</Button>
+      <ConfirmDialog id="inv-delete" title="Delete {{ $v.number }}?" message="The invoice and its {{ len $v.lines }} lines will be removed. This cannot be undone." confirmLabel="Delete invoice" icon="trash" action="remove({{ $v.id }})">
+        <brick:prop name="trigger"><Button variant="outline" size="sm" icon="trash" class="inv-danger">Delete</Button></brick:prop>
+      </ConfirmDialog>
+      <Button size="sm" icon="printer" data-print>Print</Button>
+    </div>
+  </div>
+  <article class="inv-doc" aria-label="Invoice {{ $v.number }}">
+    <header class="inv-doc__head">
+      <div class="inv-doc__from"><span class="inv-doc__logo">b</span><div><b>Brick Studio</b><small>12 Loom Street, London N1 7AA</small><small>billing@brick.dev</small></div></div>
+      <div class="inv-doc__title"><h2>Invoice</h2><span>{{ $v.number }}</span><Badge :tone="$v.tone" dot>{{ $v.label }}</Badge></div>
+    </header>
+    <div class="inv-doc__meta">
+      <div><small>Bill to</small><b>{{ $v.customer }}</b><span>{{ $v.email }}</span></div>
+      <div><small>Issued</small><b>{{ $v.issuedLabel }}</b></div>
+      <div><small>Due</small><b>{{ $v.dueLabel }}</b></div>
+      <div><small>Amount due</small><b class="inv-doc__due">${{ numberFormat (div $v.totals.total 100.0) 2 }}</b></div>
+    </div>
+    <table class="inv-doc__lines">
+      <thead><tr><th>Description</th><th class="inv-num">Qty</th><th class="inv-num">Unit price</th><th class="inv-num">Amount</th></tr></thead>
+      <tbody>{{ range $v.lines }}<tr><td>{{ .desc }}</td><td class="inv-num">{{ .qty }}</td><td class="inv-num">${{ numberFormat (div .cents 100.0) 2 }}</td><td class="inv-num">${{ numberFormat (div .amount 100.0) 2 }}</td></tr>{{ end }}</tbody>
+    </table>
+    <dl class="inv-sum inv-doc__sum">
+      <div><dt>Subtotal</dt><dd>${{ numberFormat (div $v.totals.subtotal 100.0) 2 }}</dd></div>
+      <div><dt>Tax ({{ $v.tax_rate }}%)</dt><dd>${{ numberFormat (div $v.totals.tax 100.0) 2 }}</dd></div>
+      <div class="inv-sum__total"><dt>Total</dt><dd>${{ numberFormat (div $v.totals.total 100.0) 2 }}</dd></div>
+    </dl>
+    {{ with $v.notes }}<div class="inv-doc__notes"><small>Notes</small><p>{{ . }}</p></div>{{ end }}
+    <footer class="inv-doc__foot">Brick Studio Ltd · Company no. 09876543 · VAT GB 123 4567 89</footer>
+  </article>
+  {{ else }}
+  <EmptyState icon="file" title="This invoice no longer exists" description="It may have been deleted."><button type="button" class="bk-btn bk-btn--outline" brick:click="back">Back to invoices</button></EmptyState>
+  {{ end }}
+{{ end }}
+{{ if .State.flash }}<Toast variant="success" title="{{ .State.flash }}" id="inv-flash-{{ .State.flashN }}" />{{ end }}
+</div>
+<brick:style>
+/* The page chrome around the app (topbar actions, print), kept here with the app. */
+.inv-top { margin-left: auto; display: flex; gap: .5rem; }
+/* Print only the invoice document: no app chrome, no toolbar, no shadow. */
+@media print {
+  .bk-appshell__sidebar, .bk-appshell__topbar, .inv-toolbar, .bk-toaster, .inv-top { display: none !important; }
+  .bk-appshell, .bk-appshell__body { display: block; height: auto; overflow: visible; }
+  .bk-appshell__main, .inv { padding: 0; max-width: none; }
+  .inv-doc { max-width: none; border: 0; box-shadow: none; padding: 0; }
+  body.bk-base { background: #fff; color: #000; }
+}
+.inv { display: flex; flex-direction: column; gap: 1.25rem; max-width: 72rem; margin: 0 auto; padding: .5rem .25rem 3rem; }
+.inv-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.inv :is(th, td).inv-num { text-align: right; }
+.inv-list__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--bk-border); }
+.inv-list__tools { display: flex; align-items: center; gap: .5rem; flex: 1 1 22rem; justify-content: flex-end; }
+.inv-list__tools .bk-search { max-width: 16rem; }
+.inv-list__tools .bk-select { width: 11.5rem; flex: none; }
+.inv-list .bk-table { border: 0; border-radius: 0; }
+.inv-list__foot { padding: .6rem 1rem; border-top: 1px solid var(--bk-border); }
+.inv-link { white-space: nowrap; min-height: 1.75rem; padding: 0; border: 0; background: none; color: var(--bk-primary-text); font: 600 var(--bk-text-sm)/1.2 var(--bk-mono); cursor: pointer; }
+.inv-link:hover { text-decoration: underline; }
+.inv-show-sm { display: none; }
+/* Four stat cards: one row, or two rows of two — never three and an orphan. */
+.inv .inv-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .inv .inv-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.inv-cust { display: flex; flex-direction: column; line-height: 1.3; }
+.inv-cust b { font-weight: 500; }
+.inv-cust small { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.inv-act { width: 2.5rem; text-align: right; }
+.inv-back { display: inline-flex; align-items: center; gap: .35rem; padding: 0; border: 0; background: none; color: var(--bk-muted-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); cursor: pointer; }
+.inv-back:hover { color: var(--bk-fg); }
+.inv-editor { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.25rem; align-items: start; }
+.inv-editor__main { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.inv-editor__side { position: sticky; top: 4.5rem; }
+.inv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.25rem; }
+.inv-wide { grid-column: 1 / -1; }
+.inv-lines { display: flex; flex-direction: column; gap: .5rem; }
+.inv-line { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem 8rem 7rem 2rem; gap: .5rem; align-items: center; }
+.inv-line--head { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 500; }
+.inv-line__amount { font-weight: 500; font-size: var(--bk-text-sm); }
+.inv-line__error { grid-column: 1 / -1; display: flex; align-items: center; gap: .3rem; margin: -.15rem 0 0; color: var(--bk-danger-text); font-size: var(--bk-text-xs); font-weight: 500; }
+.inv-add { margin-top: .75rem; }
+.inv-sum { display: flex; flex-direction: column; gap: .5rem; margin: 0; font-size: var(--bk-text-sm); }
+.inv-sum > div { display: flex; justify-content: space-between; gap: 1rem; }
+.inv-sum dt { color: var(--bk-muted-fg); }
+.inv-sum dd { margin: 0; font-variant-numeric: tabular-nums; }
+.inv-sum__total { padding-top: .6rem; border-top: 1px solid var(--bk-border); font-size: var(--bk-text-lg); font-weight: 650; }
+.inv-sum__total dt { color: var(--bk-fg); }
+.inv-side-actions { display: flex; flex-direction: column; gap: .4rem; margin-top: 1.25rem; }
+.inv-busy { display: flex; justify-content: center; align-items: center; gap: .4rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.inv-toolbar { width: 100%; max-width: 50rem; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+.inv-toolbar__actions { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+.inv-danger { color: var(--bk-danger-text); }
+.inv-doc { width: 100%; max-width: 50rem; margin: 0 auto; padding: 2.75rem 3rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow); font-size: var(--bk-text-sm); }
+.inv-doc__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem; padding-bottom: 1.75rem; border-bottom: 1px solid var(--bk-border); }
+.inv-doc__from { display: flex; gap: .75rem; }
+.inv-doc__from > div { display: flex; flex-direction: column; gap: .1rem; }
+.inv-doc__from b { font-size: var(--bk-text-base); }
+.inv-doc__from small, .inv-doc__meta small, .inv-doc__notes small { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.inv-doc__logo { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: var(--bk-radius); background: var(--bk-primary); color: var(--bk-primary-fg); font-weight: 700; }
+.inv-doc__title { display: flex; flex-direction: column; align-items: flex-end; gap: .3rem; }
+.inv-doc__title h2 { font-size: var(--bk-text-2xl); letter-spacing: -.02em; }
+.inv-doc__title span { color: var(--bk-muted-fg); font-family: var(--bk-mono); }
+.inv-doc__meta { display: grid; grid-template-columns: 2fr 1fr 1fr 1.2fr; gap: 1.25rem; padding: 1.5rem 0; }
+.inv-doc__meta > div { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+.inv-doc__meta b { font-weight: 600; }
+.inv-doc__meta span { color: var(--bk-muted-fg); overflow-wrap: anywhere; }
+.inv-doc__due { font-size: var(--bk-text-lg); }
+.inv-doc__lines { width: 100%; border-collapse: collapse; }
+.inv-doc__lines th { padding: .55rem 0; border-bottom: 1px solid var(--bk-border); color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 500; text-align: left; }
+.inv-doc__lines td { padding: .7rem 0; border-bottom: 1px solid var(--bk-border); }
+.inv-doc__lines .inv-num { text-align: right; padding-left: 1rem; }
+.inv-doc__sum { width: 16rem; margin: 1.25rem 0 0 auto; }
+.inv-doc__notes { margin-top: 2rem; padding: 1rem; border-radius: var(--bk-radius); background: var(--bk-surface-2); }
+.inv-doc__notes p { margin-top: .25rem; }
+.inv-doc__foot { margin-top: 2.5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-align: center; }
+@media (max-width: 1100px) { .inv-editor { grid-template-columns: minmax(0, 1fr); } .inv-editor__side { position: static; } }
+@media (max-width: 640px) {
+  .inv-hide-sm { display: none; }
+  .inv-cust small { display: none; }
+  .inv-show-sm { display: flex; justify-content: flex-end; margin-top: .25rem; }
+  .inv-stats .bk-stat__value { font-size: var(--bk-text-xl); }
+  .inv-act { width: 2rem; }
+  .inv-list .bk-table :is(th, td) { padding-left: .6rem; padding-right: .6rem; }
+  .inv-list__tools { flex-basis: 100%; }
+  .inv-list__tools .bk-search { max-width: none; }
+  .inv-grid { grid-template-columns: minmax(0, 1fr); }
+  .inv-line { grid-template-columns: 4.5rem minmax(0, 1fr) 2rem; }
+  .inv-line--head { display: none; }
+  .inv-line > :nth-child(1) { grid-column: 1 / -1; }
+  .inv-line > :nth-child(2) { grid-column: 1; grid-row: 2; }
+  .inv-line > :nth-child(3) { grid-column: 2; grid-row: 2; }
+  .inv-line > :nth-child(5) { grid-column: 3; grid-row: 2; }
+  .inv-line > :nth-child(4) { grid-column: 1 / -1; grid-row: 3; text-align: right; }
+  .inv-line + .inv-line { padding-top: .75rem; border-top: 1px solid var(--bk-border); }
+  .inv-list__tools > * { flex: 1 1 0; min-width: 0; }
+  .inv-list__tools .bk-select { width: auto; }
+  .inv-doc { padding: 1.5rem 1.25rem; }
+  .inv-doc__head { flex-direction: column; }
+  .inv-doc__title { align-items: flex-start; }
+  .inv-doc__meta { grid-template-columns: 1fr 1fr; }
+  .inv-doc__sum { width: 100%; }
+}
+</brick:style>

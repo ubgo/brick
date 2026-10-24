@@ -1,0 +1,18 @@
+---
+title: Callout
+category: Feedback
+description: "A highlighted block in the page’s flow — tip, note, warning — with an icon, title, text and actions. Not announced, not dismissible."
+api:
+  - {name: tone, type: "neutral | primary | info | success | warning | danger", default: "neutral", desc: "The colour, and the default icon."}
+  - {name: variant, type: "soft | outline", default: "soft", desc: "Filled tint or a tinted border."}
+  - {name: title, type: "string", desc: "Bold first line."}
+  - {name: icon, type: "string", default: "auto", desc: "auto picks the tone’s icon; empty hides it."}
+  - {name: actions, type: "block", desc: "<brick:prop name=actions>: buttons under the text."}
+---
+<h1>Callout</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>Use an <a href="/components/alert/">Alert</a> for a message that appears because something happened (it is announced and can be dismissed); a Callout is content that is always there.</p>
+<Example title="Tones" block><CalloutTones /><brick:prop name="code"><Source src="~/demos/CalloutTones.html" /></brick:prop></Example>
+<Example title="Actions, outline, no icon" block><CalloutActions /><brick:prop name="code"><Source src="~/demos/CalloutActions.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

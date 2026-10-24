@@ -1,0 +1,116 @@
+---
+use:
+  settings: ~/data/settings.yaml
+state:
+  plan: pro
+  last4: "4242"
+  expiry: "08/28"
+  editingCard: false
+  saves: 0
+  saved: ""
+---
+{{/*
+SettingsBilling: the Billing section — the current plan with its usage, a
+plan change validated against that usage (Hobby holds one project, and the
+demo account has seven), the payment method with an inline edit form, and
+the invoice table. saved names what was just saved ("plan" or "card"), so
+one toast says which.
+*/}}
+<brick:script>
+PLANS = {"hobby": "Hobby", "pro": "Pro", "team": "Team"}
+PROJECTS = 7
+
+def changePlan(state, props, fields):
+    plan = fields.get("plan", "")
+    new = dict(state, plan = plan, saved = "")
+    if plan not in PLANS:
+        return [dict(new, plan = state["plan"]), {"plan": "Choose a plan."}]
+    if plan == "hobby":
+        return [dict(new, plan = state["plan"]), {"plan": "Hobby holds 1 project and you have %d. Archive %d first." % (PROJECTS, PROJECTS - 1)}]
+    return dict(new, saved = "plan", saves = state["saves"] + 1)
+
+def updateCard(state, props, fields):
+    number = "".join([c for c in fields.get("number", "").elems() if c.isdigit()])
+    expiry = fields.get("expiry", "").strip()
+    errors = {}
+    if len(number) < 15 or len(number) > 16:
+        errors["number"] = "Enter the 15 or 16 digits on your card."
+    if len(expiry) != 5 or expiry[2] != "/" or not expiry[:2].isdigit() or not expiry[3:].isdigit() or int(expiry[:2]) < 1 or int(expiry[:2]) > 12:
+        errors["expiry"] = "Use MM/YY, like 08/29."
+    elif int(expiry[3:]) < 26:
+        errors["expiry"] = "This card has expired."
+    if errors:
+        return [dict(state, editingCard = True, saved = ""), errors]
+    return dict(state, last4 = number[-4:], expiry = expiry, editingCard = False, saved = "card", saves = state["saves"] + 1)
+
+def editCard(state, props):
+    return dict(state, editingCard = True, saved = "")
+
+def cancelCard(state, props):
+    return dict(state, editingCard = False, saved = "")
+</brick:script>
+<div class="settings-stack">
+  <Card :level="2" padding="lg">
+    <brick:prop name="header">
+      <div class="settings-plan">
+        <div><Text size="sm" tone="muted">Current plan</Text><div class="settings-plan__name">{{ index (dict "hobby" "Hobby" "pro" "Pro" "team" "Team") .State.plan }} <Badge tone="primary" size="sm">Active</Badge></div></div>
+        <div class="settings-plan__price"><b>{{ index (dict "hobby" "$0" "pro" "$12" "team" "$49") .State.plan }}</b><span>/ month</span></div>
+      </div>
+    </brick:prop>
+    <Text size="sm" tone="muted">Renews on October 1, 2026.</Text>
+    <div class="settings-usage">
+      <Progress :value="7" :max="10" label="Projects · 7 of 10" showValue size="sm" />
+      <Progress :value="3.2" :max="10" label="Storage · 3.2 of 10 GB" showValue size="sm" />
+      <Progress :value="4" :max="5" label="Seats · 4 of 5" showValue size="sm" tone="warning" />
+    </div>
+    <Separator />
+    <form brick:submit="changePlan" novalidate class="settings-planform">
+      <Field label="Change plan" :error=".Errors.plan"><RadioGroup name="plan" variant="card" :columns="3" :value=".State.plan" :options=".Data.settings.plans" /></Field>
+      <div class="settings-inline-actions"><span brick:loading hidden><span class="settings-busy"><Icon name="loader" :size="14" class="bk-btn__spin" />Updating…</span></span><Button type="submit" variant="outline">Change plan</Button></div>
+    </form>
+  </Card>
+  <Card :level="2" title="Payment method" description="Charged on the 1st of every month." padding="lg">
+    <div class="settings-card">
+      <span class="settings-card__brand" aria-hidden="true"><Icon name="credit-card" :size="18" /></span>
+      <div><b>Visa ending in {{ .State.last4 }}</b><Text size="sm" tone="muted">Expires {{ .State.expiry }}</Text></div>
+      {{ if not .State.editingCard }}<button type="button" class="bk-btn bk-btn--outline bk-btn--sm settings-card__edit" brick:click="editCard">Update</button>{{ end }}
+    </div>
+  </Card>
+  {{ if .State.editingCard }}
+  <Card :level="2" title="New card" description="Replaces the card above from the next invoice." padding="lg">
+    <form brick:submit="updateCard" novalidate class="settings-cardform">
+      <div class="settings-grid">
+        <Field label="Card number" :error=".Errors.number" class="settings-wide"><Input name="number" inputmode="numeric" autocomplete="cc-number" placeholder="1234 5678 9012 3456" icon="credit-card" /></Field>
+        <Field label="Expiry" :error=".Errors.expiry"><Input name="expiry" autocomplete="cc-exp" placeholder="MM/YY" /></Field>
+        <Field label="CVC"><Input name="cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" /></Field>
+      </div>
+      <FormActions><button type="button" class="bk-btn bk-btn--ghost" brick:click="cancelCard">Cancel</button><Button type="submit">Save card</Button></FormActions>
+    </form>
+  </Card>
+  {{ end }}
+  <Card :level="2" title="Invoices" description="Download a PDF for your records." padding="lg">
+    <Table :columns=".Data.settings.invoiceColumns" :rows=".Data.settings.invoices" hover>
+      <brick:prop name="cell_status"><Badge :tone="cond (eq .Slot.value `Paid`) `success` `neutral`" size="sm" dot>{{ .Slot.value }}</Badge></brick:prop>
+      <brick:prop name="cell_download"><a class="bk-btn bk-btn--ghost bk-btn--sm bk-btn--square" href="#" aria-label="Download {{ .Slot.row.number }}"><Icon name="download" :size="14" /></a></brick:prop>
+    </Table>
+  </Card>
+  {{ if eq .State.saved "plan" }}<Toast variant="success" title="Plan changed" description="You're on the {{ index (dict `hobby` `Hobby` `pro` `Pro` `team` `Team`) .State.plan }} plan from today." id="settings-billing-{{ .State.saves }}" />{{ end }}
+  {{ if eq .State.saved "card" }}<Toast variant="success" title="Card updated" description="Visa ending in {{ .State.last4 }}." id="settings-billing-{{ .State.saves }}" />{{ end }}
+</div>
+<brick:style>
+.settings-plan { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.settings-plan__name { display: flex; align-items: center; gap: .5rem; margin-top: .15rem; font-size: var(--bk-text-2xl); font-weight: 650; letter-spacing: -.02em; }
+.settings-plan__price b { font-size: var(--bk-text-2xl); font-weight: 650; letter-spacing: -.02em; }
+.settings-plan__price span { margin-left: .25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.settings-usage { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem 1.5rem; margin: 1rem 0 1.25rem; }
+.settings-planform { display: flex; flex-direction: column; gap: .9rem; margin-top: 1.25rem; }
+.settings-inline-actions { display: flex; align-items: center; justify-content: flex-end; gap: .75rem; font-size: var(--bk-text-sm); color: var(--bk-muted-fg); }
+.settings-card { display: flex; align-items: center; gap: .9rem; padding: .8rem 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); font-size: var(--bk-text-sm); }
+.settings-card > div { display: flex; flex-direction: column; gap: .1rem; }
+.settings-card b { font-weight: 550; }
+.settings-card__brand { display: grid; place-items: center; width: 2.5rem; height: 1.75rem; border-radius: var(--bk-radius-sm); background: var(--bk-muted); color: var(--bk-fg); }
+.settings-card__edit { margin-left: auto; }
+.settings-cardform { display: flex; flex-direction: column; gap: 1rem; }
+.settings-cardform .settings-grid { margin-top: 0; }
+@media (max-width: 640px) { .settings-usage { grid-template-columns: minmax(0, 1fr); } .settings-plan { align-items: flex-start; flex-direction: column; } }
+</brick:style>

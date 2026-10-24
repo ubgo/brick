@@ -1,0 +1,37 @@
+---
+state:
+  name: ""
+  email: ""
+  password: ""
+  confirm: ""
+brick:
+  rules:
+    name: [required, {min: 2}]
+    email: [required, email, {max: 120}]
+    password: [required, {min: 12}]
+    confirm: [required, {same: password}]
+  messages:
+    confirm.same: "The passwords do not match."
+---
+<brick:script>
+def signup(state, props):
+    errors = brick.validate()
+    if errors:
+        return [state, errors]
+    if state["email"].endswith("@taken.example"):
+        return [state, {"email": "That e-mail already has an account."}]
+    brick.untouch()
+    brick.flash("Welcome!", "success")
+    return dict(state, name = "", email = "", password = "", confirm = "")
+</brick:script>
+<form brick:submit="signup" novalidate>
+  <input brick:model.lazy="name" value="{{ .State.name }}">
+  {{ with .Errors.name }}<p class="error">name: {{ . }}</p>{{ end }}
+  <input type="email" brick:model.lazy="email" value="{{ .State.email }}">
+  {{ with .Errors.email }}<p class="error">email: {{ . }}</p>{{ end }}
+  <input type="password" brick:model.lazy="password" value="{{ .State.password }}">
+  {{ with .Errors.password }}<p class="error">password: {{ . }}</p>{{ end }}
+  <input type="password" brick:model.lazy="confirm" value="{{ .State.confirm }}">
+  {{ with .Errors.confirm }}<p class="error">confirm: {{ . }}</p>{{ end }}
+  <button>Create account</button>
+</form>

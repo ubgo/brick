@@ -1,0 +1,23 @@
+---
+use:
+  contacts: ~/apps/contacts/contacts.star
+state: {}
+brick:
+  on:
+    contact-added: $refresh
+    contact-deleted: $refresh
+---
+{{/*
+ContactCount: how many contacts the workspace has, for the Contacts topbar.
+
+It is stateful only so it can listen: ContactsApp dispatches contact-added
+and contact-deleted from its actions, and each one runs $refresh here, which
+re-reads the count. Neither component names the other; they share only the
+event names.
+*/}}
+{{ $n := contacts.total }}
+<span class="ct-total" aria-live="polite"><b>{{ numberFormat $n }}</b> {{ cond (eq $n 1) `contact` `contacts` }}</span>
+<brick:style>
+.ct-total { color: var(--bk-muted-fg); font-size: var(--bk-text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ct-total b { color: var(--bk-fg); font-weight: 600; }
+</brick:style>

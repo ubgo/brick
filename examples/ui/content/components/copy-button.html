@@ -1,0 +1,20 @@
+---
+title: CopyButton
+category: Actions
+description: Copies text to the clipboard and confirms with a check for two seconds. Copies a fixed string or the text of another element.
+api:
+  - {name: text, type: string, desc: The text to copy.}
+  - {name: target, type: string, desc: "A CSS selector; its element's text (or value) is copied when text is empty."}
+  - {name: label, type: string, default: Copy, desc: "The accessible name, and the visible text with showLabel."}
+  - {name: copiedLabel, type: string, default: Copied, desc: Announced to screen readers (and shown with showLabel) after copying.}
+  - {name: showLabel, type: bool, desc: Shows the label next to the icon.}
+  - {name: variant, type: "ghost | outline | secondary", default: ghost, desc: The look.}
+  - {name: size, type: "xs | sm | md", default: sm, desc: The size.}
+---
+<h1>CopyButton</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Copy a string"><CopyButtonBasic /><brick:prop name="code"><Source src="~/demos/CopyButtonBasic.html" /></brick:prop></Example>
+<Example title="Copy another element's text" block><Stack gap="sm"><CopyButtonTarget /></Stack><brick:prop name="code"><Source src="~/demos/CopyButtonTarget.html" /></brick:prop></Example>
+<Prose><p>The clipboard needs JavaScript, so without it the button is hidden rather than dead. The result is announced through a polite live region.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

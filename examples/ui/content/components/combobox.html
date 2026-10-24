@@ -1,0 +1,19 @@
+---
+title: Combobox
+category: Forms
+description: "A searchable select: type to filter, arrows and Enter to pick. A native select without JavaScript."
+api:
+  - {name: options, type: "list", desc: "Strings, or maps {value, label} (required)."}
+  - {name: value, type: "string", desc: "The selected value."}
+  - {name: placeholder, type: "string", default: "Select…", desc: "Shown while nothing is chosen."}
+  - {name: empty, type: "string", default: "No results", desc: "Shown when nothing matches."}
+  - {name: label, type: "string", desc: "The accessible name when not inside a Field."}
+  - {name: invalid, type: "bool", desc: "Red border."}
+  - {name: required, type: "bool", desc: "Required."}
+  - {name: disabled, type: "bool", desc: "Disables it."}
+---
+<h1>Combobox</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Searchable" block><ComboboxBasic /><brick:prop name="code"><Source src="~/demos/ComboboxBasic.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

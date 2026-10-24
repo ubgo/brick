@@ -1,0 +1,22 @@
+---
+state:
+  once: 0
+  every: 0
+---
+<brick:script>
+def bump_once(state, props):
+    return dict(state, once = state["once"] + 1)
+
+def bump_every(state, props):
+    return dict(state, every = state["every"] + 1)
+</brick:script>
+{{/*
+Hold Enter in the first field: .norepeat runs the action once per press.
+Hold the down arrow in the second: the default repeats while held.
+*/}}
+<div style="display: grid; gap: .6rem; max-width: 22rem">
+  <Input id="v22-norepeat" placeholder="Hold Enter here" brick:keydown.norepeat.enter="bump_once" />
+  <span>Enter presses: <b id="v22-once">{{ .State.once }}</b></span>
+  <Input id="v22-repeat" placeholder="Hold the down arrow here" brick:keydown.down="bump_every" />
+  <span>Down-arrow keydowns: <b id="v22-every">{{ .State.every }}</b></span>
+</div>

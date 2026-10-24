@@ -1,0 +1,16 @@
+---
+title: Data
+bio: "<p>Hi, I'm <b>Sara</b>.</p><script>alert('x')</script>"
+---
+<h1>Data and errors</h1>
+<h2>A loader</h2>
+<RecentPosts />
+<h2>A boundary</h2>
+<brick:boundary>
+  <Broken />
+  <brick:prop name="fallback"><p class="fallback">This widget is unavailable.</p></brick:prop>
+</brick:boundary>
+<h2>Attribute spread</h2>
+<Primary id="buy" hx-post="/buy">Buy</Primary>
+<h2>Sanitized user HTML</h2>
+<div class="bio">{{ sanitize .Params.bio }}</div>

@@ -1,0 +1,11 @@
+---
+columns:
+  - {key: name, label: Member}
+  - {key: role, label: Role}
+  - {key: team, label: Team}
+  - {key: stage, label: Status}
+  - {key: seats, label: Seats, align: right, width: 5rem}
+---
+<Table :columns=".Params.columns" :rows="list" style="width: 100%">
+  <brick:prop name="empty"><EmptyState icon="users" title="No members yet" description="Invite someone to see them here." size="sm" /></brick:prop>
+</Table>

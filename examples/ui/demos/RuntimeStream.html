@@ -1,0 +1,25 @@
+---
+state:
+  q: ""
+  answer: "Ask me anything."
+---
+<brick:script>
+def ask(state, props):
+    # A host global would call a model here; the demo writes a canned
+    # reply word by word. Each brick.stream lands in the brick:ref at once,
+    # as text, and the final render below replaces it.
+    q = state["q"].strip() or "nothing"
+    words = ("You asked about \"" + q + "\". This reply is streamed one word at a time, then the final render lands.").split(" ")
+    brick.stream("answer", "", replace = True)
+    for w in words:
+        pause(90)
+        brick.stream("answer", w + " ")
+    return dict(state, answer = " ".join(words), q = "")
+</brick:script>
+<div style="display: grid; gap: .75rem; max-width: 36rem">
+  <p style="min-height: 3rem; margin: 0"><b>Brickbot:</b> <span id="rs-answer" brick:ref="answer" style="white-space: pre-wrap">{{ .State.answer }}</span></p>
+  <div style="display: flex; gap: .5rem">
+    <Input id="rs-q" brick:model.defer="q" placeholder="Ask Brickbot" />
+    <Button id="rs-ask" brick:click="ask" brick:disable-with="Streaming…">Ask</Button>
+  </div>
+</div>

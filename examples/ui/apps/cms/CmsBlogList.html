@@ -1,0 +1,37 @@
+---
+use:
+  cms: ~/apps/cms/cms.star
+brick:
+  island: true
+load: cms.published_posts
+props:
+  posts: {type: list, default: []}
+---
+{{/*
+CmsBlogList: the public blog's live posts (published, or scheduled for a
+date that has come), newest first, as a card grid. An island, so the
+cached page shows what the CMS published a moment ago. :posts at the call
+site replaces the loader (the post page passes its "more posts").
+*/}}
+<brick:style>
+.cms-blog-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 1.25rem; }
+.cms-blog-card { display: flex; flex-direction: column; height: 100%; overflow: hidden; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); text-decoration: none; transition: transform var(--bk-duration), box-shadow var(--bk-duration), border-color var(--bk-duration); }
+.cms-blog-card:hover { transform: translateY(-2px); box-shadow: var(--bk-shadow-lg); border-color: color-mix(in oklab, var(--bk-primary) 30%, var(--bk-border)); }
+.cms-blog-card:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.cms-blog-card__body { display: flex; flex-direction: column; gap: .5rem; flex: 1; padding: 1rem; }
+.cms-blog-card__excerpt { color: var(--bk-muted-fg); font-size: var(--bk-text-sm); line-height: 1.55; }
+.cms-blog-card__meta { display: flex; align-items: center; gap: .45rem; margin-top: auto; padding-top: .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.cms-blog-card__tags { display: flex; flex-wrap: wrap; gap: .25rem; }
+</brick:style>
+<div class="{{ cx `cms-blog-list` .Attrs.class }}" {{ attrs `class` }}>
+  {{ range .Props.posts }}
+  <a class="cms-blog-card" href="{{ print `/apps/cms/blog/` .slug `/` }}">
+    <CmsCover :tone=".cover" :title=".title" />
+    <div class="cms-blog-card__body">
+      <div class="cms-blog-card__tags">{{ range .taglist }}<Badge size="sm">{{ . }}</Badge>{{ end }}</div>
+      <p class="cms-blog-card__excerpt">{{ .excerpt }}</p>
+      <div class="cms-blog-card__meta"><Avatar :name=".author" size="xs" />{{ .author }} · {{ dateFormat "2 Jan 2006" (slice .published 0 10) }}</div>
+    </div>
+  </a>
+  {{ else }}<EmptyState icon="file" title="Nothing published yet" description="Posts appear here when the CMS publishes them." bordered />{{ end }}
+</div>

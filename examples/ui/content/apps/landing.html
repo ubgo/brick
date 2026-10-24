@@ -1,0 +1,233 @@
+---
+title: Landing page
+layout: app
+nav:
+  - {label: Features, href: "#features"}
+  - {label: Pricing, href: "#pricing"}
+  - {label: Customers, href: "#customers"}
+  - {label: FAQ, href: "#faq"}
+  - {label: Docs, href: /}
+team:
+  - {name: Maya Chen}
+  - {name: Liam Kim}
+  - {name: Ava Patel}
+  - {name: Noah Silva}
+logos:
+  - {name: Northwind, icon: globe}
+  - {name: Globex, icon: layers}
+  - {name: Lumenly, icon: sparkles}
+  - {name: Orbital, icon: rocket}
+  - {name: Quanta, icon: activity}
+  - {name: Keystone, icon: shield}
+features:
+  - {icon: zap, title: No build step, text: "Save a file and the page reloads. There is no bundler, no transpiler and nothing to cache-bust."}
+  - {icon: layers, title: Components as files, text: "Card.html is <Card>. Props are attributes, slots are blocks, and everything is plain Go html/template."}
+  - {icon: activity, title: Live actions, text: "A button calls a Starlark function on the server and the component patches in place. No API to write."}
+  - {icon: shield, title: Safe by default, text: "Every value is escaped. Scripts are sandboxed, paths are confined, and data can never choose a file."}
+  - {icon: globe, title: Works without JavaScript, text: "Dialogs are <dialog>, menus are popovers, forms post. JavaScript only makes them nicer."}
+  - {icon: palette, title: Themeable to the pixel, text: "Seventy design tokens, dark mode and seven accents. Rebrand by overriding custom properties."}
+stats:
+  - {value: "4,200+", label: Teams shipping}
+  - {value: "38 ms", label: Median render}
+  - {value: "0 KB", label: Required JavaScript}
+  - {value: "99.99%", label: Uptime last year}
+plans:
+  - name: Hobby
+    blurb: For side projects and prototypes.
+    monthly: "$0"
+    yearly: "$0"
+    cta: Start free
+    variant: outline
+    perks: [1 project, Community support, Deploy previews, Custom domain]
+  - name: Pro
+    blurb: For growing teams that ship every day.
+    monthly: "$24"
+    yearly: "$19"
+    cta: Start 14-day trial
+    variant: primary
+    popular: true
+    perks: [Unlimited projects, Live actions and islands, Team roles and SSO, Priority support, Usage analytics]
+  - name: Enterprise
+    blurb: For scale, security and compliance.
+    monthly: "$79"
+    yearly: "$63"
+    cta: Talk to sales
+    variant: outline
+    perks: [Everything in Pro, SAML and SCIM, Audit log, 99.99% SLA, Dedicated engineer]
+quotes:
+  - {name: Maya Chen, role: "CTO, Northwind", text: "We deleted 40,000 lines of client code. Pages got faster and the team got its evenings back."}
+  - {name: Liam Kim, role: "Staff engineer, Globex", text: "It is just HTML and Go templates, so every engineer on the team could contribute on day one."}
+  - {name: Ava Patel, role: "Founder, Lumenly", text: "Our dashboard renders in 40 ms and works on a train with JavaScript blocked. Customers noticed."}
+faq:
+  - {q: "Do I need to know Go?", a: "Only to host it. Pages and components are HTML with a few template actions; scripts are a small Python-like language."}
+  - {q: "Can I use my own CSS framework?", a: "Yes. The kit's styles live under .bk- classes and never touch your markup. Tailwind is built in if you want it."}
+  - {q: "What happens with JavaScript off?", a: "Everything still works. Links navigate, forms post, dialogs open. JavaScript adds instant navigation and live actions."}
+  - {q: "How does billing work?", a: "Plans are per workspace, billed monthly or yearly. Yearly saves 20%. You can switch or cancel at any time."}
+  - {q: "Is there a self-hosted option?", a: "Brickyard is open source. Run it anywhere a Go binary runs, or let us host it for you."}
+---
+<brick:style>
+.land { overflow-x: clip; }
+a.land-brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; font-size: var(--bk-text-lg); letter-spacing: -.02em; text-decoration: none; color: var(--bk-fg); }
+.land-brand__mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: var(--bk-radius); background: linear-gradient(135deg, var(--bk-primary), color-mix(in oklab, var(--bk-primary), black 30%)); color: var(--bk-primary-fg); }
+.land-proof { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.land-logos { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.25rem 3rem; color: var(--bk-muted-fg); }
+.land-logos span { display: inline-flex; align-items: center; gap: .45rem; font-size: var(--bk-text-xl); font-weight: 700; letter-spacing: -.03em; }
+.land-kicker { text-align: center; font-size: var(--bk-text-sm); color: var(--bk-muted-fg); margin-bottom: 1.5rem; }
+.land-feature__icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; margin-bottom: 1rem; border-radius: var(--bk-radius); background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); }
+.land-band { border-block: 1px solid var(--bk-border); background: var(--bk-surface-2); }
+.land-stat { text-align: center; }
+.land-stat b { display: block; font-size: clamp(1.75rem, 4vw, 2.5rem); font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.land-stat span { color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.land-toggle { display: flex; justify-content: center; align-items: center; gap: .75rem; margin-bottom: 2rem; }
+.land-plans .land-price--yearly { display: none; }
+.land-plans:has(input[value=Yearly]:checked) .land-price--yearly { display: inline; }
+.land-plans:has(input[value=Yearly]:checked) .land-price--monthly { display: none; }
+.land-plan { position: relative; }
+.land-plan__head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.land-plan:not(.land-plan--popular) .land-plan__badge { display: none; }
+.land-plan.land-plan--popular { border-color: var(--bk-primary); box-shadow: 0 0 0 1px var(--bk-primary), var(--bk-shadow-lg); }
+.land-plan__price { display: flex; align-items: baseline; gap: .3rem; margin: .25rem 0 1.25rem; }
+.land-plan__price b { font-size: 2.5rem; font-weight: 700; letter-spacing: -.04em; line-height: 1; }
+.land-plan__perks { display: grid; gap: .6rem; margin: 1.25rem 0 0; padding: 0; list-style: none; font-size: var(--bk-text-sm); }
+.land-plan__perks li { display: flex; align-items: center; gap: .55rem; }
+.land-plan__perks .bk-icon { color: var(--bk-primary-text); flex: none; }
+.land-quote { margin: 0 0 1.25rem; font-size: var(--bk-text-base); line-height: 1.7; }
+.land-cta { position: relative; overflow: hidden; padding: 3.5rem 1.5rem; border-radius: var(--bk-radius-lg); background: linear-gradient(135deg, var(--bk-primary), color-mix(in oklab, var(--bk-primary), black 35%)); color: var(--bk-primary-fg); text-align: center; }
+.land-cta::after { content: ""; position: absolute; inset: auto -10% -60% 40%; height: 120%; background: radial-gradient(closest-side, color-mix(in oklab, var(--bk-primary-fg) 22%, transparent), transparent); pointer-events: none; }
+.land-cta h2 { font-size: clamp(1.6rem, 4vw, 2.25rem); letter-spacing: -.03em; }
+.land-cta p { margin: .75rem auto 1.75rem; max-width: 34rem; opacity: .85; font-size: var(--bk-text-lg); }
+.land-cta .bk-btn--secondary { background: var(--bk-primary-fg); color: var(--bk-primary-text); }
+.land-cta .bk-btn--ghost { color: var(--bk-primary-fg); }
+.land-cta .bk-btn--ghost:hover { background: color-mix(in oklab, var(--bk-primary-fg) 14%, transparent); }
+.land-faq { max-width: 46rem; margin: 0 auto; }
+</brick:style>
+<div class="land">
+<Navbar :items=".Params.nav" sticky label="Primary">
+  <brick:prop name="brand"><a class="land-brand" href="/apps/landing/"><span class="land-brand__mark"><Icon name="layers" :size="16" /></span>Brickyard</a></brick:prop>
+  <brick:prop name="actions">
+    <ThemeToggle />
+    <Button href="/apps/auth/" variant="ghost" size="sm">Sign in</Button>
+    <Button href="/apps/auth/?mode=register" size="sm">Get started</Button>
+  </brick:prop>
+</Navbar>
+
+<main id="main">
+<Hero layout="split" title="Ship server‑rendered apps, not build pipelines" subtitle="Brickyard turns folders of HTML components into fast, accessible web apps — with live server actions and zero required JavaScript.">
+  <brick:prop name="eyebrowSlot"><a href="#features" style="text-decoration: none"><Badge tone="primary" pill icon="sparkles">New · Live actions and islands</Badge></a></brick:prop>
+  <brick:prop name="actions">
+    <Button href="/apps/auth/?mode=register" size="lg" iconRight="arrow-right">Start for free</Button>
+    <Button href="#pricing" size="lg" variant="outline" icon="play">See pricing</Button>
+  </brick:prop>
+  <div class="land-proof">
+    <AvatarGroup :items=".Params.team" size="md" label="Brickyard customers" />
+    <Stack gap="none">
+      <Rating :value="5" readonly size="sm" label="Rated 5 out of 5" />
+      <Text as="span" size="xs" tone="muted">Loved by 4,200+ teams</Text>
+    </Stack>
+  </div>
+  <brick:prop name="media"><BrowserMockup url="app.brickyard.dev/dashboard"><img src="/demo/dashboard.svg" alt="The Brickyard dashboard: requests, render time, a traffic chart and recent deployments" style="display: block; width: 100%"></BrowserMockup></brick:prop>
+</Hero>
+
+<Container size="xl">
+  <Section spacing="sm">
+    <p class="land-kicker">Trusted by engineering teams at</p>
+    <div class="land-logos">{{ range .Params.logos }}<span><Icon :name=".icon" :size="20" />{{ .name }}</span>{{ end }}</div>
+  </Section>
+
+  <Section id="features" eyebrow="Features" title="Everything a web app needs, in plain HTML" description="Drop in a file to add a page, and build it from components with props, slots and context." align="center" spacing="lg">
+    <Grid :sm="2" :lg="3" gap="lg">
+      {{ range .Params.features }}
+      <Card variant="outline">
+        <div class="land-feature__icon"><Icon :name=".icon" :size="20" /></div>
+        <Heading :level="3" size="md">{{ .title }}</Heading>
+        <Text size="sm" tone="muted" style="margin-top: .4rem">{{ .text }}</Text>
+      </Card>
+      {{ end }}
+    </Grid>
+  </Section>
+</Container>
+
+<div class="land-band">
+  <Container size="xl">
+    <Section spacing="md">
+      <Grid :cols="2" :md="4" gap="lg">{{ range .Params.stats }}<div class="land-stat"><b>{{ .value }}</b><span>{{ .label }}</span></div>{{ end }}</Grid>
+    </Section>
+  </Container>
+</div>
+
+<Container size="xl">
+  <Section id="pricing" eyebrow="Pricing" title="Simple pricing that scales with you" description="Start free. Upgrade when your team does. Every plan includes the full component kit." align="center" spacing="lg">
+    <div class="land-plans">
+      <div class="land-toggle">
+        <SegmentedControl name="billing" label="Billing period" :options="list `Monthly` `Yearly`" value="Monthly" />
+        <Badge tone="success" pill size="sm">Save 20%</Badge>
+      </div>
+      <Grid :md="3" gap="lg" align="start">
+        {{ range .Params.plans }}
+        <Card variant="default" padding="lg" :class="cond .popular `land-plan land-plan--popular` `land-plan`">
+          <div class="land-plan__head"><Heading :level="3" size="md">{{ .name }}</Heading><Badge tone="primary" variant="solid" pill size="sm" class="land-plan__badge">Most popular</Badge></div>
+          <Text size="sm" tone="muted" style="margin-top: .35rem">{{ .blurb }}</Text>
+          <div class="land-plan__price"><b><span class="land-price--monthly">{{ .monthly }}</span><span class="land-price--yearly">{{ .yearly }}</span></b><Text as="span" size="sm" tone="muted">per seat / month</Text></div>
+          <Button href="/apps/auth/?mode=register" :variant=".variant" block>{{ .cta }}</Button>
+          <ul class="land-plan__perks">{{ range .perks }}<li><Icon name="check" :size="15" />{{ . }}</li>{{ end }}</ul>
+        </Card>
+        {{ end }}
+      </Grid>
+      <Text size="xs" tone="muted" align="center" style="margin-top: 1.25rem">Prices in USD. Yearly plans are billed once a year.</Text>
+    </div>
+  </Section>
+
+  <Section id="customers" eyebrow="Customers" title="Teams ship faster with Brickyard" align="center" spacing="lg">
+    <Grid :md="3" gap="lg">
+      {{ range .Params.quotes }}
+      <Card variant="muted" padding="lg">
+        <Rating :value="5" readonly size="sm" label="5 out of 5" style="margin-bottom: .9rem" />
+        <blockquote class="land-quote">“{{ .text }}”</blockquote>
+        <Stack direction="row" gap="sm">
+          <Avatar :name=".name" size="md" />
+          <Stack gap="none"><Text as="span" size="sm" weight="semibold">{{ .name }}</Text><Text as="span" size="xs" tone="muted">{{ .role }}</Text></Stack>
+        </Stack>
+      </Card>
+      {{ end }}
+    </Grid>
+  </Section>
+
+  <Section id="faq" eyebrow="FAQ" title="Questions, answered" align="center" spacing="lg">
+    <div class="land-faq">
+      {{ range $i, $f := .Params.faq }}<Accordion :title="$f.q" group="faq" variant="separated" :open="eq $i 0">{{ $f.a }}</Accordion>{{ end }}
+    </div>
+  </Section>
+
+  <Section spacing="lg">
+    <div class="land-cta">
+      <h2>Ready to ship your next app?</h2>
+      <p>Create a project in a minute. No credit card, no build step, no lock-in.</p>
+      <Stack direction="row" gap="sm" justify="center" wrap>
+        <Button href="/apps/auth/?mode=register" size="lg" variant="secondary" iconRight="arrow-right">Get started free</Button>
+        <Button href="/" size="lg" variant="ghost" icon="book-open">Read the docs</Button>
+      </Stack>
+    </div>
+  </Section>
+</Container>
+</main>
+
+<Footer variant="muted">
+  <brick:prop name="brand">
+    <a class="land-brand" href="/apps/landing/"><span class="land-brand__mark"><Icon name="layers" :size="16" /></span>Brickyard</a>
+    <p>Server-rendered apps for teams who would rather ship than configure.</p>
+  </brick:prop>
+  <div><h3>Product</h3><ul><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="/">Components</a></li><li><a href="#">Changelog</a></li></ul></div>
+  <div><h3>Resources</h3><ul><li><a href="/">Docs</a></li><li><a href="/theming/">Theming</a></li><li><a href="#">Guides</a></li><li><a href="#">Community</a></li></ul></div>
+  <div><h3>Company</h3><ul><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">Blog</a></li><li><a href="#">Contact</a></li></ul></div>
+  <brick:prop name="bottom">
+    <span>© 2026 Brickyard, Inc. All rights reserved.</span>
+    <Stack direction="row" gap="md" inline><a href="#">Privacy</a><a href="#">Terms</a><Status tone="success" pulse>All systems normal</Status></Stack>
+  </brick:prop>
+</Footer>
+</div>
+
+<AppSource app="Landing page">
+  <Tabs label="Landing page files" size="sm">
+    <Tab title="landing.html"><CodeView file="content/apps/landing.html"><Source src="~/content/apps/landing.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

@@ -1,0 +1,49 @@
+---
+use:
+  nav: ~/data/nav.yaml
+blurbs:
+  Getting started: Install, lay out a page and retheme.
+  Foundations: Tokens, icons, type and the pieces everything else is made of.
+  Actions: Buttons, groups, copy and swap.
+  Forms: Inputs, selects and choices that post without JavaScript.
+  Data display: Tables, badges, avatars, stats and lists.
+  Feedback: Alerts, toasts, progress and empty states.
+  Navigation: Menus, tabs, breadcrumbs and pagination.
+  Overlays: Dialogs, drawers, popovers and tooltips.
+  Layout: Containers, stacks, grids, cards and page sections.
+  Charts: Server-rendered SVG charts.
+  Mockups: Browser, phone and code frames for screenshots.
+icons:
+  Getting started: rocket
+  Foundations: palette
+  Actions: zap
+  Forms: pencil
+  Data display: list
+  Feedback: bell
+  Navigation: menu
+  Overlays: layers
+  Layout: layout-dashboard
+  Charts: bar-chart
+  Mockups: image
+---
+{{/* IntroCategories: one card per sidebar category that has pages, linking to its first page. */}}
+<brick:style>
+.intro-cat { display: flex; align-items: flex-start; gap: .75rem; }
+.intro-cat__icon { display: grid; place-items: center; flex: none; width: 2rem; height: 2rem; border-radius: var(--bk-radius); background: color-mix(in oklab, var(--bk-primary) 11%, transparent); color: var(--bk-primary-text); }
+.intro-cat__count { margin-top: .35rem; font-size: var(--bk-text-xs); color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; }
+</brick:style>
+<Grid :sm="2" :lg="3" gap="sm">
+  {{ range .Data.nav.categories }}{{ $cat := . }}{{ $n := 0 }}{{ $first := "" }}
+  {{ range $.Site.Pages }}{{ if eq (index .Params "category") $cat }}{{ $n = add $n 1 }}{{ if not $first }}{{ $first = .URL }}{{ end }}{{ end }}{{ end }}
+  {{ if $n }}<Card :href="$first" padding="sm">
+    <div class="intro-cat">
+      <span class="intro-cat__icon"><Icon :name="index $.Params.icons $cat" :size="16" /></span>
+      <div>
+        <Heading :level="3" size="sm">{{ $cat }}</Heading>
+        <Text size="xs" tone="muted">{{ index $.Params.blurbs $cat }}</Text>
+        <div class="intro-cat__count">{{ $n }} {{ pluralize $n "page" "pages" }}</div>
+      </div>
+    </div>
+  </Card>{{ end }}
+  {{ end }}
+</Grid>

@@ -1,0 +1,18 @@
+# The kit is a component library: brick-kit is the
+# embedded kit that main.go offers (kit.Library()), so every kit tag is
+# available by name, and Theme's tokens are linked on every page through the
+# kit's `global:` list. demos/ holds each documented example as its own
+# component, so a doc page renders it and shows its source from the same
+# file.
+# apps/ holds one folder per demo app: its components and its Starlark
+# module side by side (each folder's README.md lists the rest).
+roots: [components, apps, demos]
+libraries: [brick-kit]
+navigation: true
+# What main.go supplies, so `brick check` and `brick lsp` (which are not this
+# program) can compile the site: the script globals it grants (Options.DB is
+# db) and its upload sink. Pages that actually use one are reported as
+# warnings there, never rendered with a fake value.
+host:
+  globals: [db, today, sanitize_html, pause]
+  uploads: true

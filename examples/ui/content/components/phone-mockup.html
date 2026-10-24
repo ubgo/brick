@@ -1,0 +1,15 @@
+---
+title: Phone mockup
+category: Mockups
+description: "A phone frame with a status bar and a dynamic island or notch; the screen scrolls."
+api:
+  - {name: notch, type: "island | notch | none", default: "island", desc: "The camera cut-out."}
+  - {name: time, type: "string", default: "9:41", desc: "The status bar clock."}
+  - {name: label, type: "string", desc: "The figure’s caption for screen readers."}
+---
+<h1>Phone mockup</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Island and notch"><PhoneMockupApp /><brick:prop name="code"><Source src="~/demos/PhoneMockupApp.html" /></brick:prop></Example>
+<Example title="With a Dock"><DockInPhone /><brick:prop name="code"><Source src="~/demos/DockInPhone.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

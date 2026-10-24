@@ -1,0 +1,22 @@
+---
+props:
+  tone: {type: string, default: default, oneof: [default, primary]}
+---
+{{/*
+Code: inline code inside running text — a command, a file name, an
+identifier.
+
+  Run <Code>task ui:test</Code> after changing the kit.
+  Set <Code tone="primary">data-accent</Code> on the html element.
+
+For a block of code use <pre>. Code holding a less-than sign or template
+braces is written with entities (&lt;), or shown from a file by a raw
+component.
+*/}}
+<brick:style>
+.bk-code { padding: .1em .35em; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-muted); color: var(--bk-fg); font: .86em/1.4 var(--bk-mono); overflow-wrap: anywhere; }
+.bk-code--primary { border-color: color-mix(in oklab, var(--bk-primary) 25%, transparent); background: color-mix(in oklab, var(--bk-primary) 9%, transparent); color: var(--bk-primary-text); }
+</brick:style>
+{{- /* and no leading whitespace */ -}}
+<code class="{{ cx `bk-code` (cond (eq .Props.tone `primary`) `bk-code--primary` ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</code>
+{{- /* no trailing newline: this renders inline, inside running text */ -}}

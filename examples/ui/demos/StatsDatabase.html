@@ -1,0 +1,11 @@
+---
+use:
+  demo: ~/demos/demo_data.star
+load: demo.order_stats
+---
+<Stats style="width: 100%">
+  <Stat label="Paid orders" :value="numberFormat .Props.orders" icon="shopping-cart" />
+  <Stat label="Revenue" :value="print `$` (numberFormat .Props.revenue)" icon="dollar" />
+  <Stat label="Pending" :value="print .Props.pending" icon="clock" />
+  <Stat label="Refunded" :value="print .Props.refunded" icon="refresh" />
+</Stats>

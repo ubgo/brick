@@ -1,0 +1,13 @@
+/examples/build/
+/runtime/test/node_modules/
+
+# lore — the knowledge DB is per-developer, and the rendered .lore/LORE.md
+# is compiled from the private design overlay, so none of it is
+# committed here.
+/.lore/
+
+# Local pointer to the private design overlay (BRICK_DESIGN_DIR=...).
+/.env.design
+
+# Python bytecode from the docs check scripts.
+__pycache__/

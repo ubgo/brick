@@ -1,0 +1,53 @@
+---
+use:
+  dash: ~/apps/dashboard/dashboard.star
+load: dash.board
+props:
+  range: {type: string, default: 30d}
+  page: {type: int, default: 1}
+---
+{{/*
+DashPanels: everything the Dashboard shows for one range and orders page —
+KPI cards with deltas against the previous period of the same length, the
+revenue line, orders by status, top products, recent orders and activity.
+Every value comes from apps/dashboard/dashboard.star; nothing here computes.
+*/}}
+<brick:style>
+.dash-panels .dash-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .dash-panels .dash-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .dash-panels .dash-kpis { grid-template-columns: minmax(0, 1fr); } }
+.dash-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 1rem; margin-top: 1rem; }
+.dash-grid__side { display: grid; gap: 1rem; align-content: start; }
+.dash-range { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 400; }
+.dash-orders { align-self: start; }
+.dash-orders .bk-pagination { margin-top: .75rem; }
+.dash-id { font-family: var(--bk-mono); color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+@media (max-width: 1100px) { .dash-grid { grid-template-columns: minmax(0, 1fr); } }
+</brick:style>
+<div class="dash-panels">
+  <Stats class="dash-kpis">{{ range .Props.kpis }}{{ $v := "" }}{{ if .percent }}{{ $v = printf "%.1f%%" .value }}{{ else if .money }}{{ $v = print "$" (numberFormat .value (cond (eq (printf "%T" .value) "float64") 2 0)) }}{{ else }}{{ $v = numberFormat .value }}{{ end }}<Stat :label=".label" :value="$v" :delta=".delta" :invert=".invert" :trend=".trend" :icon=".icon" :description="cond .delta `vs. previous period` `no earlier data`" />{{ end }}</Stats>
+  <div class="dash-grid">
+    <Card :level="2" title="Revenue" :description="print `Paid revenue per day, 7-day average · ` .Props.start ` – ` .Props.end">
+      <LineChart :data=".Props.revenue" x="label" y="revenue" name="7-day average" prefix="$" area smooth :points="false" :height="240" label="Paid revenue per day, 7-day average" />
+    </Card>
+    <Card :level="2" title="Orders by status" description="Share of all orders in the range">
+      <DonutChart :data=".Props.status" name="Orders" centerLabel="Orders" legend="bottom" :size="168" :thickness="18" label="Orders by status" />
+    </Card>
+    <Card :level="2" title="Recent orders" class="dash-orders" padding="sm">
+      <Table compact hover :rows=".Props.orders" :columns="list (dict `key` `id` `label` `Order`) (dict `key` `customer` `label` `Customer`) (dict `key` `product` `label` `Product`) (dict `key` `date` `label` `Date`) (dict `key` `status` `label` `Status`) (dict `key` `amount` `label` `Amount` `align` `right`)">
+        <brick:prop name="cell_id"><span class="dash-id">{{ .Slot.value }}</span></brick:prop>
+        <brick:prop name="cell_status"><Badge :tone=".Slot.row.tone" dot size="sm">{{ .Slot.value }}</Badge></brick:prop>
+        <brick:prop name="cell_amount">${{ numberFormat .Slot.value 2 }}</brick:prop>
+      </Table>
+      <Pagination :page=".Props.page" :total=".Props.total" :perPage=".Props.perPage" href="#orders-page-%d" size="sm" label="Recent orders pages" />
+    </Card>
+    <div class="dash-grid__side">
+      <Card :level="2" title="Top products" description="By paid revenue">
+        <BarChart :data=".Props.products" x="product" y="revenue" name="Revenue" orientation="horizontal" labels prefix="$" label="Top products by paid revenue" />
+      </Card>
+      <Card :level="2" title="Activity">
+        <Timeline :items=".Props.activity" size="sm" label="Recent activity" />
+      </Card>
+    </div>
+  </div>
+</div>

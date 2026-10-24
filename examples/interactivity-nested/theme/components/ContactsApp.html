@@ -1,0 +1,19 @@
+---
+state:
+  contacts:
+    - {id: 1, name: Ada}
+    - {id: 2, name: Grace}
+    - {id: 3, name: Linus}
+---
+<brick:script>
+def rename(state, props, id, name):
+    return dict(state, contacts = [dict(c, name = name) if c["id"] == id else c for c in state["contacts"]])
+
+def remove(state, props, id):
+    return dict(state, contacts = [c for c in state["contacts"] if c["id"] != id])
+</brick:script>
+<section class="contacts">
+  <ul>{{ range .State.contacts }}
+    <li><ContactRow :contact="." :key=".id" /></li>{{ end }}
+  </ul>
+</section>

@@ -1,0 +1,45 @@
+---
+state:
+  q: ""
+  tab: all
+  page: 1
+  columns: [title, price]
+  rows: []
+brick:
+  query:
+    q: {as: search}
+    tab: {}
+    page: {history: push}
+  params: on_params
+  updated: tidy
+  remember: [columns]
+  temporary: [rows]
+---
+<brick:script>
+LAST_PAGE = 5
+
+def on_params(state, props, params):
+    if state["page"] > LAST_PAGE:
+        return dict(state, page = LAST_PAGE)
+    return state
+
+def tidy(state, props, paths):
+    page = 1 if "q" in paths else state["page"]
+    return dict(state, q = state["q"].strip().lower(), page = page)
+
+def fill(state, props):
+    rows = [{"id": i, "title": "Item %d" % i} for i in range(1, 4)]
+    return dict(state, rows = rows)
+
+def wide(state, props):
+    return dict(state, columns = ["title", "price", "stock"])
+</brick:script>
+<section class="catalog">
+  <input id="q" brick:model.debounce.300ms="q" value="{{ .State.q }}">
+  <a id="books" href="?tab=books">Books</a>
+  <button id="next" brick:click='$set("page", {{ add .State.page 1 }})'>Next</button>
+  <button id="clear" brick:click='$reset("q", "page")'>Clear</button>
+  <button id="load" brick:click="fill">Load rows</button>
+  <button id="wide" brick:click="wide">Wide columns</button>
+  <p id="where">q={{ .State.q }} tab={{ .State.tab }} page={{ .State.page }} columns={{ join "," .State.columns }} rows={{ len .State.rows }}</p>
+</section>

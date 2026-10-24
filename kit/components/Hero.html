@@ -1,0 +1,61 @@
+---
+props:
+  title: {type: string, required: true}
+  subtitle: {type: string, default: ""}
+  eyebrow: {type: string, default: ""}
+  layout: {type: string, default: centered, oneof: [centered, split]}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  backdrop: {type: bool, default: true}
+---
+{{/*
+Hero: the opening block of a landing page — a headline, a subtitle, calls
+to action and, in the split layout, a picture beside them.
+
+  <Hero title="Build pages, not pipelines" subtitle="Server-rendered components with no build step.">
+    <brick:prop name="actions"><Button size="lg">Get started</Button></brick:prop>
+  </Hero>
+  <Hero layout="split" eyebrow="New in v2" title="…">
+    <brick:prop name="media"><img src="/app.png" alt="The dashboard"></brick:prop>
+  </Hero>
+
+Blocks: eyebrowSlot (replaces the eyebrow text, e.g. a badge link), actions,
+media, and children (after the actions: a note, logos). The title is the
+page's <h1>, so use one Hero per page. backdrop draws a faint tinted glow;
+turn it off on busy pages.
+*/}}
+<brick:style>
+.bk-hero { position: relative; isolation: isolate; padding: 4.5rem var(--bk-space-4); overflow: hidden; }
+.bk-hero--sm { padding-block: 2.75rem; }
+.bk-hero--lg { padding-block: 7rem; }
+.bk-hero--backdrop::before { content: ""; position: absolute; inset: -40% -10% auto; z-index: -1; height: 120%; background: radial-gradient(50% 50% at 50% 50%, color-mix(in oklab, var(--bk-primary) 16%, transparent), transparent 70%); pointer-events: none; }
+.bk-hero__inner { display: flex; flex-direction: column; align-items: center; gap: var(--bk-space-6); max-width: 46rem; margin: 0 auto; text-align: center; }
+.bk-hero__body { display: flex; flex-direction: column; align-items: inherit; gap: var(--bk-space-4); }
+.bk-hero__eyebrow { display: inline-flex; align-items: center; gap: .4rem; height: 1.6rem; padding: 0 .7rem; border: 1px solid color-mix(in oklab, var(--bk-primary) 25%, var(--bk-border)); border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-primary) 8%, var(--bk-surface)); color: var(--bk-primary-text); font-size: var(--bk-text-xs); font-weight: 600; }
+.bk-hero__title { margin: 0; font-size: clamp(2.1rem, 5vw, 3.4rem); font-weight: 700; line-height: 1.06; letter-spacing: -.035em; text-wrap: balance; color: var(--bk-fg); }
+.bk-hero--sm .bk-hero__title { font-size: clamp(1.75rem, 4vw, 2.5rem); }
+.bk-hero__subtitle { margin: 0; max-width: 38rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xl); line-height: 1.55; text-wrap: pretty; }
+.bk-hero__actions { display: flex; flex-wrap: wrap; justify-content: inherit; gap: var(--bk-space-3); margin-top: var(--bk-space-2); }
+.bk-hero--centered .bk-hero__actions { justify-content: center; }
+.bk-hero__extra { color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.bk-hero__media { width: 100%; }
+.bk-hero__media :where(img) { display: block; width: 100%; height: auto; border-radius: var(--bk-radius-lg); }
+.bk-hero--split .bk-hero__inner { max-width: 72rem; align-items: center; text-align: start; }
+.bk-hero--split .bk-hero__body { align-items: flex-start; }
+@media (min-width: 900px) {
+  .bk-hero--split .bk-hero__inner { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 3rem; }
+  .bk-hero--split.bk-hero--backdrop::before { inset: -30% 40% auto -20%; }
+}
+</brick:style>
+{{ $p := .Props }}
+<section class="{{ cx `bk-hero` (print `bk-hero--` $p.layout) (cond (ne $p.size `md`) (print `bk-hero--` $p.size) ``) (cond $p.backdrop `bk-hero--backdrop` ``) .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-hero__inner">
+    <div class="bk-hero__body">
+      {{ if hasNode "eyebrowSlot" }}{{ node "eyebrowSlot" }}{{ else if $p.eyebrow }}<span class="bk-hero__eyebrow">{{ $p.eyebrow }}</span>{{ end }}
+      <h1 class="bk-hero__title">{{ $p.title }}</h1>
+      {{ with $p.subtitle }}<p class="bk-hero__subtitle">{{ . }}</p>{{ end }}
+      {{ if hasNode "actions" }}<div class="bk-hero__actions">{{ node "actions" }}</div>{{ end }}
+      {{ if hasNode "children" }}<div class="bk-hero__extra">{{ children }}</div>{{ end }}
+    </div>
+    {{ if hasNode "media" }}<div class="bk-hero__media">{{ node "media" }}</div>{{ end }}
+  </div>
+</section>

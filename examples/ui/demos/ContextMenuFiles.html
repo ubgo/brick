@@ -1,0 +1,35 @@
+---
+state:
+  files:
+    - {id: 1, name: Q3 report.pdf, size: 2.4 MB, starred: true}
+    - {id: 2, name: Pricing.xlsx, size: 380 KB, starred: false}
+    - {id: 3, name: Launch post.md, size: 12 KB, starred: false}
+---
+<brick:script>
+SEED = [
+    {"id": 1, "name": "Q3 report.pdf", "size": "2.4 MB", "starred": True},
+    {"id": 2, "name": "Pricing.xlsx", "size": "380 KB", "starred": False},
+    {"id": 3, "name": "Launch post.md", "size": "12 KB", "starred": False},
+]
+
+def star(state, props, id):
+    return dict(state, files = [dict(f, starred = not f["starred"]) if f["id"] == id else f for f in state["files"]])
+
+def remove(state, props, id):
+    return dict(state, files = [f for f in state["files"] if f["id"] != id])
+
+def restore(state, props):
+    return dict(state, files = SEED)
+</brick:script>
+<div style="display: grid; gap: .5rem; width: 100%; max-width: 30rem">
+  {{ range .State.files }}
+  <ContextMenu :label="print `Actions for ` .name">
+    <brick:prop name="target"><div style="display: flex; align-items: center; gap: .6rem; padding: .55rem .75rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface)"><Icon name="file" /><span style="flex: 1; font-size: var(--bk-text-sm)">{{ .name }}</span>{{ if .starred }}<Icon name="star" :size="14" label="Starred" />{{ end }}<span style="color: var(--bk-muted-fg); font-size: var(--bk-text-xs)">{{ .size }}</span></div></brick:prop>
+    <MenuItem icon="star" brick:click="{{ print `star(` .id `)` }}">{{ if .starred }}Remove star{{ else }}Star{{ end }}</MenuItem>
+    <MenuItem icon="download">Download</MenuItem>
+    <MenuSeparator />
+    <MenuItem icon="trash" danger brick:click="{{ print `remove(` .id `)` }}">Delete</MenuItem>
+  </ContextMenu>
+  {{ else }}<p style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">No files left.</p>{{ end }}
+  <div><Button variant="link" brick:click="restore">Restore the files</Button></div>
+</div>

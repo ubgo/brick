@@ -1,0 +1,18 @@
+---
+title: Resizable
+category: Layout
+description: "Panels side by side or stacked with drag handles between them — pointer and keyboard, min and max per panel, and the split remembered per id."
+api:
+  - {name: direction, type: "horizontal | vertical", default: horizontal, desc: "Side by side or stacked; a vertical group needs a height."}
+  - {name: step, type: float, default: "5", desc: "Percent moved by one arrow key press."}
+  - {name: grip, type: bool, desc: "Draw a small grip on the handles."}
+  - {name: persist, type: bool, desc: "With an id, save the sizes in localStorage (bk-resizable:<id>) and restore them."}
+  - {name: label, type: string, default: Resize, desc: "The handles' accessible name, followed by the panel's label."}
+  - {name: children, type: ResizablePanel, desc: "Two or more panels."}
+---
+<h1>Resizable</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="An editor, remembered" block><ResizableEditor /><brick:prop name="code"><Source src="~/demos/ResizableEditor.html" /></brick:prop></Example>
+<Example title="Stacked, with grips" block><ResizableVertical /><brick:prop name="code"><Source src="~/demos/ResizableVertical.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

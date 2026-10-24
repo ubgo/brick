@@ -1,0 +1,19 @@
+<AppShell :landmark="false" style="height: 30rem; width: 100%; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg)">
+  <brick:prop name="sidebar">
+    <Sidebar current="/apps/dashboard/">
+      <brick:prop name="header"><a href="/"><Icon name="zap" :size="18" /> Acme</a></brick:prop>
+      <SidebarGroup title="Workspace">
+        <SidebarItem href="/apps/dashboard/" icon="layout-dashboard" label="Dashboard" />
+        <SidebarItem href="/apps/inbox/" icon="inbox" label="Inbox" badge="4" />
+        <SidebarItem href="/apps/tasks/" icon="kanban" label="Tasks" />
+      </SidebarGroup>
+      <brick:prop name="footer"><SidebarItem href="/apps/settings/" icon="settings" label="Settings" /></brick:prop>
+    </Sidebar>
+  </brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Acme` `href` `/`) (dict `label` `Dashboard`)" />
+    <div style="margin-left: auto; display: flex; gap: .5rem"><ThemeToggle /><Button size="sm" icon="plus">New</Button></div>
+  </brick:prop>
+  <h2 style="font-size: var(--bk-text-xl); margin-bottom: 1rem">Dashboard</h2>
+  <ChartsRevenue />
+</AppShell>

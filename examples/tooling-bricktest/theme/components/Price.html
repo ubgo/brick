@@ -1,0 +1,8 @@
+---
+use:
+  shop: ~/lib/shop.star
+load: shop.price
+props:
+  sku: string
+---
+<span class="price">{{ .Props.amount }}</span>

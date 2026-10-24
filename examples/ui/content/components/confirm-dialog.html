@@ -1,0 +1,26 @@
+---
+title: ConfirmDialog
+category: Overlays
+description: "Asks before something destructive or final: an alertdialog with Cancel focused first, whose confirm button runs a server action or submits a form."
+api:
+  - {name: title, type: string, default: "Are you sure?", desc: "The question."}
+  - {name: message, type: string, desc: "The consequence; children replace it with markup."}
+  - {name: confirmLabel, type: string, default: Confirm, desc: "The confirm button."}
+  - {name: cancelLabel, type: string, default: Cancel, desc: "The cancel button (focused first)."}
+  - {name: variant, type: "danger | primary", default: danger, desc: "The confirm button and the icon."}
+  - {name: icon, type: string, desc: "Replaces the variant's icon."}
+  - {name: action, type: string, desc: "A brick:click call for the confirm button, e.g. remove(3); needs a stateful component around it."}
+  - {name: form, type: string, desc: "The id of a form the confirm button submits."}
+  - {name: open, type: bool, desc: "Rendered open, like Dialog."}
+  - {name: trigger, type: "block", desc: "Opens it (JavaScript), like Dialog."}
+  - {name: confirm, type: "block", desc: "Replaces the confirm button entirely."}
+---
+<h1>ConfirmDialog</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Delete a row with a server action"><ConfirmDialogDelete /><brick:prop name="code"><Source src="~/demos/ConfirmDialogDelete.html" /></brick:prop></Example>
+<Example title="Primary, and submitting a form"><ConfirmDialogVariants /><brick:prop name="code"><Source src="~/demos/ConfirmDialogVariants.html" /></brick:prop></Example>
+<Toaster />
+<h2>One attribute: brick:confirm</h2>
+<p>For a plain "are you sure?" no wrapper is needed: <code>brick:confirm="Clear the form?"</code> on any element with <code>brick:click</code>, <code>brick:submit</code>, <code>brick:change</code> or <code>brick:keydown</code> asks first and sends nothing on Cancel. On a page that has a ConfirmDialog, like this one, that question opens this dialog (registered with <code>brick.confirmWith</code>) instead of the browser's <code>confirm()</code>; <code>data-confirm-label</code> names its button. Try <i>Delete all</i> in the first example. Pages without a ConfirmDialog keep the browser's dialog, as on the <a href="../deferred-form/">deferred form</a>.</p>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

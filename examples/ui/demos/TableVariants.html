@@ -1,0 +1,14 @@
+---
+use:
+  people: ~/data/demo-people.yaml
+columns:
+  - {key: name, label: Member}
+  - {key: role, label: Role}
+  - {key: team, label: Team}
+  - {key: stage, label: Status}
+  - {key: seats, label: Seats, align: right, width: 5rem}
+---
+<div style="display: grid; gap: 1rem; width: 100%">
+  <Table :columns=".Params.columns" :rows=".Data.people" striped compact bordered caption="Striped, compact and bordered" />
+  <Table :columns=".Params.columns" :rows=".Data.people" sticky height="11rem" hover caption="Sticky header in a scrolling box" />
+</div>

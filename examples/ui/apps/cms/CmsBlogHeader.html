@@ -1,0 +1,21 @@
+---
+props:
+  current: {type: string, default: ""}
+---
+{{/*
+CmsBlogHeader: the public blog's top bar — brand, navigation and theme
+toggle — shared by the blog index and the post page.
+*/}}
+<brick:style>
+.cms-blog-header { position: sticky; top: 0; z-index: var(--bk-z-sticky); border-bottom: 1px solid var(--bk-border); background: color-mix(in oklab, var(--bk-bg) 85%, transparent); backdrop-filter: blur(8px); }
+.cms-blog-header__in { display: flex; align-items: center; gap: 1rem; max-width: 64rem; height: 3.5rem; margin: 0 auto; padding: 0 1rem; }
+.cms-blog-header__end { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+@media (max-width: 640px) { .cms-blog-header .bk-navmenu { display: none; } }
+</brick:style>
+<header class="{{ cx `cms-blog-header` .Attrs.class }}" {{ attrs `class` }}>
+  <div class="cms-blog-header__in">
+    <Brand name="brick blog" href="/apps/cms/blog/" icon="pencil" />
+    <NavigationMenu :current=".Props.current" label="Blog" :items="list (dict `label` `Posts` `href` `/apps/cms/blog/`) (dict `label` `Topics` `columns` 2 `links` (list (dict `label` `Architecture` `href` `/apps/cms/blog/` `icon` `layout-dashboard` `description` `Islands, actions, server state.`) (dict `label` `Design` `href` `/apps/cms/blog/` `icon` `grid` `description` `The kit, tokens and dark mode.`) (dict `label` `Security` `href` `/apps/cms/blog/` `icon` `shield` `description` `Sanitizing user content.`) (dict `label` `Go` `href` `/apps/cms/blog/` `icon` `code` `description` `The engine and its scripts.`)))" />
+    <div class="cms-blog-header__end"><Button variant="ghost" size="sm" icon="pencil" href="/apps/cms/">Write</Button><ThemeToggle /></div>
+  </div>
+</header>

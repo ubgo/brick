@@ -1,0 +1,29 @@
+---
+title: Line chart
+category: Charts
+description: "Trends over an ordered axis — one or more lines, straight or smooth, with an area wash, points, a crosshair and a tooltip."
+api:
+  - {name: data, type: "list", desc: "Rows: maps with the x key and one numeric key per series."}
+  - {name: x, type: "string", default: "label", desc: "The category key."}
+  - {name: y, type: "string", default: "value", desc: "The value key when there is one series."}
+  - {name: name, type: "string", desc: "The single series’ display name."}
+  - {name: series, type: "list", desc: "Maps of key, label and tone (1–6 or primary, success, warning, danger, info, neutral)."}
+  - {name: label, type: "string", default: "Line chart", desc: "The chart’s accessible name and table caption."}
+  - {name: smooth, type: "bool", desc: "A curve through every point."}
+  - {name: area, type: "bool", desc: "Wash the area under each line."}
+  - {name: points, type: "bool", default: "true", desc: "Mark every value (they always show under the crosshair)."}
+  - {name: max, type: "float", default: "0", desc: "Fixes the top of the value axis (0: a round number above the data)."}
+  - {name: ticks, type: "int", default: "4", desc: "The target number of axis intervals."}
+  - {name: legend, type: "bool", default: "true", desc: "Show a legend when there are two or more series."}
+  - {name: prefix, type: "string", desc: "Before every value, e.g. $."}
+  - {name: suffix, type: "string", desc: "After every value, e.g. %."}
+  - {name: empty, type: "string", default: "No data", desc: "Shown when data is empty."}
+---
+<h1>Line chart</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="One series" block><LineChartBasic /><brick:prop name="code"><Source src="~/demos/LineChartBasic.html" /></brick:prop></Example>
+<Example title="Smooth, with areas and a legend" block><LineChartArea /><brick:prop name="code"><Source src="~/demos/LineChartArea.html" /></brick:prop></Example>
+<Example title="Tones, a suffix, points off" block><LineChartLatency /><brick:prop name="code"><Source src="~/demos/LineChartLatency.html" /></brick:prop></Example>
+<Example title="Paid orders per month from the database" block><LineChartDatabase /><brick:prop name="code"><Source src="~/demos/LineChartDatabase.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

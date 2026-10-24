@@ -1,0 +1,164 @@
+---
+use:
+  ChartLegend: ~/components/ChartLegend.html
+props:
+  data: {type: list, default: []}
+  x: {type: string, default: label}
+  y: {type: string, default: value}
+  name: {type: string, default: ""}
+  label: {type: string, default: Donut chart}
+  variant: {type: string, default: donut, oneof: [donut, pie]}
+  thickness: {type: int, default: 22}
+  size: {type: int, default: 176}
+  centerLabel: {type: string, default: Total}
+  centerValue: {type: string, default: ""}
+  legend: {type: string, default: right, oneof: [right, bottom, none]}
+  percent: {type: bool, default: true}
+  prefix: {type: string, default: ""}
+  suffix: {type: string, default: ""}
+  empty: {type: string, default: No data}
+---
+{{/*
+DonutChart: parts of a whole — a ring of segments with the total in the
+middle and a legend of values and shares; variant="pie" fills the centre.
+Best for two to six parts; more, and a BarChart reads better.
+
+  <DonutChart :data=".Params.plans" x="plan" y="users" label="Users by plan" />
+  <DonutChart :data="$status" centerLabel="Orders" legend="bottom" />
+  <DonutChart :data="$share" variant="pie" :size="140" />
+  data: [{label: Paid, value: 84, tone: success}, {label: Refunded, value: 6, tone: danger}]
+
+Each segment is an arc of one circle whose length is its share of the
+total (a stroke dash, so no trigonometry and no rounding drift: the arcs
+and the 2-unit gaps between them add up to exactly the circumference).
+Values at or below zero are left out. thickness is in units of the
+200-unit chart; size is its width in px. centerValue replaces the
+formatted total; name labels the value in the tooltip. Hovering (or arrowing to) a segment shows its value and
+share; a hidden table carries every value for screen readers.
+*/}}
+<brick:client>
+// The tooltip: identical in BarChart, LineChart and DonutChart.
+// TIP_DX is the gap between the pointer and the tooltip's side, and TIP_DY
+// the gap above it: enough that the cursor never covers the text.
+const TIP_DX = 14, TIP_DY = 10;
+const tip = (el, sel) => {
+  const box = el.querySelector(":scope > .bk-chart__tip");
+  const plot = el.querySelector(".bk-chart__plot");
+  const marks = [...el.querySelectorAll(sel)];
+  if (!box || !plot || !marks.length) return () => {};
+  for (const m of marks) {
+    // The server's native tooltip — a title attribute, or an SVG <title> — becomes the rich one.
+    const t = m.querySelector(":scope > title");
+    if (t) { m.dataset.tip = t.textContent; t.remove(); }
+    else if (m.hasAttribute("title")) { m.dataset.tip = m.getAttribute("title"); m.removeAttribute("title"); }
+  }
+  let cur = -1;
+  const show = (i, x, y) => {
+    cur = i;
+    const m = marks[i];
+    marks.forEach((o) => o.classList.toggle("bk-chart--on", o === m));
+    const [head, ...rows] = m.dataset.tip.split("\n");
+    const tones = (m.dataset.tones || "").split(" ");
+    const h = document.createElement("div");
+    h.className = "bk-chart__tip-head";
+    h.textContent = head;
+    box.replaceChildren(h, ...rows.map((r, j) => {
+      const at = r.lastIndexOf(": ");
+      const row = document.createElement("div");
+      const key = document.createElement("i");
+      const val = document.createElement("b");
+      const name = document.createElement("span");
+      row.className = "bk-chart__tip-row";
+      key.dataset.tone = tones[j] || "";
+      val.textContent = at < 0 ? r : r.slice(at + 2);
+      name.textContent = at < 0 ? "" : r.slice(0, at);
+      row.append(key, val, name);
+      return row;
+    }));
+    box.hidden = false;
+    const fr = el.getBoundingClientRect(), mr = m.getBoundingClientRect();
+    if (x === undefined) { x = mr.left + mr.width / 2; y = mr.top + mr.height / 2; }
+    let left = x - fr.left + TIP_DX, top = y - fr.top - box.offsetHeight - TIP_DY;
+    if (left + box.offsetWidth > fr.width) left = x - fr.left - box.offsetWidth - TIP_DX;
+    box.style.left = Math.max(0, left) + "px";
+    box.style.top = Math.max(0, top) + "px";
+  };
+  const hide = () => { cur = -1; box.hidden = true; marks.forEach((o) => o.classList.remove("bk-chart--on")); };
+  const move = (e) => { const i = marks.indexOf(e.target.closest(sel)); if (i < 0) hide(); else show(i, e.clientX, e.clientY); };
+  const key = (e) => {
+    if (e.key === "Escape") return hide();
+    const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    show(cur < 0 ? (d > 0 ? 0 : marks.length - 1) : (cur + d + marks.length) % marks.length);
+  };
+  plot.tabIndex = 0;
+  plot.addEventListener("pointermove", move);
+  plot.addEventListener("pointerleave", hide);
+  plot.addEventListener("keydown", key);
+  plot.addEventListener("blur", hide);
+  return () => { plot.removeEventListener("pointermove", move); plot.removeEventListener("pointerleave", hide); plot.removeEventListener("keydown", key); plot.removeEventListener("blur", hide); };
+};
+brick.mount("DonutChart", (el) => tip(el, ".bk-donut-chart__seg"))
+</brick:client>
+<brick:style>
+/* bk-chart base: the same in every chart component (kit_nav_test.go checks) */
+.bk-chart { --bk-chart-bg: var(--bk-surface); --bk-chart-grid: color-mix(in oklab, var(--bk-border) 70%, transparent); --bk-chart-gutter: 2.75rem; position: relative; margin: 0; min-width: 0; color: var(--bk-muted-fg); font-size: .6875rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.bk-chart [data-tone="1"] { --bk-c: var(--bk-chart-1); }
+.bk-chart [data-tone="2"] { --bk-c: var(--bk-chart-2); }
+.bk-chart [data-tone="3"] { --bk-c: var(--bk-chart-3); }
+.bk-chart [data-tone="4"] { --bk-c: var(--bk-chart-4); }
+.bk-chart [data-tone="5"] { --bk-c: var(--bk-chart-5); }
+.bk-chart [data-tone="6"] { --bk-c: var(--bk-chart-6); }
+.bk-chart [data-tone=primary] { --bk-c: var(--bk-primary); }
+.bk-chart [data-tone=success] { --bk-c: var(--bk-success); }
+.bk-chart [data-tone=warning] { --bk-c: var(--bk-warning); }
+.bk-chart [data-tone=danger] { --bk-c: var(--bk-danger); }
+.bk-chart [data-tone=info] { --bk-c: var(--bk-info); }
+.bk-chart [data-tone=neutral] { --bk-c: color-mix(in oklab, var(--bk-muted-fg) 70%, transparent); }
+.bk-chart__plot { position: relative; }
+.bk-chart__plot:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 4px; border-radius: var(--bk-radius-sm); }
+.bk-chart__gl { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--bk-chart-grid); }
+.bk-chart__gl:first-child { border-top-color: var(--bk-border); }
+.bk-chart__gl > span { position: absolute; right: calc(100% + .5rem); top: 0; transform: translateY(-50%); white-space: nowrap; }
+.bk-chart__xaxis { display: flex; margin: .45rem 0 0 var(--bk-chart-gutter); }
+.bk-chart__xaxis > span { display: flex; flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
+.bk-chart__xaxis > .bk-chart__skip { visibility: hidden; }
+@container (max-width: 520px) { .bk-chart__xaxis > .bk-chart__x2 { visibility: hidden; } }
+@container (max-width: 300px) { .bk-chart__xaxis > .bk-chart__x4 { visibility: hidden; } }
+.bk-chart__tip { position: absolute; z-index: var(--bk-z-tooltip); min-width: 8rem; padding: .4rem .55rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); pointer-events: none; font-size: var(--bk-text-xs); }
+.bk-chart__tip-head { margin-bottom: .2rem; color: var(--bk-muted-fg); font-weight: 500; }
+.bk-chart__tip-row { display: flex; align-items: center; gap: .45rem; line-height: 1.5; }
+.bk-chart__tip-row > i { flex: none; width: .7rem; height: 2px; border-radius: 1px; background: var(--bk-c, var(--bk-muted-fg)); }
+.bk-chart__tip-row > b { font-weight: 600; }
+.bk-chart__tip-row > span { color: var(--bk-muted-fg); }
+.bk-chart__empty { display: grid; place-items: center; min-height: 8rem; border: 1px dashed var(--bk-border); border-radius: var(--bk-radius); font-size: var(--bk-text-sm); }
+.bk-chart .bk-chart-legend { margin-top: .75rem; }
+/* end bk-chart base */
+.bk-donut-chart__body { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.5rem; }
+.bk-donut-chart--bottom .bk-donut-chart__body { flex-direction: column; gap: .9rem; }
+.bk-donut-chart .bk-chart-legend { flex: 1 1 10rem; min-width: 0; margin: 0; }
+.bk-donut-chart--bottom .bk-chart-legend { flex: none; justify-content: center; }
+.bk-donut-chart .bk-chart__plot { flex: none; width: var(--bk-chart-size); aspect-ratio: 1; }
+.bk-donut-chart__svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.bk-donut-chart__track { fill: none; stroke: var(--bk-muted); }
+.bk-donut-chart__seg { fill: none; stroke: var(--bk-c); transition: opacity var(--bk-duration), stroke-width var(--bk-duration); cursor: default; }
+.bk-donut-chart__svg:hover .bk-donut-chart__seg:not(:hover), .bk-donut-chart__svg:has(.bk-chart--on) .bk-donut-chart__seg:not(.bk-chart--on) { opacity: .4; }
+.bk-donut-chart__center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; text-align: center; }
+.bk-donut-chart__value { color: var(--bk-fg); font-size: var(--bk-text-xl); font-weight: 650; letter-spacing: -.01em; font-variant-numeric: normal; }
+.bk-donut-chart__label { margin-top: .1rem; font-size: var(--bk-text-xs); }
+</brick:style>
+{{ $data := .Props.data }}{{ $x := .Props.x }}{{ $y := .Props.y }}{{ $pie := eq .Props.variant "pie" }}
+{{ $total := 0.0 }}{{ $parts := 0 }}{{ range $data }}{{ $v := mul 1.0 (default 0 (index . $y)) }}{{ if gt $v 0.0 }}{{ $total = add $total $v }}{{ $parts = add $parts 1 }}{{ end }}{{ end }}
+{{ $th := cond $pie 92.0 (mul 1.0 .Props.thickness) }}{{ $r := sub 96.0 (div $th 2.0) }}{{ $circ := mul 6.283185307179586 $r }}{{ $gap := cond (gt $parts 1) 2.0 0.0 }}
+<figure class="{{ cx `bk-chart` `bk-donut-chart` (cond (eq .Props.legend `bottom`) `bk-donut-chart--bottom` ``) .Attrs.class }}" style="--bk-chart-size: {{ .Props.size }}px" {{ attrs `class` }}>
+  {{ if not $parts }}<div class="bk-chart__empty">{{ .Props.empty }}</div>{{ else }}<div class="bk-donut-chart__body">
+    <div class="bk-chart__plot" role="img" aria-label="{{ .Props.label }}">
+      <svg class="bk-donut-chart__svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false"><circle class="bk-donut-chart__track" cx="100" cy="100" r="{{ printf `%.3f` $r }}" stroke-width="{{ printf `%.3f` $th }}"/>{{ $cum := 0.0 }}{{ range $i, $row := $data }}{{ $v := mul 1.0 (default 0 (index $row $y)) }}{{ if gt $v 0.0 }}{{ $len := mul $circ (div $v $total) }}<circle class="bk-donut-chart__seg" data-tone="{{ default (add (mod $i 6) 1) (index $row `tone`) }}" data-tones="{{ default (add (mod $i 6) 1) (index $row `tone`) }}" cx="100" cy="100" r="{{ printf `%.3f` $r }}" stroke-width="{{ printf `%.3f` $th }}" stroke-dasharray="{{ printf `%.3f` (max 0.0 (sub $len $gap)) }} {{ printf `%.3f` $circ }}" stroke-dashoffset="{{ printf `%.3f` (mul -1.0 (add $cum (div $gap 2.0))) }}" transform="rotate(-90 100 100)"><title>{{ index $row $x }}&#10;{{ default $y $.Props.name }}: {{ $.Props.prefix }}{{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $v 2)))) }}{{ $.Props.suffix }} ({{ printf `%.0f` (mul 100.0 (div $v $total)) }}%)</title></circle>{{ $cum = add $cum $len }}{{ end }}{{ end }}</svg>
+      {{ if not $pie }}<div class="bk-donut-chart__center" aria-hidden="true"><span class="bk-donut-chart__value">{{ with .Props.centerValue }}{{ . }}{{ else }}{{ .Props.prefix }}{{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $total 2)))) }}{{ .Props.suffix }}{{ end }}</span>{{ with .Props.centerLabel }}<span class="bk-donut-chart__label">{{ . }}</span>{{ end }}</div>{{ end }}
+    </div>
+    {{ if ne .Props.legend "none" }}<ChartLegend :items="$data" :labelKey="$x" :valueKey="$y" :prefix="$.Props.prefix" :suffix="$.Props.suffix" :percent="$.Props.percent" :direction="cond (eq $.Props.legend `right`) `column` `row`" />{{ end }}
+  </div>
+  <table class="bk-sr-only"><caption>{{ .Props.label }}</caption><thead><tr><th scope="col">{{ $x }}</th><th scope="col">{{ default $y .Props.name }}</th><th scope="col">Share</th></tr></thead><tbody>{{ range $row := $data }}{{ $v := mul 1.0 (default 0 (index $row $y)) }}<tr><th scope="row">{{ index $row $x }}</th><td>{{ $.Props.prefix }}{{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $v 2)))) }}{{ $.Props.suffix }}</td><td>{{ printf `%.0f` (mul 100.0 (div (max 0.0 $v) $total)) }}%</td></tr>{{ end }}</tbody></table>
+  <div class="bk-chart__tip" hidden></div>{{ end }}
+</figure>

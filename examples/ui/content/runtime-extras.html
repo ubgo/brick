@@ -1,0 +1,63 @@
+---
+order: 6
+title: Rows, hand-offs and declarations
+category: Getting started
+description: A live feed whose rows never sit in state, an action that hands off to a classic form post, a component that recovers from a 500, a batch loader that answers every card in one call, declared slots with docs, and a heading whose level is data.
+---
+<h1>Rows, hand-offs and declarations</h1>
+<p class="lead">{{ .Params.description }}</p>
+
+<Prose class="bk-prose--wide">
+  <p>Row streams: the feed keeps no rows in its state. Each action calls <code>brick.rows("feed", component = "RuntimeRowsItem", items = […], at = "top", limit = 5)</code>, the server renders each item through that component (so what you type arrives escaped), and the runtime inserts the rows into the <code>brick:ref="feed"</code> list, matched by <code>brick:key</code>. The list carries <code>brick:ignore</code>, so the component's own re-render leaves the rows alone, and <code>limit</code> trims the oldest row off the bottom. <code>last</code> is declared <code>brick: {temporary: [last]}</code>: the render that answers an action sees the rows it sent, then the instance is saved with <code>last</code> back at <code>[]</code>, so Re-render shows 0. Clear is <code>op = "reset"</code>.</p>
+</Prose>
+<Example title="A live feed with rows that never sit in state" block><RuntimeRows /><brick:prop name="code"><Source src="~/demos/RuntimeRows.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>Regions: a list written inline in the component's own template that grows instead of being replaced. The <code>brick:ref="feed"</code> list carries <code>brick:ignore</code>, so ordinary re-renders leave it alone; <code>brick.region("feed", "append")</code> appends the same element's children from the action's render, <code>"prepend"</code> puts them first, and the default <code>"replace"</code> refreshes a region only when an action names it (Recount). Unlike rows there is no row component and no keys; Re-render updates the text outside the regions and nothing inside them.</p>
+</Prose>
+<Example title="Regions: load newer, load older, recount" block><RegionFeed /><brick:prop name="code"><Source src="~/demos/RegionFeed.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>A hand-off to a classic form post: the action checks the name like any action, and only when it is valid calls <code>brick.submit("classic")</code>. After the morph the browser submits the <code>brick:ref="classic"</code> form natively to <code>/demo/sign-in</code>, a plain Go handler that sets a cookie and answers 303, which only a top-level post can turn into a signed-in page. Submit is terminal, like a redirect.</p>
+</Prose>
+<Example title="Validate with an action, then post the form for real" block><RuntimeSubmit /><brick:prop name="code"><Source src="~/demos/RuntimeSubmit.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>Recovering from a 500: Break it runs an action that fails on purpose, and the showcase's host answers that failure as a server fault (a 500; the engine's default for a script failure is 422, which the visitor can correct). The runtime fires <code>action-error</code> with the component's root and the status; this component's client code shows a notice, and its button calls <code>brick.reloadComponent(el)</code>, which fetches a fresh render of just this component and morphs it in. The count starts over from its declared value.</p>
+</Prose>
+<Example title="Reload a component after its action failed" block><RuntimeReload /><brick:prop name="code"><Source src="~/demos/RuntimeReload.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>A batch loader: <code>RuntimeUserCard</code> names <code>brick: {load_many: users.cards}</code> instead of <code>load:</code>. Five cards in a <code>{{ "{{ range }}" }}</code> wait until the page has run, then the loader is called once with the four distinct inputs and answers a list in the same order. Each card prints how many inputs that call carried: 4 on every card means one call answered them all; a loader called per card would print 1.</p>
+</Prose>
+<Example title="Five cards, one loader call" block><RuntimeTeam /><brick:prop name="code"><Source src="~/demos/RuntimeUserCard.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>Declared slots: <code>RuntimePanel</code> lists the blocks it takes under <code>brick: {slots:}</code>, with <code>required:</code>, <code>doc:</code> and <code>examples:</code>, and its props carry <code>doc:</code> too. A call that leaves out the required title, or passes a block the panel does not declare, fails at compile with the caller's file and line. <code>brick docs</code> (and <code>Engine.ComponentDocs</code>) print the props and slots with their docs.</p>
+</Prose>
+<Example title="A panel that declares its blocks" block><RuntimeSlots /><brick:prop name="code"><Source src="~/demos/RuntimePanel.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>An element name from data: <code>tag</code> writes the whole start tag and <code>endtag</code> the close, so a heading's level can come from state or a prop. They write only elements without URL, script or raw-text content, refuse <code>on*</code>, URL and <code>style</code> attributes, and escape every value.</p>
+</Prose>
+<Example title="A heading whose level is state"><RuntimeHeading /><brick:prop name="code"><Source src="~/demos/RuntimeHeading.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>A modelable child: <code>V22Stepper</code> names its <code>value</code> as its model with <code>brick: {model: value}</code>, and the cart binds its own <code>qty</code> to it with <code>&lt;V22Stepper brick:model="qty"&gt;</code>. The stepper's buttons change the cart's total; the cart's reset comes back down into the stepper. Each change makes one trip each way: up as a <code>$set</code> of the parent's field, down when the parent renders.</p>
+</Prose>
+<Example title="A stepper bound to its parent's field" block><V22Cart /><brick:prop name="code"><Source src="~/demos/V22Cart.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>An action chooses its own view transition: <code>brick.transition("slide")</code> names the type CSS styles with <code>:active-view-transition-type(slide)</code>, and <code>brick.transition("none")</code> morphs without one, though the root opts in with <code>brick:transition</code>.</p>
+</Prose>
+<Example title="Rotate with a slide, note without a transition" block><V22Transition /><brick:prop name="code"><Source src="~/demos/V22Transition.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>A held key: <code>brick:keydown.norepeat.enter</code> runs once per press, however long Enter is held; without <code>.norepeat</code> the binding repeats with the key, as before.</p>
+</Prose>
+<Example title="Once per press, or once per repeat" block><V22Keys /><brick:prop name="code"><Source src="~/demos/V22Keys.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+  <p>Click details: <code>brick:click.details</code> passes the click's modifier keys, button, count and position as the action's last argument. Without <code>.details</code> nothing about the click is sent.</p>
+</Prose>
+<Example title="Where and how the pad was clicked" block><V22Click /><brick:prop name="code"><Source src="~/demos/V22Click.html" /></brick:prop></Example>

@@ -1,0 +1,16 @@
+---
+title: App shell
+category: Layout
+description: "The frame of an app — sidebar, sticky top bar and a scrolling main area; below 1024px the sidebar becomes a drawer that works without JavaScript."
+api:
+  - {name: sidebar, type: "block", desc: "<brick:prop name=sidebar>: usually a Sidebar."}
+  - {name: topbar, type: "block", desc: "<brick:prop name=topbar>: title, breadcrumbs, actions."}
+  - {name: landmark, type: "bool", default: "true", desc: "The main area is a <main>; turn off when the page already has one."}
+  - {name: menuLabel, type: "string", default: "Open navigation", desc: "The drawer button’s accessible name."}
+---
+<h1>App shell</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>The shell fills the viewport; give it a height to embed it, as here. Narrow the window below 1024px and the sidebar moves behind the button in the top bar — a native popover, so Escape and a click outside close it.</p>
+<Example title="A dashboard in a shell" block><AppShellDemo /><brick:prop name="code"><Source src="~/demos/AppShellDemo.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

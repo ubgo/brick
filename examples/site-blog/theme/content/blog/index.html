@@ -1,0 +1,12 @@
+---
+title: Blog
+menu: main
+weight: 2
+cache: {tags: [posts]}
+---
+<h1>Blog</h1>
+<ul>
+{{- range .Site.Pages }}{{ if and (eq .Section "blog") (ne .URL "/blog/") }}
+  <li><PostLink title="{{ .Title }}" url="{{ .URL }}" /> · {{ dateFormat "2 Jan 2006" .Date }}</li>
+{{- end }}{{ end }}
+</ul>

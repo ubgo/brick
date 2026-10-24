@@ -1,0 +1,16 @@
+---
+title: Forms and validation
+category: Forms
+description: A real stateful form built from the kit — server-side validation with inline errors, a loading state and a success state, in one component file.
+---
+<h1>Forms and validation</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Sign up — submit it empty, then fill it in" block><SignupForm /><brick:prop name="code"><Source src="~/demos/SignupForm.html" /></brick:prop></Example>
+<h2>How it works</h2>
+<ul>
+  <li><b>State on the server.</b> The component declares <code>state:</code>; <code>brick:submit="save"</code> on the form sends its named fields to the Starlark <code>save</code> action as one dict.</li>
+  <li><b>Errors for one render.</b> <code>save</code> returns <code>[state, errors]</code> when something is wrong. Each <code>&lt;Field :error=".Errors.email"&gt;</code> shows its message, marks the control <code>aria-invalid</code> and links the message with <code>aria-describedby</code>. The typed values survive because they are saved in the state.</li>
+  <li><b>Loading.</b> While the action runs, <code>brick:loading</code> shows the spinner and the submit button is disabled.</li>
+  <li><b>Success.</b> A valid submit returns the state with <code>saved = True</code>, and the template renders the confirmation instead of the form.</li>
+  <li><b>No browser validation in the way.</b> <code>novalidate</code> on the form lets the server be the one place rules live; drop it to get the browser's checks first as well.</li>
+</ul>

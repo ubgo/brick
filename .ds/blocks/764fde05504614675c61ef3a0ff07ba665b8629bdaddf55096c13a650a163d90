@@ -1,0 +1,23 @@
+func newApp(dir string) (*app, error) {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, err
+	}
+	sc, err := scriptstarlark.New(scriptstarlark.Options{})
+	if err != nil {
+		return nil, err
+	}
+	eng, err := brick.New(brick.Options{
+		FS:               root.FS(),
+		Scripting:        sc,
+		States:           brick.NewMemoryStates(0, 0),
+		ActionMiddleware: []brick.ActionMiddleware{audit, celebrate},
+		RedirectHosts:    []string{payHost},
+		MaxEffectBytes:   maxEffectBytes,
+		Runtime:          runtimeConfig,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &app{eng: eng}, nil
+}

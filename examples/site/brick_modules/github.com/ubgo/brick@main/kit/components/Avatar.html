@@ -1,0 +1,51 @@
+---
+props:
+  name: {type: string, default: ""}
+  src: {type: string, default: ""}
+  alt: {type: string, default: ""}
+  size: {type: string, default: md, oneof: [xs, sm, md, lg, xl]}
+  shape: {type: string, default: circle, oneof: [circle, square]}
+  status: {type: string, default: "", oneof: ["", online, away, busy, offline]}
+---
+{{/*
+Avatar: a person's picture, or their initials when there is no picture.
+
+  <Avatar name="Maya Chen" src="/img/maya.jpg" />
+  <Avatar name="Liam Kim" />                        LK on a tinted circle
+  <Avatar name="Ava Patel" size="lg" status="online" />
+  <Avatar name="Acme" shape="square" size="sm" />
+
+The initials are the first letters of the first and last words of name, and
+the tint is chosen from the name's length, so the same name always gets the
+same colour on every render. The initials are the tint's colour mixed 45% toward
+the text colour — darker in light mode, lighter in dark — which keeps them
+at 4.5:1 or better on the tint in both themes. name is also the accessible name (alt overrides
+it for the image). The status dot is announced as part of that name.
+*/}}
+<brick:style>
+.bk-avatar { --bk-avatar-s: 2rem; position: relative; display: inline-flex; flex: none; align-items: center; justify-content: center; width: var(--bk-avatar-s); height: var(--bk-avatar-s); border-radius: var(--bk-radius-full); background: var(--bk-avatar-bg, var(--bk-muted)); color: var(--bk-avatar-fg, var(--bk-muted-fg)); font: 600 calc(var(--bk-avatar-s) * .38)/1 var(--bk-font); letter-spacing: .02em; user-select: none; vertical-align: middle; }
+.bk-avatar__img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.bk-avatar--square { border-radius: var(--bk-radius); }
+.bk-avatar--xs { --bk-avatar-s: 1.5rem; }
+.bk-avatar--sm { --bk-avatar-s: 1.75rem; }
+.bk-avatar--lg { --bk-avatar-s: 2.5rem; }
+.bk-avatar--xl { --bk-avatar-s: 3.5rem; }
+.bk-avatar--xs.bk-avatar--square, .bk-avatar--sm.bk-avatar--square { border-radius: var(--bk-radius-sm); }
+.bk-avatar--xl.bk-avatar--square { border-radius: var(--bk-radius-lg); }
+.bk-avatar--tint { --bk-avatar-bg: color-mix(in oklab, var(--bk-avatar-c) 15%, var(--bk-surface)); --bk-avatar-fg: color-mix(in oklab, var(--bk-avatar-c), var(--bk-fg) 45%); }
+.bk-avatar--t0 { --bk-avatar-c: var(--bk-primary); }
+.bk-avatar--t1 { --bk-avatar-c: var(--bk-success); }
+.bk-avatar--t2 { --bk-avatar-c: var(--bk-warning); }
+.bk-avatar--t3 { --bk-avatar-c: color-mix(in oklab, var(--bk-primary), var(--bk-danger)); }
+.bk-avatar--t4 { --bk-avatar-c: var(--bk-info); }
+.bk-avatar--t5 { --bk-avatar-c: color-mix(in oklab, var(--bk-info), var(--bk-success)); }
+.bk-avatar__status { position: absolute; right: 0; bottom: 0; width: max(.5rem, calc(var(--bk-avatar-s) * .27)); height: max(.5rem, calc(var(--bk-avatar-s) * .27)); border-radius: var(--bk-radius-full); background: var(--bk-muted-fg); box-shadow: 0 0 0 2px var(--bk-bg); }
+.bk-avatar--square .bk-avatar__status { right: -.15rem; bottom: -.15rem; }
+.bk-avatar__status--online { background: var(--bk-success); }
+.bk-avatar__status--away { background: var(--bk-warning); }
+.bk-avatar__status--busy { background: var(--bk-danger); }
+</brick:style>
+{{- $words := split " " (trim .Props.name) -}}
+{{- $initials := upper (print (truncate 1 (first $words)) (cond (gt (len $words) 1) (truncate 1 (last $words)) "")) -}}
+{{- $label := print (default .Props.name .Props.alt) (cond .Props.status (print " (" .Props.status ")") "") -}}
+<span class="{{ cx `bk-avatar` (cond (ne .Props.size `md`) (print `bk-avatar--` .Props.size) ``) (cond (eq .Props.shape `square`) `bk-avatar--square` ``) (cond .Props.src `` (print `bk-avatar--tint bk-avatar--t` (mod (len .Props.name) 6))) .Attrs.class }}"{{ if not .Props.src }} role="img" aria-label="{{ $label }}"{{ end }} {{ attrs `class` }}>{{ if .Props.src }}<img class="bk-avatar__img" src="{{ .Props.src }}" alt="{{ $label }}">{{ else }}<span aria-hidden="true">{{ $initials }}</span>{{ end }}{{ with .Props.status }}<span class="bk-avatar__status bk-avatar__status--{{ . }}"></span>{{ end }}</span>

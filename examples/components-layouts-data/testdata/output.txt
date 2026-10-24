@@ -1,0 +1,48 @@
+== content/index.html
+<!doctype html>
+<html>
+<head><title>Pricing · My Blog</title></head>
+<body>
+<a href="https://example.com/">My Blog</a>
+<h1>Pricing</h1>
+<div class="card card--gray">Free: $0</div><div class="card card--gray">Pro: $12</div>
+
+</body>
+</html>
+
+== content/index.html as a fragment
+<h1>Pricing</h1>
+<div class="card card--gray">Free: $0</div><div class="card card--gray">Pro: $12</div>
+
+== content/blog/hello.html
+<!doctype html>
+<html>
+<head><title>Hello · My Blog</title></head>
+<body>
+<a href="https://example.com/">My Blog</a>
+<article class="post"><h1>Hello</h1>
+<div class="card card--blue">Team: $30</div>
+</article>
+
+</body>
+</html>
+
+== content/plans.html
+<ul><li>Free</li><li>Pro</li></ul>
+
+== content/cart.html (en)
+<button>Add to cart</button>
+<p>1 item / 3 items</p>
+<p>Sunday 27 September</p>
+
+== content/cart.html (fr)
+<button>Ajouter au panier</button>
+<p>1 article / 3 articles</p>
+<p>dimanche 27 septembre</p>
+
+== content/about.html (en)
+<p>About us.</p>
+
+== content/about.html (fr)
+<p>À propos.</p>
+

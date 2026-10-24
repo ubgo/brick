@@ -1,0 +1,18 @@
+---
+title: Breadcrumbs
+category: Navigation
+description: "Where the page sits in the site: links to each ancestor, the current page last, and long trails folded into a menu."
+api:
+  - {name: items, type: "list", desc: "Maps of label, href, icon and prefetch (true or visible); the last is the current page."}
+  - {name: separator, type: "chevron | slash | dot", default: "chevron", desc: "Drawn in CSS between items."}
+  - {name: max, type: "int", default: "0", desc: "Above this many items the middle folds into a “…” menu."}
+  - {name: label, type: "string", default: "Breadcrumb", desc: "The nav’s accessible name."}
+---
+<h1>Breadcrumbs</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Items with an icon"><BreadcrumbsBasic /><brick:prop name="code"><Source src="~/demos/BreadcrumbsBasic.html" /></brick:prop></Example>
+<Example title="Separators"><BreadcrumbsSeparators /><brick:prop name="code"><Source src="~/demos/BreadcrumbsSeparators.html" /></brick:prop></Example>
+<Example title="Collapsed — max=4 keeps the first and the last three"><BreadcrumbsCollapsed /><brick:prop name="code"><Source src="~/demos/BreadcrumbsCollapsed.html" /></brick:prop></Example>
+<Example title="Written as children"><BreadcrumbsChildren /><brick:prop name="code"><Source src="~/demos/BreadcrumbsChildren.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

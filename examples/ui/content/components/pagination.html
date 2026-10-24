@@ -1,0 +1,22 @@
+---
+title: Pagination
+category: Data display
+description: "Server-side page links with a window, ellipses, previous and next, and a “1–20 of 312” summary. Every control is a real link."
+api:
+  - {name: page, type: int, default: "1", desc: "The current page; clamped to the valid range."}
+  - {name: total, type: int, desc: "The number of items (not pages). Required."}
+  - {name: perPage, type: int, default: "20", desc: "Items per page."}
+  - {name: href, type: string, default: "?page=%d", desc: "The link pattern; %d is the page. Without %d, page=N is added to the query."}
+  - {name: siblings, type: int, default: "1", desc: "Pages shown either side of the current one."}
+  - {name: edges, type: bool, desc: "Adds first- and last-page arrows."}
+  - {name: summary, type: bool, default: "true", desc: "Shows “1–20 of 312” (or “No results”)."}
+  - {name: size, type: "sm | md", default: md, desc: "Control size."}
+  - {name: label, type: string, default: Pagination, desc: "The <nav>'s accessible name."}
+  - {name: action, type: string, desc: "A server action of the stateful component around the pager: each link also gets brick:click=\"<action>(N)\", so a click calls it with the page number; the href still works without JavaScript."}
+---
+<h1>Pagination</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="The window: first, middle and last page" block><PaginationWindow /><brick:prop name="code"><Source src="~/demos/PaginationWindow.html" /></brick:prop></Example>
+<Example title="Patterns, siblings, size, and no results" block><PaginationOptions /><brick:prop name="code"><Source src="~/demos/PaginationOptions.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

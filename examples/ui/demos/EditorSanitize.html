@@ -1,0 +1,15 @@
+---
+state:
+  html: '<p>Try it: <b>bold</b>, a <a href="https://example.com">link</a>, and a <a href="javascript:alert(1)" onclick="alert(2)">sneaky link</a> that goes nowhere.</p><script>alert(3)</script>'
+---
+<brick:script>
+def save(state, props, fields):
+    return dict(state, html = fields.get("body", ""))
+</brick:script>
+<form brick:submit="save" style="display: grid; gap: .75rem; width: 100%; max-width: 40rem">
+  <Editor name="body" :value=".State.html" :rows="4" label="Comment" />
+  <div><Button type="submit" size="sm">Save</Button></div>
+  <Card title="As the server shows it" description="{{ `{{ sanitize .State.html }}` }} — the only way user HTML reaches a page." padding="sm">
+    <div class="bk-editor-demo">{{ sanitize .State.html }}</div>
+  </Card>
+</form>

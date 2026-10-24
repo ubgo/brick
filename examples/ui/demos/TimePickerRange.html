@@ -1,0 +1,4 @@
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 12rem)); gap: 1rem">
+  <Field label="Opens" hint="Every 30 minutes, 8 AM to 12 PM."><TimePicker name="opens" min="08:00" max="12:00" value="09:00" hour12 /></Field>
+  <Field label="Reminder" hint="15-minute steps." required><TimePicker name="reminder" :step="15" required /></Field>
+</div>

@@ -1,0 +1,118 @@
+---
+props:
+  label: {type: string, default: Actions}
+  focusable: {type: bool, default: true}
+---
+{{/*
+ContextMenu: a menu that opens where you right-click a region — a file in
+a list, a card on a board, a row. Its children are <MenuItem>,
+<MenuSeparator> and <MenuLabel>, exactly as in a DropdownMenu; the region
+is the target block.
+
+  <ContextMenu label="File actions">
+    <brick:prop name="target"><div class="file">report.pdf</div></brick:prop>
+    <MenuItem icon="pencil" shortcut="F2">Rename</MenuItem>
+    <MenuItem icon="copy">Duplicate</MenuItem>
+    <MenuSeparator />
+    <MenuItem icon="trash" danger brick:click="remove(3)">Delete</MenuItem>
+  </ContextMenu>
+
+It opens on a right-click (at the pointer), a long press on a touch screen
+(half a second), or Shift+F10 / the Menu key while the region has focus (at
+the region). The menu is the kit's keyboard menu (DropdownMenu's code:
+arrows, Home/End, typeahead, Escape returns focus); a click outside, a
+scroll or choosing an item closes it. It is a popover in the top layer,
+placed at the pointer and kept on screen.
+
+Without JavaScript the menu stays hidden and the region is untouched: the
+browser's own context menu appears as usual. So a context menu must never
+be the only way to an action — keep a button or a DropdownMenu for it too.
+focusable (the default) puts the region in the tab order, so keyboard users
+can reach the menu; turn it off when the region already holds a focusable
+control. label names the menu.
+*/}}
+<brick:client>
+import { menuKeys } from "brick:DropdownMenu";
+
+// LONG_PRESS (ms) is how long a touch must rest to open the menu, SLOP (px)
+// how far it may drift before it counts as a scroll instead, EDGE (px) the
+// margin kept from the viewport, and KEY_ANCHOR (px) where a keyboard-opened
+// menu appears inside the focused element (Shift+F10 has no pointer).
+const LONG_PRESS = 500, SLOP = 10, EDGE = 8, KEY_ANCHOR = 16;
+
+brick.mount("ContextMenu", (el) => {
+  const target = el.querySelector(":scope > .bk-context-menu__target");
+  const menu = el.querySelector(":scope > .bk-context-menu__menu");
+  if (!target || !menu) return;
+  const popover = typeof menu.showPopover === "function";
+  menu.removeAttribute("hidden");
+  if (!popover) { menu.removeAttribute("popover"); menu.hidden = true; }
+  let returnTo = null, press = 0, start = null;
+  const isOpen = () => popover ? menu.matches(":popover-open") : !menu.hidden;
+  const hide = (back) => {
+    if (!isOpen()) return;
+    if (popover) menu.hidePopover(); else menu.hidden = true;
+    if (back && returnTo && returnTo.isConnected) returnTo.focus();
+  };
+  const keys = menuKeys(menu, hide);
+  const show = (x, y) => {
+    returnTo = document.activeElement && document.activeElement !== document.body ? document.activeElement : target;
+    if (popover) { if (!isOpen()) menu.showPopover(); } else menu.hidden = false;
+    const r = menu.getBoundingClientRect();
+    const left = Math.max(EDGE, Math.min(x, window.innerWidth - r.width - EDGE));
+    const top = y + r.height > window.innerHeight - EDGE ? Math.max(EDGE, y - r.height) : y;
+    Object.assign(menu.style, { left: left + "px", top: top + "px" });
+    keys.focusAt(0);
+  };
+  const onContext = (e) => { e.preventDefault(); show(e.clientX, e.clientY); };
+  const onKey = (e) => {
+    if ((e.key === "F10" && e.shiftKey) || e.key === "ContextMenu") {
+      e.preventDefault();
+      const r = (document.activeElement && target.contains(document.activeElement) ? document.activeElement : target).getBoundingClientRect();
+      show(r.left + Math.min(KEY_ANCHOR, r.width / 2), r.top + Math.min(KEY_ANCHOR, r.height / 2));
+    }
+  };
+  const cancel = () => { clearTimeout(press); press = 0; };
+  const onDown = (e) => {
+    if (e.pointerType !== "touch") return;
+    start = { x: e.clientX, y: e.clientY };
+    cancel();
+    press = setTimeout(() => { press = 0; show(start.x, start.y); }, LONG_PRESS);
+  };
+  const onMove = (e) => { if (press && start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > SLOP) cancel(); };
+  const outside = (e) => { if (!popover && isOpen() && !menu.contains(e.target)) hide(false); };
+  const onScroll = () => hide(false);
+  target.addEventListener("contextmenu", onContext);
+  target.addEventListener("keydown", onKey);
+  target.addEventListener("pointerdown", onDown);
+  target.addEventListener("pointermove", onMove);
+  target.addEventListener("pointerup", cancel);
+  target.addEventListener("pointercancel", cancel);
+  document.addEventListener("click", outside);
+  window.addEventListener("scroll", onScroll, true);
+  return () => {
+    keys.cleanup();
+    cancel();
+    target.removeEventListener("contextmenu", onContext);
+    target.removeEventListener("keydown", onKey);
+    target.removeEventListener("pointerdown", onDown);
+    target.removeEventListener("pointermove", onMove);
+    target.removeEventListener("pointerup", cancel);
+    target.removeEventListener("pointercancel", cancel);
+    document.removeEventListener("click", outside);
+    window.removeEventListener("scroll", onScroll, true);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-context-menu { display: contents; }
+.bk-context-menu__target { display: block; }
+.bk-context-menu__target:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; border-radius: var(--bk-radius); }
+.bk-context-menu__menu, .bk-context-menu__menu *, .bk-context-menu__menu *::before, .bk-context-menu__menu *::after { box-sizing: border-box; }
+.bk-context-menu__menu { position: fixed; inset: auto; margin: 0; z-index: var(--bk-z-dropdown); width: max-content; min-width: 11rem; max-width: min(20rem, calc(100vw - 1rem)); max-height: min(24rem, 80vh); overflow-y: auto; padding: .25rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); animation: bk-pop-in var(--bk-duration) ease; }
+.bk-context-menu__menu[hidden] { display: none; }
+</brick:style>
+<div class="bk-context-menu">
+  <div class="{{ cx `bk-context-menu__target` .Attrs.class }}"{{ if .Props.focusable }} tabindex="0"{{ end }} aria-haspopup="menu" {{ attrs `class` }}>{{ node "target" }}</div>
+  <div class="bk-context-menu__menu" role="menu" aria-label="{{ .Props.label }}" popover hidden>{{ children }}</div>
+</div>

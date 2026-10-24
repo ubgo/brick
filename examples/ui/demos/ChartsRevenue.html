@@ -1,0 +1,6 @@
+---
+use:
+  demo: ~/demos/demo_charts.star
+load: demo.revenue_by_month
+---
+<BarChart :data=".Props.data" x="month" y="revenue" name="Revenue" prefix="$" labels label="Paid revenue per month" :height="200" style="width: 100%" />

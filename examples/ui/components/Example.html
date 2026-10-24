@@ -1,0 +1,152 @@
+---
+props:
+  title: {type: string, default: ""}
+---
+{{/*
+Example: one documented example on a component page — a
+Preview tab with the live demo and a Code tab with its source, a copy
+button, and light syntax highlighting. The page passes the demo as children
+and the source as a <brick:prop name="code"> holding
+<Source src="~/demos/X.html" />, so the preview and the code come from the
+same file and cannot drift.
+
+Without JavaScript the tabs are hidden and the preview and the code both
+show, one above the other. `block` on the tag lays the preview out as a
+block instead of a wrapping row.
+*/}}
+<brick:client>
+// Tabs (Preview | Code) with arrow keys, and a small highlighter for the
+// three languages a demo file holds: YAML frontmatter, brick/Go template
+// actions and HTML. It builds spans with textContent, never innerHTML, so
+// the source is shown exactly as written.
+const KINDS = [
+  ["com", /^<!--[\s\S]*?-->/],
+  ["tpl", /^\{\{[\s\S]*?\}\}/],
+  ["tag", /^<\/?[A-Za-z][\w:.-]*/],
+  ["tag", /^\/?>/],
+  ["str", /^"[^"]*"|^'[^']*'/],
+  ["attr", /^[:@]?[A-Za-z_][\w:.-]*(?==)/],
+];
+// CODE_KINDS are the tokens of a code file (Starlark or Go): comments,
+// strings and keywords.
+const CODE_KINDS = [
+  ["com", /^(#|\/\/)[^\n]*/],
+  ["str", /^"(?:[^"\\\n]|\\.)*"|^'(?:[^'\\\n]|\\.)*'|^`[^`]*`/],
+  ["tag", /^\b(?:def|return|if|elif|else|for|in|not|and|or|load|func|package|import|const|var|type|struct|range|nil|None|True|False|true|false)\b/],
+];
+function highlightCode(src, span, out) {
+  while (src) {
+    let hit = null;
+    for (const [cls, re] of CODE_KINDS) { const m = re.exec(src); if (m) { hit = [cls, m[0]]; break; } }
+    if (hit) { span(hit[0], hit[1]); src = src.slice(hit[1].length); continue; }
+    const m = /^[A-Za-z_]\w*|^\s+|^./s.exec(src);
+    out.append(m[0]);
+    src = src.slice(m[0].length);
+  }
+}
+// highlight colours a <pre> once, in place. lang is "html" (brick files:
+// frontmatter, template actions, HTML) or "code" (Starlark, Go).
+export function highlight(pre, lang = "html") {
+  const code = pre.querySelector("code") || pre;
+  if (code.dataset.hl) return;
+  let src = code.textContent;
+  const out = document.createDocumentFragment();
+  const span = (cls, text) => { const s = document.createElement("span"); s.className = "ex-tk-" + cls; s.textContent = text; out.append(s); };
+  if (lang === "code") {
+    highlightCode(src, span, out);
+    code.textContent = "";
+    code.append(out);
+    code.dataset.hl = "1";
+    return;
+  }
+  const fm = /^---\n[\s\S]*?\n---\n?/.exec(src);
+  if (fm) {
+    for (const line of fm[0].split(/(?<=\n)/)) {
+      const m = /^(\s*-?\s*)([\w.-]+)(:)(.*\n?)$/.exec(line);
+      if (m && line.trim() !== "---") { out.append(m[1]); span("key", m[2]); out.append(m[3]); span("val", m[4]); }
+      else span("com", line);
+    }
+    src = src.slice(fm[0].length);
+  }
+  let inTag = false;
+  while (src) {
+    let hit = null;
+    for (const [cls, re] of KINDS) {
+      if ((cls === "str" || cls === "attr") && !inTag) continue;
+      if (cls === "tag" && re.source.startsWith("^\\/?>") && !inTag) continue;
+      const m = re.exec(src);
+      if (m) { hit = [cls, m[0]]; break; }
+    }
+    if (hit) {
+      span(hit[0], hit[1]);
+      if (hit[0] === "tag") inTag = !/>$/.test(hit[1]);
+      src = src.slice(hit[1].length);
+    } else {
+      const next = src.search(inTag ? /[<{"'\/>:@A-Za-z_]/ : /[<{]/);
+      const n = next <= 0 ? 1 : next;
+      out.append(src.slice(0, n));
+      src = src.slice(n);
+    }
+  }
+  code.textContent = "";
+  code.append(out);
+  code.dataset.hl = "1";
+}
+brick.mount("Example", (el) => {
+  const tabs = [...el.querySelectorAll(":scope > .ex__head [role=tab]")];
+  const panels = { preview: el.querySelector(":scope > .ex__preview"), code: el.querySelector(":scope > .ex__code") };
+  if (!panels.code) return;
+  const select = (name, focus) => {
+    tabs.forEach((t) => {
+      const on = t.dataset.tab === name;
+      t.setAttribute("aria-selected", String(on));
+      t.tabIndex = on ? 0 : -1;
+      if (on && focus) t.focus();
+    });
+    panels.preview.hidden = name !== "preview";
+    panels.code.hidden = name !== "code";
+    if (name === "code") el.querySelectorAll(".ex__code pre").forEach(highlight);
+  };
+  const onClick = (e) => { const t = e.target.closest("[role=tab]"); if (t && tabs.includes(t)) select(t.dataset.tab, false); };
+  const onKey = (e) => {
+    const i = tabs.indexOf(document.activeElement);
+    if (i < 0 || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    const j = e.key === "Home" ? 0 : e.key === "End" ? tabs.length - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+    select(tabs[j].dataset.tab, true);
+  };
+  el.classList.add("ex--js");
+  el.addEventListener("click", onClick);
+  el.addEventListener("keydown", onKey);
+  select("preview", false);
+  return () => { el.removeEventListener("click", onClick); el.removeEventListener("keydown", onKey); };
+})
+</brick:client>
+<brick:style>
+.ex { border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); overflow: hidden; margin: 0 0 1.25rem; background: var(--bk-surface); }
+.ex__head { display: flex; align-items: center; gap: .5rem; min-height: 2.5rem; padding: .3rem .5rem .3rem .85rem; border-bottom: 1px solid var(--bk-border); background: var(--bk-surface-2); }
+.ex__title { flex: 1; min-width: 0; margin: 0; font-size: var(--bk-text-sm); line-height: 1.4; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ex__tabs { display: none; gap: .15rem; padding: .15rem; border-radius: var(--bk-radius); background: var(--bk-muted); }
+.ex--js .ex__tabs { display: inline-flex; }
+.ex__tab { height: 1.6rem; padding: 0 .7rem; border: 0; border-radius: calc(var(--bk-radius) - .1rem); background: none; color: var(--bk-muted-fg); font: 500 var(--bk-text-xs)/1 var(--bk-font); cursor: pointer; }
+.ex__tab[aria-selected=true] { background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-sm); }
+.ex__tab:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+.ex__copy { display: none; }
+.ex--js .ex__copy { display: inline-flex; }
+.ex__preview { padding: 1.5rem 1.25rem; display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; min-height: 6rem; }
+.ex__preview--block { display: block; }
+.ex__preview[hidden], .ex__code[hidden] { display: none; }
+.ex__code { border-top: 1px solid var(--bk-border); }
+.ex--js .ex__code { border-top: 0; }
+.ex__code pre { margin: 0; padding: .85rem 1rem; max-height: 30rem; overflow: auto; font-size: var(--bk-text-xs); line-height: 1.65; background: var(--bk-surface-2); tab-size: 2; }
+.ex__code pre:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+</brick:style>
+<section class="ex" {{ attrs `block` }}>
+  <div class="ex__head">
+    {{/* An h2: each example is a section under the page h1, so the headings inside a demo (a card title, h3) follow on without skipping a level. */}}{{ with .Props.title }}<h2 class="ex__title">{{ . }}</h2>{{ else }}<span class="ex__title"></span>{{ end }}
+    {{ if hasNode "code" }}<div class="ex__tabs" role="tablist" aria-label="{{ with .Props.title }}{{ . }} — {{ end }}view"><button type="button" class="ex__tab" role="tab" data-tab="preview" id="{{ .ID }}-tp" aria-controls="{{ .ID }}-pp" aria-selected="true">Preview</button><button type="button" class="ex__tab" role="tab" data-tab="code" id="{{ .ID }}-tc" aria-controls="{{ .ID }}-pc" aria-selected="false" tabindex="-1">Code</button></div>
+    <CopyButton target="#{{ .ID }}-pc pre" label="Copy code" class="ex__copy" />{{ end }}
+  </div>
+  <div class="ex__preview{{ if .Attrs.block }} ex__preview--block{{ end }}" id="{{ .ID }}-pp" role="tabpanel" aria-labelledby="{{ .ID }}-tp">{{ children }}</div>
+  {{ if hasNode "code" }}<div class="ex__code" id="{{ .ID }}-pc" role="tabpanel" aria-labelledby="{{ .ID }}-tc">{{ node "code" }}</div>{{ end }}
+</section>

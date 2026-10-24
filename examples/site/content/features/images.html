@@ -1,0 +1,7 @@
+---
+title: Images
+---
+<h1>Images</h1>
+{{ with image "~/static/team.png" 160 320 }}
+<img class="team" src="{{ .URL }}" srcset="{{ .SrcSet }}" sizes="320px" width="{{ .Width }}" height="{{ .Height }}" alt="A gradient" loading="lazy">
+{{ end }}

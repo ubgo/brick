@@ -1,0 +1,29 @@
+---
+state:
+  rows: []
+  next: 1
+  open: false
+---
+<brick:script>
+def add_row(state, props, title):
+    row = {"id": state["next"], "title": title}
+    return dict(state, rows = [row] + state["rows"], next = state["next"] + 1)
+
+def shuffle(state, props):
+    brick.transition("shuffle")
+    return dict(state, rows = list(reversed(state["rows"])))
+
+def quiet(state, props):
+    brick.transition("none")
+    return dict(state, next = state["next"] + 1)
+</brick:script>
+<section class="todos" brick:transition="slide">
+  <button id="add" brick:click='add_row("Write docs")'>Add</button>
+  <button id="shuffle" brick:click="shuffle">Reverse</button>
+  <button id="quiet" brick:click="quiet">No animation</button>
+  <button id="toggle" brick:click='$toggle("open")'>Notes</button>
+  <ul>{{ range .State.rows }}<li brick:key="{{ .id }}">{{ .title }} #{{ .id }}</li>{{ end }}</ul>
+  <div id="map" brick:ignore></div>
+  <div id="chart" brick:replace>{{ len .State.rows }} rows</div>
+  <p id="notes" brick:show="open" class="fade" brick:enter="faded" brick:leave="faded" {{ if not .State.open }}hidden{{ end }}>Notes</p>
+</section>

@@ -1,0 +1,48 @@
+---
+props:
+  title: {type: string, required: true}
+  open: {type: bool, default: false}
+  group: {type: string, default: ""}
+  variant: {type: string, default: default, oneof: [default, bordered, separated]}
+---
+{{/*
+Accordion: a section that opens and closes under its title. It is a native
+<details>, so it needs no JavaScript, the browser's find-in-page opens it,
+and the title is a keyboard-operable <summary>.
+
+  <Accordion title="Is there a free plan?" open>Yes, for up to three projects.</Accordion>
+  <Accordion title="Shipping" group="faq">…</Accordion>
+  <Accordion title="Returns" group="faq">…</Accordion>        only one of "faq" is open at a time
+  <Accordion title="Billing" variant="separated">…</Accordion>
+
+group sets the name attribute, which makes accordions sharing it exclusive
+(one open at a time) in browsers that support it; elsewhere each opens on
+its own. Write a run of accordions with the same variant: default puts a
+rule under each, bordered joins them into one box, separated makes each a
+card. The summary holds only the title text; the chevron is drawn in CSS.
+*/}}
+<brick:style>
+.bk-accordion { border-bottom: 1px solid var(--bk-border); }
+.bk-accordion > summary { position: relative; display: block; padding: .75rem 2rem .75rem 0; font-size: var(--bk-text-base); font-weight: 550; color: var(--bk-fg); cursor: pointer; list-style: none; border-radius: var(--bk-radius-sm); }
+.bk-accordion > summary::-webkit-details-marker { display: none; }
+.bk-accordion > summary::after { content: ""; position: absolute; top: 50%; right: .4rem; width: .45rem; height: .45rem; margin-top: -.35rem; border-right: 1.5px solid var(--bk-muted-fg); border-bottom: 1.5px solid var(--bk-muted-fg); transform: rotate(45deg); transition: transform var(--bk-duration), margin var(--bk-duration); }
+.bk-accordion[open] > summary::after { margin-top: -.1rem; transform: rotate(-135deg); }
+.bk-accordion > summary:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--bk-border); }
+.bk-accordion > summary:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-accordion__body { padding: 0 0 .9rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); line-height: 1.6; }
+.bk-accordion[open] > .bk-accordion__body { animation: bk-fade-in var(--bk-duration) ease-out; }
+.bk-accordion--bordered, .bk-accordion--separated { border: 1px solid var(--bk-border); background: var(--bk-surface); }
+.bk-accordion--bordered > summary, .bk-accordion--separated > summary { padding-left: 1rem; padding-right: 2.5rem; }
+.bk-accordion--bordered > summary::after, .bk-accordion--separated > summary::after { right: 1rem; }
+.bk-accordion--bordered > .bk-accordion__body, .bk-accordion--separated > .bk-accordion__body { padding: 0 1rem 1rem; }
+.bk-accordion--bordered { border-radius: 0; }
+.bk-accordion--bordered + .bk-accordion--bordered { border-top: 0; }
+.bk-accordion--bordered:not(.bk-accordion--bordered + .bk-accordion--bordered) { border-top-left-radius: var(--bk-radius-lg); border-top-right-radius: var(--bk-radius-lg); }
+.bk-accordion--bordered:not(:has(+ .bk-accordion--bordered)) { border-bottom-left-radius: var(--bk-radius-lg); border-bottom-right-radius: var(--bk-radius-lg); }
+.bk-accordion--separated { border-radius: var(--bk-radius-lg); box-shadow: var(--bk-shadow-sm); }
+.bk-accordion--separated + .bk-accordion--separated { margin-top: .5rem; }
+</brick:style>
+<details class="{{ cx `bk-accordion` (cond (ne .Props.variant `default`) (print `bk-accordion--` .Props.variant) ``) .Attrs.class }}"{{ if omit .Attrs `class` }} {{ attrs `class` }}{{ end }}{{ if .Props.open }} open{{ end }}{{ with .Props.group }} name="{{ . }}"{{ end }}>
+  <summary>{{ .Props.title }}</summary>
+  <div class="bk-accordion__body">{{ children }}</div>
+</details>

@@ -1,0 +1,35 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  url: {type: string, default: ""}
+  label: {type: string, default: ""}
+---
+{{/*
+BrowserMockup: a browser window frame — traffic lights, an address bar and
+the children as the page — for screenshots and product shots on landing
+pages and docs.
+
+  <BrowserMockup url="acme.com/dashboard"><img src="/shot.png" alt="The dashboard"></BrowserMockup>
+  <BrowserMockup url="localhost:8002" class="shadow-xl"><Card>…</Card></BrowserMockup>
+
+The frame is decoration: it is a <figure>, and label (or the url) becomes
+its caption for screen readers. The content area grows with its children;
+constrain it with a class or style on the tag.
+*/}}
+<brick:style>
+.bk-browser { display: flex; flex-direction: column; margin: 0; overflow: hidden; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-lg); }
+.bk-browser__bar { display: grid; grid-template-columns: 4rem minmax(0, 1fr) 4rem; align-items: center; gap: .75rem; height: 2.5rem; padding: 0 .75rem; border-bottom: 1px solid var(--bk-border); background: var(--bk-surface-2); }
+.bk-browser__lights { display: flex; gap: .4rem; }
+.bk-browser__lights > i { width: .7rem; height: .7rem; border-radius: 50%; background: var(--bk-danger); }
+.bk-browser__lights > i:nth-child(2) { background: var(--bk-warning); }
+.bk-browser__lights > i:nth-child(3) { background: var(--bk-success); }
+.bk-browser__url { display: flex; align-items: center; justify-content: center; gap: .35rem; width: 100%; max-width: 28rem; height: 1.6rem; margin: 0 auto; padding: 0 .75rem; border-radius: var(--bk-radius); background: var(--bk-muted); color: var(--bk-muted-fg); font-size: var(--bk-text-xs); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bk-browser__url .bk-icon { flex: none; }
+.bk-browser__content { flex: 1; min-height: 0; overflow: auto; background: var(--bk-bg); }
+</brick:style>
+<figure class="{{ cx `bk-browser` .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-browser__bar" aria-hidden="true"><span class="bk-browser__lights"><i></i><i></i><i></i></span>{{ if .Props.url }}<span class="bk-browser__url"><Icon name="lock" :size="11" />{{ .Props.url }}</span>{{ else }}<span></span>{{ end }}<span></span></div>
+  <div class="bk-browser__content">{{ children }}</div>
+  {{ with default .Props.url .Props.label }}<figcaption class="bk-sr-only">{{ . }}</figcaption>{{ end }}
+</figure>

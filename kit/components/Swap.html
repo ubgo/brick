@@ -1,0 +1,46 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  label: {type: string, required: true}
+  iconOff: {type: string, default: ""}
+  iconOn: {type: string, default: ""}
+  size: {type: int, default: 18}
+  effect: {type: string, default: rotate, oneof: [rotate, fade, flip]}
+  variant: {type: string, default: plain, oneof: [plain, button]}
+  checked: {type: bool, default: false}
+  name: {type: string, default: ""}
+  value: {type: string, default: "on"}
+---
+{{/*
+Swap: toggles between two contents — a menu icon that becomes a close
+icon, play and pause, a muted speaker. A hidden checkbox holds the state,
+so it works without JavaScript and posts with a form when given a name.
+
+  <Swap label="Toggle menu" iconOff="menu" iconOn="x" />
+  <Swap label="Play" iconOff="play" iconOn="pause" variant="button" effect="fade" />
+  <Swap label="Subscribe" name="subscribed" checked>
+    <brick:prop name="off">Follow</brick:prop>
+    <brick:prop name="on">Following</brick:prop>
+  </Swap>
+
+label is the checkbox's accessible name and is required: the two contents
+are decorative. The off and on blocks win over iconOff and iconOn.
+*/}}
+<brick:style>
+.bk-swap { position: relative; display: inline-grid; place-items: center; color: var(--bk-fg); cursor: pointer; user-select: none; border-radius: var(--bk-radius); vertical-align: middle; }
+.bk-swap > .bk-swap__off, .bk-swap > .bk-swap__on { grid-area: 1 / 1; display: inline-flex; align-items: center; transition: opacity var(--bk-duration), transform calc(var(--bk-duration) * 1.6); }
+.bk-swap__input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.bk-swap:has(.bk-swap__input:focus-visible) { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-swap__on { opacity: 0; }
+.bk-swap__input:checked ~ .bk-swap__off { opacity: 0; }
+.bk-swap__input:checked ~ .bk-swap__on { opacity: 1; transform: none; }
+.bk-swap--rotate .bk-swap__on { transform: rotate(-90deg) scale(.6); }
+.bk-swap--rotate .bk-swap__input:checked ~ .bk-swap__off { transform: rotate(90deg) scale(.6); }
+.bk-swap--flip .bk-swap__on { transform: rotateY(90deg); }
+.bk-swap--flip .bk-swap__input:checked ~ .bk-swap__off { transform: rotateY(-90deg); }
+.bk-swap--button { width: var(--bk-h-md); height: var(--bk-h-md); border: 1px solid var(--bk-border); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); transition: background var(--bk-duration); }
+.bk-swap--button:hover { background: var(--bk-accent); }
+.bk-swap:has(.bk-swap__input:disabled) { opacity: .5; cursor: not-allowed; }
+</brick:style>
+<label class="{{ cx `bk-swap` (print `bk-swap--` .Props.effect) (cond (eq .Props.variant `button`) `bk-swap--button` ``) .Attrs.class }}" {{ attrs `class` }}><input type="checkbox" class="bk-swap__input" aria-label="{{ .Props.label }}"{{ with .Props.name }} name="{{ . }}" value="{{ $.Props.value }}"{{ end }}{{ if .Props.checked }} checked{{ end }}><span class="bk-swap__off" aria-hidden="true">{{ if hasNode "off" }}{{ node "off" }}{{ else if .Props.iconOff }}<Icon :name=".Props.iconOff" :size=".Props.size" />{{ end }}</span><span class="bk-swap__on" aria-hidden="true">{{ if hasNode "on" }}{{ node "on" }}{{ else if .Props.iconOn }}<Icon :name=".Props.iconOn" :size=".Props.size" />{{ end }}</span></label>

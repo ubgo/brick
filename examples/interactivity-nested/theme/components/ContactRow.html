@@ -1,0 +1,10 @@
+---
+state:
+  open: false
+props:
+  contact: {type: map, reactive: true}
+---
+<div class="row">
+  <button class="toggle" brick:click='$toggle("open")'>{{ .Props.contact.name }}</button>
+  {{ if .State.open }}<em class="notes">Notes for {{ .Props.contact.name }}</em>{{ end }}
+</div>

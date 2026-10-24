@@ -1,0 +1,16 @@
+---
+state: {page: 1, items: ["Item 1", "Item 2"]}
+---
+<brick:script>
+PER_PAGE = 2
+
+def more(state, props):
+    page = state["page"] + 1
+    first = (page - 1) * PER_PAGE + 1
+    brick.region("feed", "append")
+    return dict(state, page = page, items = ["Item %d" % n for n in range(first, first + PER_PAGE)])
+</brick:script>
+<section class="feed">
+  <ul brick:ref="feed" brick:ignore>{{ range .State.items }}<li>{{ . }}</li>{{ end }}</ul>
+  <button brick:click="more">Load more</button>
+</section>

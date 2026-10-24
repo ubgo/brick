@@ -1,0 +1,28 @@
+---
+title: Inbox
+layout: app
+description: A three-pane mail client built only from kit components — folders, search, a reading pane and a compose dialog over SQLite, in one stateful component.
+---
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/inbox/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Inbox`)" />
+    <div class="app-top"><ThemeToggle /></div>
+  </brick:prop>
+  <div class="app-page"><InboxApp /></div>
+  <Toaster />
+</AppShell>
+<brick:style>
+.app-top { margin-left: auto; display: flex; gap: .5rem; }
+.app-page { padding: 0 0 1rem; }
+</brick:style>
+
+<AppSource app="Inbox">
+  <Tabs label="Inbox files" size="sm">
+    <Tab title="inbox.html"><CodeView file="content/apps/inbox.html"><Source src="~/content/apps/inbox.html" /></CodeView></Tab>
+    <Tab title="InboxApp.html"><CodeView file="apps/inbox/InboxApp.html"><Source src="~/apps/inbox/InboxApp.html" /></CodeView></Tab>
+    <Tab title="inbox.star"><CodeView file="apps/inbox/inbox.star"><Source src="~/apps/inbox/inbox.star" /></CodeView></Tab>
+    <Tab title="db_inbox.go"><CodeView file="demodb/db_inbox.go"><Source src="~/demodb/db_inbox.go" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

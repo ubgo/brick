@@ -1,0 +1,40 @@
+---
+use:
+  nav: ~/data/nav.yaml
+props:
+  current: {type: string, required: true}
+  user: {type: string, default: Ada Lovelace}
+  email: {type: string, default: ada@example.com}
+---
+{{/*
+AppNav: the sidebar every demo app shares — the brick kit brand, the app's
+own groups (children), every app from data/nav.yaml's apps list with the
+current one active, a link back to the docs, and the signed-in person.
+
+  <AppShell>
+    <brick:prop name="sidebar"><AppNav current="/apps/store/" /></brick:prop>
+    …
+  </AppShell>
+  <AppNav current="/apps/inbox/">
+    <SidebarGroup title="Mail"><SidebarItem href="#inbox" icon="inbox" label="Inbox" badge="4" /></SidebarGroup>
+  </AppNav>
+
+current is the app's URL, exactly as nav.yaml writes it; the Sidebar
+compares it with every item's href. Children are SidebarGroups placed
+above the Apps group. user and email fill the footer.
+*/}}
+<brick:style>
+.appnav-brand { display: flex; align-items: center; gap: .55rem; padding: .15rem .35rem; font-weight: 700; font-size: var(--bk-text-base); color: var(--bk-fg); text-decoration: none; }
+.appnav-brand b { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: var(--bk-radius); background: var(--bk-primary); color: var(--bk-primary-fg); font-size: var(--bk-text-sm); }
+.appnav-me { display: flex; align-items: center; gap: .6rem; padding: .3rem .4rem; line-height: 1.3; font-size: var(--bk-text-sm); }
+.appnav-me span { display: flex; flex-direction: column; min-width: 0; }
+.appnav-me b { font-weight: 600; }
+.appnav-me small { overflow: hidden; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-overflow: ellipsis; white-space: nowrap; }
+</brick:style>
+<Sidebar :current=".Props.current" label="Apps" brick:spread=".Attrs">
+  <brick:prop name="header"><a class="appnav-brand" href="/"><b>b</b> brick kit</a></brick:prop>
+  {{ children }}
+  <SidebarGroup title="Apps">{{ range .Data.nav.apps }}<SidebarItem :href=".url" :icon=".icon" :label=".title" />{{ end }}</SidebarGroup>
+  <SidebarGroup title="Docs"><SidebarItem href="/" icon="book-open" label="Components" /></SidebarGroup>
+  <brick:prop name="footer"><div class="appnav-me"><Avatar :name=".Props.user" size="sm" status="online" /><span><b>{{ .Props.user }}</b><small>{{ .Props.email }}</small></span></div></brick:prop>
+</Sidebar>

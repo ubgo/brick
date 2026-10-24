@@ -1,0 +1,52 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Label: ~/components/Label.html
+props:
+  label: {type: string, default: ""}
+  for: {type: string, default: ""}
+  hint: {type: string, default: ""}
+  error: {type: string, default: ""}
+  required: {type: bool, default: false}
+  optional: {type: bool, default: false}
+  horizontal: {type: bool, default: false}
+---
+{{/*
+Field: one form row — a label, the control, a hint and an error message —
+wired for assistive technology without the page repeating an id.
+
+  <Field label="Email" hint="We never share it."><Input type="email" name="email" /></Field>
+  <Field label="Plan" :error=".Errors.plan" required><Select name="plan" :options=".Params.plans" /></Field>
+  <Field label="Notifications" horizontal><Switch name="notify" /></Field>
+  <Field label="Password" for="pw"><brick:prop name="aside"><a href="/reset">Forgot?</a></brick:prop><PasswordInput name="password" /></Field>
+
+How the id travels: Field picks the control's id (for=, or one derived from
+the instance id) and provides it, with aria-describedby (hint and error
+ids), aria-invalid and required, as .Ctx.bkField. Every kit control injects
+bkField and applies it, so <Label for> always matches. Put ONE control in a
+Field; a list of checkboxes or radios belongs in a Fieldset or RadioGroup
+(RadioGroup reads the Field for its aria-labelledby and resets the context
+for its radios). An error that is nil or "" shows nothing, so
+:error=".Errors.email" is safe before any validation ran.
+*/}}
+<brick:style>
+.bk-field { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+.bk-field__head { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; }
+.bk-field__aside { font-size: var(--bk-text-xs); color: var(--bk-muted-fg); }
+.bk-field__aside a { color: var(--bk-primary-text); text-decoration: none; }
+.bk-field__aside a:hover { text-decoration: underline; }
+.bk-field__body { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+.bk-field__hint { margin: 0; font-size: var(--bk-text-xs); line-height: 1.45; color: var(--bk-muted-fg); }
+.bk-field__error { display: flex; align-items: flex-start; gap: .3rem; margin: 0; font-size: var(--bk-text-xs); line-height: 1.45; color: var(--bk-danger-text); font-weight: 500; }
+.bk-field__error .bk-icon { flex: none; margin-top: .15em; }
+.bk-field--horizontal { display: grid; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr); align-items: start; column-gap: 1.25rem; }
+.bk-field--horizontal > .bk-field__head { padding-top: .4rem; flex-direction: column; gap: .15rem; }
+@media (max-width: 640px) { .bk-field--horizontal { grid-template-columns: 1fr; row-gap: .4rem; } .bk-field--horizontal > .bk-field__head { padding-top: 0; } }
+</brick:style>
+{{ $id := default (print "bk-f" .ID) .Props.for }}
+{{ $desc := cx (cond .Props.hint (print $id "-hint") "") (cond .Props.error (print $id "-error") "") }}
+{{ provide "bkField" (dict "id" $id "describedby" $desc "invalid" (cond .Props.error true false) "required" .Props.required "labelledby" (cond .Props.label (print $id "-label") "")) }}
+<div class="{{ cx `bk-field` (cond .Props.horizontal `bk-field--horizontal` ``) (cond .Props.error `bk-field--invalid` ``) .Attrs.class }}" {{ attrs `class` }}>
+  {{ if or .Props.label (hasNode "aside") }}<div class="bk-field__head">{{ if .Props.label }}<Label :for="$id" id="{{ $id }}-label" :required=".Props.required" :optional=".Props.optional">{{ .Props.label }}</Label>{{ end }}{{ if hasNode "aside" }}<span class="bk-field__aside">{{ node "aside" }}</span>{{ end }}</div>{{ end }}
+  <div class="bk-field__body">{{ children }}{{ if .Props.hint }}<p class="bk-field__hint" id="{{ $id }}-hint">{{ .Props.hint }}</p>{{ end }}{{ if .Props.error }}<p class="bk-field__error" id="{{ $id }}-error" role="alert"><Icon name="alert-circle" :size="13" />{{ .Props.error }}</p>{{ end }}</div>
+</div>

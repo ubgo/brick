@@ -1,0 +1,18 @@
+---
+props:
+  title:
+    type: string
+    required: true
+    doc: The card's heading.
+    examples: [Welcome, Release notes]
+  tone:
+    type: string
+    default: calm
+    oneof: [calm, loud]
+    doc: How strongly the card is drawn.
+brick:
+  slots:
+    children: {doc: The card's body.}
+    footer: {doc: Optional links under the body., examples: ["<a href=\"/more\">More</a>"]}
+---
+<section class="card card-{{ .Props.tone }}"><h3>{{ .Props.title }}</h3>{{ children }}{{ if hasNode "footer" }}<footer>{{ node "footer" }}</footer>{{ end }}</section>

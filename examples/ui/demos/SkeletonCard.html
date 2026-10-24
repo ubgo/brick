@@ -1,0 +1,3 @@
+<div role="status" aria-busy="true" aria-label="Loading members" style="display: grid; gap: .9rem; width: 100%; max-width: 26rem; padding: 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg)">
+  {{ range 3 }}<div style="display: flex; gap: .75rem; align-items: center"><Skeleton shape="circle" /><div style="flex: 1; display: grid; gap: .4rem"><Skeleton width="45%" /><Skeleton size="sm" width="75%" /></div></div>{{ end }}
+</div>

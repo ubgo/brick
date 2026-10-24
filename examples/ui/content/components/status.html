@@ -1,0 +1,17 @@
+---
+title: Status
+category: Feedback
+description: "A coloured dot with a word — presence (online, away, busy, offline) or any state with a tone, optionally pulsing."
+api:
+  - {name: status, type: "online | offline | busy | away", default: online, desc: "The presence, its colour and its default word."}
+  - {name: tone, type: "primary | success | warning | danger | info | muted", desc: "Replaces the status's colour, for states that are not presence."}
+  - {name: label, type: string, desc: "Replaces the default word; children replace both."}
+  - {name: pulse, type: bool, desc: "A ping animation on the dot (not under reduced motion)."}
+  - {name: dot, type: bool, desc: "Only the dot; the word becomes its accessible name."}
+---
+<h1>Status</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Presence"><StatusPresence /><brick:prop name="code"><Source src="~/demos/StatusPresence.html" /></brick:prop></Example>
+<Example title="Tones, pulse and dots"><StatusTones /><brick:prop name="code"><Source src="~/demos/StatusTones.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

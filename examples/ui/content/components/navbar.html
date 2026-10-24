@@ -1,0 +1,20 @@
+---
+title: Navbar
+category: Navigation
+description: "A top bar with a brand, links and actions; below 768px the links fold into a menu that opens with no JavaScript."
+api:
+  - {name: items, type: "list", desc: "Maps of label, href and icon."}
+  - {name: current, type: "string", desc: "The item whose href equals this gets aria-current."}
+  - {name: label, type: "string", default: "Main", desc: "The nav’s accessible name."}
+  - {name: menuLabel, type: "string", default: "Menu", desc: "The mobile menu button’s accessible name."}
+  - {name: sticky, type: "bool", desc: "Sticks to the top of the viewport, translucent."}
+  - {name: brand, type: "block", desc: "<brick:prop name=brand>: the logo or name."}
+  - {name: actions, type: "block", desc: "<brick:prop name=actions>: buttons on the right."}
+---
+<h1>Navbar</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>Narrow the window below 768px: the links move behind a menu button. The menu is a native popover, so it opens, closes on Escape and on a click outside without any script.</p>
+<Example title="Brand, items and actions" block><NavbarBasic /><brick:prop name="code"><Source src="~/demos/NavbarBasic.html" /></brick:prop></Example>
+<Example title="Links as children" block><NavbarChildren /><brick:prop name="code"><Source src="~/demos/NavbarChildren.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

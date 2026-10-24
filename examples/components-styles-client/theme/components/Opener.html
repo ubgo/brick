@@ -1,0 +1,13 @@
+---
+props:
+  target: string
+---
+<brick:client>
+import { openModal } from "brick:Modal"
+brick.mount("Opener", (el) => {
+  const click = () => openModal(el.dataset.target)
+  el.addEventListener("click", click)
+  return () => el.removeEventListener("click", click)
+})
+</brick:client>
+<button class="opener" data-target="{{ .Props.target }}">{{ children }}</button>

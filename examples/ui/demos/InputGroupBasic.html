@@ -1,0 +1,5 @@
+<div style="display: grid; gap: 1rem; width: 100%; max-width: 28rem">
+  <InputGroup><Input name="email" type="email" placeholder="you@company.com" /><Button>Subscribe</Button></InputGroup>
+  <InputGroup><span class="bk-input-group__text">https://</span><Input name="domain" placeholder="my-site" /><Select name="tld" aria-label="Top-level domain" value=".dev" :options="list `.com` `.dev` `.io`" /></InputGroup>
+  <InputGroup><Select name="cur" aria-label="Currency" value="USD" :options="list `USD` `EUR` `INR`" /><Input name="amount" type="number" value="250" aria-label="Amount" /><Button variant="outline" icon="refresh" square label="Convert" /></InputGroup>
+</div>

@@ -1,0 +1,11 @@
+<div style="display: grid; gap: 1.25rem; width: 100%; max-width: 38rem">
+  <Field label="Display name" hint="Shown on your profile and in comments." horizontal>
+    <Input name="display" value="Ada Lovelace" />
+  </Field>
+  <Field label="Time zone" horizontal>
+    <Select name="tz" value="Europe/London" :options="list `America/New_York` `Europe/London` `Asia/Kolkata` `Asia/Tokyo`" />
+  </Field>
+  <Field label="Public profile" horizontal>
+    <Switch name="public" label="Visible to everyone" description="Search engines can index your page." checked />
+  </Field>
+</div>

@@ -1,0 +1,13 @@
+---
+ratios: [1/1, 4/3, 16/9, 21/9, 3/4]
+---
+<brick:style>
+.ratio-demo { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 1rem; width: 100%; }
+.ratio-demo figure { margin: 0; width: 9rem; }
+.ratio-demo figcaption { margin-top: .35rem; font: var(--bk-text-xs) var(--bk-mono); color: var(--bk-muted-fg); text-align: center; }
+</brick:style>
+<div class="ratio-demo">
+  {{ range .Params.ratios }}
+  <figure><AspectRatio :ratio="." rounded><img src="/demo/dunes.svg" alt=""></AspectRatio><figcaption>{{ . }}</figcaption></figure>
+  {{ end }}
+</div>

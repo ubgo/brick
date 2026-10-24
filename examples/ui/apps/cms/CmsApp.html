@@ -1,0 +1,250 @@
+---
+use:
+  cms: ~/apps/cms/cms.star
+state:
+  view: list
+  q: ""
+  status: all
+  sort: updated
+  dir: desc
+  page: 1
+  pageq: ""
+  per: 10
+  selected: []
+  post: 0
+  loaded: {title: "", slug: "", excerpt: "", body: "", tags: "", status: draft, author: Ada Lovelace, cover: primary, date: "", time: "09:00"}
+  draft: {title: "", slug: "", excerpt: "", body: "", tags: "", status: draft, author: Ada Lovelace, cover: primary, date: "", time: "09:00"}
+  note: ""
+  noteTone: muted
+  autosaves: 0
+  toast: ""
+  toastVariant: success
+  toasts: 0
+---
+{{/*
+CmsApp: the Blog CMS admin — a posts list (status filter with counts,
+search, sort, pages, selection with bulk publish / unpublish / delete, a
+row menu) and a post editor (title and address, the rich-text Editor with
+a Preview of the sanitized draft, excerpt, status and schedule, author,
+tags and cover), with autosave, publish confirmation and toasts. All state
+is here; every change is an action in apps/cms/cms.star.
+
+Autosave: the client module below posts the form to cms.autosave a moment
+after the visitor stops typing. The form renders from state.loaded, which
+autosave never changes, so the re-render leaves every field (and the
+Editor) exactly as the visitor has it; the note and the Preview follow
+state.draft. The module also fills the address from the title until the
+visitor edits the address.
+*/}}
+<brick:client>
+const AUTOSAVE_MS = 1200;
+// Module level, not per mount: a re-render remounts the app, and a pending
+// autosave must survive it.
+let timer = 0;
+
+const slugify = (s) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+brick.mount("CmsApp", (el) => {
+  const edited = (e) => {
+    const form = el.querySelector("#cms-form");
+    if (!form || !form.contains(e.target) || !e.target.name) return;
+    const slug = form.elements.namedItem("slug");
+    if (e.target.name === "title" && slug && slug.dataset.auto === "true") slug.value = slugify(e.target.value);
+    if (e.target.name === "slug") e.target.dataset.auto = "false";
+    const note = el.querySelector(".cms-note");
+    if (note) { note.textContent = "Saving…"; note.className = "cms-note cms-note--muted"; }
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const f = el.querySelector("#cms-form");
+      if (f) brick.action(f, "cms.autosave", [Object.fromEntries(new FormData(f))]).catch(() => {});
+    }, AUTOSAVE_MS);
+  };
+  el.addEventListener("input", edited);
+  el.addEventListener("change", edited);
+  return () => { el.removeEventListener("input", edited); el.removeEventListener("change", edited); };
+})
+</brick:client>
+<brick:style>
+.cms { display: flex; flex-direction: column; gap: 1rem; max-width: 76rem; margin: 0 auto; padding: .5rem .25rem 3rem; }
+.cms-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.cms-search { flex: 1 1 16rem; max-width: 22rem; }
+.cms-toolbar__end { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+.cms-count { margin-left: .15rem; color: var(--bk-muted-fg); font-weight: 400; font-variant-numeric: tabular-nums; }
+[aria-pressed=true] > .cms-count { color: inherit; }
+.cms-busy { display: inline-flex; color: var(--bk-muted-fg); }
+.cms-busy[hidden] { display: none; }
+.cms-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .4rem .5rem .4rem .75rem; border: 1px solid color-mix(in oklab, var(--bk-primary) 30%, var(--bk-border)); border-radius: var(--bk-radius-lg); background: color-mix(in oklab, var(--bk-primary) 6%, var(--bk-surface)); font-size: var(--bk-text-sm); animation: bk-pop-in var(--bk-duration) ease; }
+.cms-bulk__end { display: flex; flex-wrap: wrap; gap: .4rem; margin-left: auto; }
+.cms-panel { border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); overflow: hidden; }
+.cms-panel .bk-table-wrap, .cms-panel .bk-table { border: 0; border-radius: 0; }
+.cms-table th, .cms-table td { white-space: nowrap; }
+.cms-check { width: 2.25rem; padding-right: 0 !important; }
+.cms-sort { display: inline-flex; align-items: center; gap: .3rem; margin: -.2rem -.35rem; padding: .2rem .35rem; border: 0; border-radius: var(--bk-radius-sm); background: none; color: inherit; font: inherit; cursor: pointer; }
+.cms-sort:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.cms-sort .bk-icon { opacity: .45; }
+th[aria-sort=ascending] .cms-sort, th[aria-sort=descending] .cms-sort { color: var(--bk-fg); }
+th[aria-sort=ascending] .cms-sort .bk-icon, th[aria-sort=descending] .cms-sort .bk-icon { opacity: 1; }
+.cms-post { display: flex; align-items: center; gap: .7rem; min-width: 0; }
+.cms-post__text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.cms-post__title { max-width: 26rem; overflow: hidden; padding: 0; border: 0; background: none; color: var(--bk-fg); font: 500 var(--bk-text-sm) var(--bk-font); text-align: left; text-overflow: ellipsis; cursor: pointer; }
+.cms-post__title:hover { color: var(--bk-primary-text); text-decoration: underline; text-underline-offset: 2px; }
+.cms-post__slug { max-width: 26rem; overflow: hidden; color: var(--bk-muted-fg); font: var(--bk-text-xs) var(--bk-mono); text-overflow: ellipsis; }
+.cms-post__status { display: none; margin-top: .2rem; }
+.cms-muted { color: var(--bk-muted-fg); }
+.cms-num { font-variant-numeric: tabular-nums; }
+.cms-author { display: inline-flex; align-items: center; gap: .45rem; }
+.cms-tags { display: inline-flex; gap: .25rem; }
+.cms-when { display: block; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.cms-actions { width: 2.5rem; text-align: right; }
+.cms-row--selected > td { background: color-mix(in oklab, var(--bk-primary) 5%, transparent); }
+.cms-foot { padding: .5rem .75rem; border-top: 1px solid var(--bk-border); }
+.cms-editor__bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: -.5rem -.25rem 0; padding: .5rem .25rem; background: color-mix(in oklab, var(--bk-bg) 90%, transparent); backdrop-filter: blur(6px); }
+.cms-editor__end { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-left: auto; }
+.cms-note { display: inline-flex; align-items: center; gap: .35rem; font-size: var(--bk-text-xs); }
+.cms-note::before { content: ""; width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
+.cms-note--muted { color: var(--bk-muted-fg); }
+.cms-note--success { color: var(--bk-success-text); }
+.cms-note--warning { color: var(--bk-warning-text); }
+.cms-note--danger { color: var(--bk-danger-text); }
+.cms-editor__grid { display: grid; grid-template-columns: minmax(0, 1fr) 19rem; gap: 1.25rem; align-items: start; }
+.cms-editor__main { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.cms-editor__side { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 3.5rem; }
+.cms-side { display: flex; flex-direction: column; gap: .85rem; }
+.cms-side__row { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.cms-preview { padding: 1.25rem 0 .5rem; }
+.cms-preview__empty { color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+@media (max-width: 1380px) { .cms-hide-lg { display: none; } }
+@media (max-width: 900px) { .cms-hide-md { display: none; } .cms-editor__grid { grid-template-columns: minmax(0, 1fr); } .cms-editor__side { position: static; } }
+@media (max-width: 640px) {
+  .cms { padding: 0 0 2rem; gap: .75rem; }
+  .cms-hide-sm { display: none; }
+  .cms-search { max-width: none; flex-basis: 100%; }
+  .cms-toolbar__end { margin-left: 0; }
+  .cms-post__title { max-width: 13rem; }
+  .cms-post__slug { display: none; }
+  .cms-post__status { display: block; }
+  .cms-editor__end { margin-left: 0; width: 100%; }
+}
+</brick:style>
+{{ $labels := dict "all" "All" "draft" "Drafts" "scheduled" "Scheduled" "published" "Published" }}
+{{ $statusName := dict "draft" "Draft" "scheduled" "Scheduled" "published" "Published" }}
+{{ $tones := dict "draft" "neutral" "scheduled" "warning" "published" "success" }}
+<div class="cms">
+{{ if eq .State.view "edit" }}
+  {{ $f := .State.loaded }}
+  {{ $live := and .State.post (ne $f.status "draft") }}
+  <div class="cms-editor__bar">
+    <Button variant="ghost" size="sm" icon="arrow-left" brick:click="cms.back">Posts</Button>
+    <span class="cms-note cms-note--{{ .State.noteTone }}" role="status">{{ .State.note }}</span>
+    <div class="cms-editor__end">
+      {{ if and .State.post (eq $f.status "published") }}<Button variant="ghost" size="sm" icon="external-link" href="{{ print `/apps/cms/blog/` $f.slug `/` }}">View</Button>{{ end }}
+      {{ if .State.post }}<Button variant="ghost" size="sm" icon="trash" data-bk-open="cms-delete">Delete</Button>{{ end }}
+      <Button type="submit" form="cms-form" name="intent" value="save" variant="outline" size="sm">{{ if $live }}Update{{ else }}Save draft{{ end }}</Button>
+      {{ if ne $f.status "published" }}<Button size="sm" icon="send" data-bk-open="cms-publish">Publish</Button>{{ end }}
+    </div>
+  </div>
+  <form id="cms-form" class="cms-editor__grid" brick:submit="cms.save" novalidate>
+    <div class="cms-editor__main">
+      <Field label="Title" :error=".Errors.title" required><Input name="title" value="{{ $f.title }}" placeholder="A title worth clicking" size="lg" autocomplete="off" /></Field>
+      <Field label="Address" hint="Letters, digits and hyphens. Filled from the title until you change it." :error=".Errors.slug"><Input name="slug" value="{{ $f.slug }}" prefix="/blog/" autocomplete="off" spellcheck="false" data-auto="{{ or (eq $f.slug ``) (eq $f.slug (cms.slugify $f.title)) }}" /></Field>
+      <Tabs label="Post body" size="sm">
+        <Tab title="Write" icon="pencil"><Field label="Body" :error=".Errors.body"><Editor name="body" :value="$f.body" :rows="14" label="Post body" :tools="list `bold` `italic` `link` `heading` `bullets` `numbers` `quote` `code`" /></Field></Tab>
+        <Tab title="Preview" icon="eye"><div class="cms-preview">{{ if .State.draft.body }}<CmsCover :tone=".State.draft.cover" size="lg" :title="default `Untitled` .State.draft.title" /><Prose style="margin-top: 1.25rem">{{ sanitize .State.draft.body }}</Prose>{{ else }}<p class="cms-preview__empty">Nothing to preview yet: write in the Write tab, and the preview shows the sanitized draft after it autosaves.</p>{{ end }}</div></Tab>
+      </Tabs>
+      <Field label="Excerpt" hint="Shown on the blog's cards and in link previews." :error=".Errors.excerpt"><Textarea name="excerpt" value="{{ $f.excerpt }}" :rows="3" :maxlength="200" counter /></Field>
+    </div>
+    <aside class="cms-editor__side">
+      <Card title="Publishing" padding="sm">
+        <div class="cms-side">
+          <Field label="Status" :error=".Errors.status"><Select name="status" :value="$f.status" :options="list (dict `value` `draft` `label` `Draft`) (dict `value` `scheduled` `label` `Scheduled`) (dict `value` `published` `label` `Published`)" /></Field>
+          <div class="cms-side__row">
+            <Field label="Date" :error=".Errors.date"><DatePicker name="date" value="{{ $f.date }}" /></Field>
+            <Field label="Time" :error=".Errors.time"><TimePicker name="time" :value="$f.time" :step="30" /></Field>
+          </div>
+          <Field label="Author" :error=".Errors.author"><Select name="author" :value="$f.author" :options="list `Ada Lovelace` `Grace Hopper` `Alan Turing` `Katherine Johnson`" /></Field>
+        </div>
+      </Card>
+      <Card title="Organize" padding="sm">
+        <div class="cms-side">
+          <Field label="Tags" hint="Up to five. Enter or a comma adds one." :error=".Errors.tags"><TagInput name="tags" value="{{ $f.tags }}" :max="5" /></Field>
+          <Field label="Cover" :error=".Errors.cover"><ColorPicker name="cover" label="Cover colour" size="sm" :value="cms.swatch $f.cover" :colors="list (dict `value` (cms.swatch `primary`) `label` `Indigo`) (dict `value` (cms.swatch `info`) `label` `Sky`) (dict `value` (cms.swatch `success`) `label` `Green`) (dict `value` (cms.swatch `warning`) `label` `Amber`) (dict `value` (cms.swatch `danger`) `label` `Red`) (dict `value` (cms.swatch `neutral`) `label` `Grey`)" /></Field>
+        </div>
+      </Card>
+    </aside>
+  </form>
+  <ConfirmDialog id="cms-publish" variant="primary" icon="send" :title="print `Publish “` (default `this post` $f.title) `”?`" message="It goes live on the blog now, at its address, and appears first in the list.">
+    <brick:prop name="confirm"><Button type="submit" form="cms-form" name="intent" value="publish" icon="send" data-bk-close>Publish now</Button></brick:prop>
+  </ConfirmDialog>
+  {{ if .State.post }}<ConfirmDialog id="cms-delete" title="Delete this post?" :message="print `“` $f.title `” is removed from the blog and the admin. This cannot be undone.`" confirmLabel="Delete post" :action="print `cms.remove(` .State.post `)`" />{{ end }}
+{{ else }}
+  {{ $v := cms.view .State }}
+  <PageHeader title="Posts" :description="print (index $v.counts `all`) ` posts · ` (index $v.counts `published`) ` published · ` (index $v.counts `scheduled`) ` scheduled`">
+    <brick:prop name="actions"><Button variant="outline" icon="external-link" href="/apps/cms/blog/">View blog</Button><Button icon="plus" brick:click="cms.new_post">New post</Button></brick:prop>
+  </PageHeader>
+  <div class="cms-toolbar">
+    <ButtonGroup label="Filter by status">
+      {{ range list "all" "draft" "scheduled" "published" }}<Button variant="outline" size="sm" aria-pressed="{{ eq . $.State.status }}" brick:click='cms.filter_status("{{ . }}")'>{{ index $labels . }}<span class="cms-count">{{ index $v.counts . }}</span></Button>{{ end }}
+    </ButtonGroup>
+    <SearchInput brick:model.debounce.300ms="q" value="{{ .State.q }}" placeholder="Search title, tag, author…" shortcut="/" size="sm" class="cms-search" aria-label="Search posts" />
+    <div class="cms-toolbar__end">
+      <span class="cms-busy" brick:loading hidden><Spinner size="sm" label="Updating" /></span>
+      <Select size="sm" aria-label="Rows per page" brick:change="cms.per_page" :value="print $v.per" :options="list (dict `value` `10` `label` `10 per page`) (dict `value` `25` `label` `25 per page`) (dict `value` `50` `label` `50 per page`)" />
+    </div>
+  </div>
+  {{ with .State.selected }}
+  <div class="cms-bulk" role="region" aria-label="Bulk actions">
+    <b>{{ len . }} selected</b>
+    <div class="cms-bulk__end">
+      <Button size="sm" variant="outline" icon="send" brick:click="cms.publish_selected">Publish</Button>
+      <Button size="sm" variant="outline" icon="archive" brick:click="cms.unpublish_selected">Move to drafts</Button>
+      <Button size="sm" variant="danger" icon="trash" data-bk-open="cms-bulk-delete">Delete</Button>
+      <Button size="sm" variant="ghost" icon="x" square label="Clear selection" brick:click="cms.clear_selection" />
+    </div>
+  </div>
+  <ConfirmDialog id="cms-bulk-delete" :title="print `Delete ` (len .) ` ` (cond (eq (len .) 1) `post` `posts`) `?`" message="They are removed from the blog and the admin. This cannot be undone." confirmLabel="Delete" action="cms.remove_selected" />
+  {{ end }}
+  {{ if $v.total }}
+  <div class="cms-panel">
+    <Table hover class="cms-table">
+      <thead><tr>
+        <th class="cms-check"><Checkbox aria-label="Select every post on this page" :checked="$v.allSelected" :indeterminate="$v.someSelected" brick:change="cms.toggle_page" /></th>
+        {{ range list (dict `key` `title` `label` `Title` `sort` true) (dict `key` `status` `label` `Status` `class` `cms-hide-sm`) (dict `key` `author` `label` `Author` `class` `cms-hide-md`) (dict `key` `tags` `label` `Tags` `class` `cms-hide-lg`) (dict `key` `published` `label` `Published` `sort` true `class` `cms-hide-sm`) (dict `key` `updated` `label` `Updated` `sort` true `class` `cms-hide-md`) }}
+        {{ if .sort }}{{ $on := eq .key $v.sort }}<th class="{{ .class }}" aria-sort="{{ if $on }}{{ cond (eq $v.dir `asc`) `ascending` `descending` }}{{ else }}none{{ end }}"><button type="button" class="cms-sort" brick:click='cms.sort_by("{{ .key }}")'>{{ .label }}<Icon :name="cond $on (cond (eq $v.dir `asc`) `arrow-up` `arrow-down`) `chevrons-up-down`" :size="12" /></button></th>{{ else }}<th class="{{ .class }}">{{ .label }}</th>{{ end }}
+        {{ end }}
+        <th class="cms-actions"><span class="bk-sr-only">Actions</span></th>
+      </tr></thead>
+      <tbody>
+        {{ range $v.rows }}
+        <tr class="{{ if .selected }}cms-row--selected{{ end }}" id="{{ print `cms-row-` .id }}" data-status="{{ .status }}">
+          <td class="cms-check"><Checkbox :aria-label="print `Select ` .title" :checked=".selected" brick:change="{{ print `cms.toggle(` .id `)` }}" /></td>
+          <td><div class="cms-post"><CmsCover :tone=".cover" size="sm" /><div class="cms-post__text"><button type="button" class="cms-post__title" brick:click="{{ print `cms.edit(` .id `)` }}">{{ .title }}</button><span class="cms-post__slug">/blog/{{ .slug }}</span><span class="cms-post__status"><Badge :tone="index $tones .status" size="sm" dot>{{ index $statusName .status }}</Badge></span></div></div></td>
+          <td class="cms-hide-sm"><Badge :tone="index $tones .status" dot>{{ index $statusName .status }}</Badge>{{ if eq .status "scheduled" }}<span class="cms-when">{{ dateFormat "2 Jan" (slice .published 0 10) }} · {{ slice .published 11 16 }}</span>{{ end }}</td>
+          <td class="cms-hide-md"><span class="cms-author"><Avatar :name=".author" size="xs" />{{ .author }}</span></td>
+          <td class="cms-hide-lg"><span class="cms-tags">{{ range .taglist }}<Badge size="sm">{{ . }}</Badge>{{ end }}</span></td>
+          <td class="cms-hide-sm cms-muted cms-num">{{ if .published }}{{ dateFormat "2 Jan 2006" (slice .published 0 10) }}{{ else }}—{{ end }}</td>
+          <td class="cms-hide-md cms-muted cms-num">{{ dateFormat "2 Jan 2006" .updated }}</td>
+          <td class="cms-actions">
+            <DropdownMenu :label="print `Actions for ` .title" icon="more-horizontal" square :caret="false" variant="ghost" size="sm" align="end">
+              <MenuItem icon="pencil" brick:click="{{ print `cms.edit(` .id `)` }}">Edit</MenuItem>
+              {{ if .live }}<MenuItem icon="external-link" href="{{ print `/apps/cms/blog/` .slug `/` }}">View on blog</MenuItem>{{ end }}
+              <MenuItem icon="copy" brick:click="{{ print `cms.duplicate(` .id `)` }}">Duplicate</MenuItem>
+              {{ if eq .status "published" }}<MenuItem icon="archive" brick:click="{{ print `cms.unpublish(` .id `)` }}">Move to drafts</MenuItem>{{ else }}<MenuItem icon="send" brick:click="{{ print `cms.publish(` .id `)` }}">Publish now</MenuItem>{{ end }}
+              <MenuSeparator />
+              <MenuItem icon="trash" danger data-bk-open="{{ print `cms-del-` .id }}">Delete</MenuItem>
+            </DropdownMenu>
+            <ConfirmDialog id="{{ print `cms-del-` .id }}" title="Delete this post?" :message="print `“` .title `” is removed from the blog and the admin. This cannot be undone.`" confirmLabel="Delete post" :action="print `cms.remove(` .id `)`" />
+          </td>
+        </tr>
+        {{ end }}
+      </tbody>
+    </Table>
+    <div class="cms-foot"><Pagination :page="$v.page" :total="$v.total" :perPage="$v.per" href="#page-%d" action="cms.goto" size="sm" label="Post pages" /></div>
+  </div>
+  {{ else }}
+  <EmptyState icon="search" :title="cond (ne (trim .State.q) ``) (print `No posts match “` (trim .State.q) `”`) (print `No ` (lower (index $labels .State.status)) ` yet`)" description="Try another search, or clear the filters." bordered>
+    <Button variant="outline" icon="x" brick:click="cms.clear_filters">Clear filters</Button>
+  </EmptyState>
+  {{ end }}
+{{ end }}
+  {{ if .State.toast }}<Toast :variant=".State.toastVariant" :title=".State.toast" id="{{ print `cms-toast-` .State.toasts }}" />{{ end }}
+</div>

@@ -1,0 +1,7 @@
+---
+inject:
+  accent: {default: gray}
+props:
+  plan: {type: map, required: true}
+---
+<div class="card card--{{ .Ctx.accent }}">{{ .Props.plan.name }}: ${{ .Props.plan.price }}</div>

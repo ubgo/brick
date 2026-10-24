@@ -1,0 +1,38 @@
+---
+title: Dashboard
+layout: app
+description: Revenue, orders and activity from the store's database — KPIs with deltas, charts, a paged orders table and a date range that re-queries through an action.
+---
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/dashboard/" /></brick:prop>
+  <brick:prop name="topbar">
+    <SearchInput name="q" placeholder="Search orders, customers…" shortcut="⌘K" size="sm" class="dash-search" />
+    <div class="dash-top">
+      <ThemeToggle />
+      <Indicator :count="3" label="3 unread notifications"><Button variant="ghost" icon="bell" square size="sm" label="Notifications" /></Indicator>
+      <DropdownMenu label="Ada Lovelace" variant="ghost" size="sm" align="end" :caret="false" square icon="user">
+        <MenuLabel>ada@example.com</MenuLabel>
+        <MenuItem href="/apps/settings/" icon="user">Profile</MenuItem>
+        <MenuItem href="/apps/settings/" icon="settings">Settings</MenuItem>
+        <MenuSeparator />
+        <MenuItem href="/apps/auth/" icon="log-out">Sign out</MenuItem>
+      </DropdownMenu>
+    </div>
+  </brick:prop>
+  <DashBoard />
+</AppShell>
+<brick:style>
+.bk-appshell__topbar .dash-search { width: min(22rem, 100%); }
+.dash-top { display: flex; align-items: center; gap: .35rem; margin-left: auto; }
+</brick:style>
+
+<AppSource app="Dashboard">
+  <Tabs label="Dashboard files" size="sm">
+    <Tab title="dashboard.html"><CodeView file="content/apps/dashboard.html"><Source src="~/content/apps/dashboard.html" /></CodeView></Tab>
+    <Tab title="DashBoard.html"><CodeView file="apps/dashboard/DashBoard.html"><Source src="~/apps/dashboard/DashBoard.html" /></CodeView></Tab>
+    <Tab title="DashPanels.html"><CodeView file="apps/dashboard/DashPanels.html"><Source src="~/apps/dashboard/DashPanels.html" /></CodeView></Tab>
+    <Tab title="dashboard.star"><CodeView file="apps/dashboard/dashboard.star"><Source src="~/apps/dashboard/dashboard.star" /></CodeView></Tab>
+    <Tab title="db_dashboard.go"><CodeView file="demodb/db_dashboard.go"><Source src="~/demodb/db_dashboard.go" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

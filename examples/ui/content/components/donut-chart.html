@@ -1,0 +1,27 @@
+---
+title: Donut chart
+category: Charts
+description: "Parts of a whole: a ring of segments with the total in the middle and a legend of values and shares, or a pie."
+api:
+  - {name: data, type: "list", desc: "Maps of the x key, the y key and an optional tone."}
+  - {name: x, type: "string", default: "label", desc: "The segment name key."}
+  - {name: y, type: "string", default: "value", desc: "The value key."}
+  - {name: name, type: "string", desc: "What the value is, for the tooltip."}
+  - {name: label, type: "string", default: "Donut chart", desc: "The accessible name and table caption."}
+  - {name: variant, type: "donut | pie", default: "donut", desc: "A ring or a full circle."}
+  - {name: thickness, type: "int", default: "22", desc: "Ring thickness, in units of the 200-unit chart."}
+  - {name: size, type: "int", default: "176", desc: "Width in px."}
+  - {name: centerLabel, type: "string", default: "Total", desc: "Text under the centre value."}
+  - {name: centerValue, type: "string", desc: "Replaces the formatted total."}
+  - {name: legend, type: "right | bottom | none", default: "right", desc: "Where the legend goes."}
+  - {name: percent, type: "bool", default: "true", desc: "Show each share in the legend."}
+  - {name: prefix, type: "string", desc: "Before every value."}
+  - {name: suffix, type: "string", desc: "After every value."}
+---
+<h1>Donut chart</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A donut with a legend"><DonutChartBasic /><brick:prop name="code"><Source src="~/demos/DonutChartBasic.html" /></brick:prop></Example>
+<Example title="Orders by status from the database, semantic tones"><DonutChartDatabase /><brick:prop name="code"><Source src="~/demos/DonutChartDatabase.html" /></brick:prop></Example>
+<Example title="A pie, legend below"><DonutChartPie /><brick:prop name="code"><Source src="~/demos/DonutChartPie.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

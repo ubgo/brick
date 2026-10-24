@@ -1,0 +1,18 @@
+---
+title: Menu
+category: Navigation
+description: "A vertical list of links and buttons with icons, section headings, badges, shortcuts and an active item."
+api:
+  - {name: items, type: "list", desc: "Maps of label, href, icon, badge, kbd, active, disabled and prefetch (true or visible); {section} and {divider} maps."}
+  - {name: current, type: "string", desc: "The item whose href equals this is active."}
+  - {name: size, type: "sm | md", default: "md", desc: "Row height."}
+  - {name: bordered, type: "bool", desc: "A bordered card around the list."}
+  - {name: label, type: "string", default: "Menu", desc: "The nav’s accessible name."}
+---
+<h1>Menu</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>A list of links, not an ARIA menu: Tab moves through it. For a pop-up action menu use <a href="/components/dropdown-menu/">DropdownMenu</a>.</p>
+<Example title="Sections, badge and active item — items from a YAML file"><MenuSettings /><brick:prop name="code"><Source src="~/demos/MenuSettings.html" /></brick:prop></Example>
+<Example title="Small, with shortcuts"><MenuCompact /><brick:prop name="code"><Source src="~/demos/MenuCompact.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

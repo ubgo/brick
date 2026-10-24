@@ -1,0 +1,45 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  name: {type: string, default: ""}
+  value: {type: string, default: "on"}
+  pressed: {type: bool, default: false}
+  icon: {type: string, default: ""}
+  label: {type: string, default: ""}
+  variant: {type: string, default: ghost, oneof: [ghost, outline]}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  disabled: {type: bool, default: false}
+---
+{{/*
+Toggle: a button that stays pressed — bold in a toolbar, "pin", "mute".
+It is a native checkbox inside a label, so it works and submits with no
+JavaScript, and a screen reader announces it as checked or not checked.
+
+  <Toggle icon="bold" label="Bold" name="bold" />
+  <Toggle icon="star" pressed variant="outline">Starred</Toggle>
+  <Toggle icon="volume-x" label="Mute" size="sm" brick:change="mute" />
+
+label is the accessible name, required when the toggle shows only an
+icon. name and value go on the checkbox (value defaults to "on", as a
+checkbox's does); pressed checks it. Every other attribute lands on the
+checkbox, so brick:change and brick:model inside a stateful component
+read its state.
+*/}}
+<brick:style>
+.bk-toggle { position: relative; display: inline-flex; }
+.bk-toggle__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.bk-toggle__input:disabled { cursor: not-allowed; }
+.bk-toggle__face { display: inline-flex; align-items: center; justify-content: center; gap: .4em; min-width: var(--bk-h-md); height: var(--bk-h-md); padding: 0 .6rem; border: 1px solid transparent; border-radius: var(--bk-radius); color: var(--bk-muted-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); white-space: nowrap; pointer-events: none; transition: background var(--bk-duration), color var(--bk-duration), border-color var(--bk-duration); }
+.bk-toggle--icon .bk-toggle__face { padding: 0; }
+.bk-toggle--sm .bk-toggle__face { min-width: var(--bk-h-sm); height: var(--bk-h-sm); font-size: var(--bk-text-xs); }
+.bk-toggle--lg .bk-toggle__face { min-width: var(--bk-h-lg); height: var(--bk-h-lg); font-size: var(--bk-text-base); }
+.bk-toggle--outline .bk-toggle__face { border-color: var(--bk-input); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); }
+.bk-toggle:hover .bk-toggle__face { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-toggle__input:checked + .bk-toggle__face { background: color-mix(in oklab, var(--bk-fg) 9%, transparent); color: var(--bk-fg); }
+.bk-toggle--outline .bk-toggle__input:checked + .bk-toggle__face { border-color: color-mix(in oklab, var(--bk-fg) 25%, var(--bk-input)); }
+.bk-toggle__input:focus-visible + .bk-toggle__face { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-toggle__input:disabled + .bk-toggle__face { opacity: .5; }
+</brick:style>
+{{ $icon := and .Props.icon (not (hasNode "children")) }}{{ $is := cond (eq .Props.size "lg") 16 (cond (eq .Props.size "sm") 13 15) }}
+<label class="{{ cx `bk-toggle` (print `bk-toggle--` .Props.variant) (cond (ne .Props.size `md`) (print `bk-toggle--` .Props.size) ``) (cond $icon `bk-toggle--icon` ``) .Attrs.class }}"{{ if and .Props.label $icon }} title="{{ .Props.label }}"{{ end }}><input type="checkbox" class="bk-toggle__input"{{ with .Props.name }} name="{{ . }}"{{ end }} value="{{ .Props.value }}"{{ if .Props.pressed }} checked{{ end }}{{ if .Props.disabled }} disabled{{ end }}{{ with .Props.label }} aria-label="{{ . }}"{{ end }} {{ attrs `class` }}><span class="bk-toggle__face">{{ with .Props.icon }}<Icon :name="." :size="$is" />{{ end }}{{ children }}</span></label>

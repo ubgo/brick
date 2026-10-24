@@ -1,0 +1,16 @@
+---
+title: Theme
+category: Foundations
+description: The design tokens every kit component reads — colours for light and dark, a type scale, control heights, radii and motion.
+api:
+  - {name: "(none)", type: "", desc: "Theme takes no props. Put <Theme /> once in the layout, after {{ assets }} and before any other kit component."}
+---
+<h1>Theme</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Colours — switch the theme or accent from the top bar to see them change" block><ThemeColors /><brick:prop name="code"><Source src="~/demos/ThemeColors.html" /></brick:prop></Example>
+<Example title="Type, control heights and radii" block><ThemeScale /><brick:prop name="code"><Source src="~/demos/ThemeScale.html" /></brick:prop></Example>
+<h2>Usage</h2>
+<Prose><p>The layout needs <code>class="bk-base"</code> on <code>&lt;body&gt;</code> for the base font, colours and focus rings, then the assets and the theme. See <a href="/theming/">Theming</a> to change colours, force dark mode or pick an accent.</p></Prose>
+<Prose class="bk-prose--wide"><Source src="~/snippets/layout.html" /></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

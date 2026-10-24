@@ -1,0 +1,40 @@
+---
+state:
+  contacts:
+    - {id: 1, name: Ada Lovelace, email: ada@example.com}
+    - {id: 2, name: Grace Hopper, email: grace@example.com}
+    - {id: 3, name: Alan Turing, email: alan@example.com}
+  deleted: ""
+  deletes: 0
+---
+<brick:script>
+SEED = [
+    {"id": 1, "name": "Ada Lovelace", "email": "ada@example.com"},
+    {"id": 2, "name": "Grace Hopper", "email": "grace@example.com"},
+    {"id": 3, "name": "Alan Turing", "email": "alan@example.com"},
+]
+
+def remove(state, props, id):
+    gone = [c["name"] for c in state["contacts"] if c["id"] == id]
+    return dict(state, contacts = [c for c in state["contacts"] if c["id"] != id], deleted = gone[0] if gone else "", deletes = state["deletes"] + 1)
+
+def remove_all(state, props):
+    return dict(state, contacts = [], deleted = "")
+
+def restore(state, props):
+    return dict(state, contacts = SEED, deleted = "")
+</brick:script>
+<div style="width: 100%; max-width: 30rem">
+  <div style="border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); overflow: hidden">
+    {{ range .State.contacts }}
+    <div brick:key="{{ .id }}" style="display: flex; align-items: center; gap: .75rem; padding: .55rem .75rem; border-bottom: 1px solid var(--bk-border)">
+      <div style="flex: 1; line-height: 1.35"><b style="font-size: var(--bk-text-sm)">{{ .name }}</b><br><span style="color: var(--bk-muted-fg); font-size: var(--bk-text-xs)">{{ .email }}</span></div>
+      <ConfirmDialog id="{{ print `demo-del-` .id }}" title="Delete contact?" :message="print .name ` will be removed from your contacts. This cannot be undone.`" confirmLabel="Delete" :action="print `remove(` .id `)`">
+        <brick:prop name="trigger"><Button variant="ghost" size="sm" icon="trash" square :label="print `Delete ` .name" /></brick:prop>
+      </ConfirmDialog>
+    </div>
+    {{ else }}<p style="padding: 1rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">No contacts left.</p>{{ end }}
+  </div>
+  <div style="margin-top: .6rem; display: flex; gap: .5rem"><Button variant="link" brick:click="restore">Restore the three contacts</Button><Button id="demo-del-all" variant="link" brick:click="remove_all" brick:confirm="Delete every contact?" data-confirm-label="Delete all">Delete all</Button></div>
+  {{ with .State.deleted }}<Toast id="{{ print `deleted-` $.State.deletes }}" title="Contact deleted" :description="print . ` was removed.`" />{{ end }}
+</div>

@@ -1,0 +1,160 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "brick (injection into HTML)",
+  "scopeName": "brick.injection",
+  "injectionSelector": "L:text.html -comment",
+  "patterns": [
+    {
+      "include": "#action"
+    },
+    {
+      "include": "#component-tag"
+    },
+    {
+      "include": "#brick-attribute"
+    }
+  ],
+  "repository": {
+    "action": {
+      "comment": "A Go template action {{ \u2026 }} (or {{- \u2026 -}}), anywhere: text, attribute values, script and style bodies.",
+      "name": "meta.embedded.action.brick",
+      "begin": "\\{\\{-?",
+      "end": "-?\\}\\}",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.section.embedded.begin.brick"
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.section.embedded.end.brick"
+        }
+      },
+      "patterns": [
+        {
+          "name": "comment.block.brick",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "string.quoted.double.brick",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.brick",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.raw.brick",
+          "begin": "`",
+          "end": "`"
+        },
+        {
+          "name": "string.quoted.single.brick",
+          "match": "'(?:[^'\\\\]|\\\\.)'"
+        },
+        {
+          "name": "keyword.control.brick",
+          "match": "\\b(?:if|else|end|range|with|define|block|template|break|continue)\\b"
+        },
+        {
+          "name": "constant.language.brick",
+          "match": "\\b(?:true|false|nil)\\b"
+        },
+        {
+          "name": "constant.numeric.brick",
+          "match": "-?\\b\\d+(?:\\.\\d+)?\\b"
+        },
+        {
+          "name": "variable.other.brick",
+          "match": "\\$[A-Za-z0-9_]*"
+        },
+        {
+          "name": "variable.other.property.brick",
+          "match": "\\.[A-Za-z_][A-Za-z0-9_]*"
+        },
+        {
+          "name": "keyword.operator.brick",
+          "match": ":=|=|\\|"
+        },
+        {
+          "name": "support.function.brick",
+          "match": "\\b[A-Za-z_][A-Za-z0-9_]*\\b"
+        }
+      ]
+    },
+    "component-tag": {
+      "comment": "A component tag (<Card>, <ui.Card>, <x-card>) or an engine tag (<brick:prop>), with its attributes.",
+      "begin": "(</?)([A-Z][A-Za-z0-9_.]*|x-[a-z0-9][a-z0-9.-]*|brick:[a-z][a-z0-9-]*)(?=[\\s/>])",
+      "end": "(/?>)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.html"
+        },
+        "2": {
+          "name": "entity.name.tag.component.brick"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.end.html"
+        }
+      },
+      "name": "meta.tag.component.brick",
+      "patterns": [
+        {
+          "include": "#action"
+        },
+        {
+          "include": "#brick-attribute"
+        },
+        {
+          "name": "entity.other.attribute-name.html",
+          "match": "[:@]?[A-Za-z_][\\w:.-]*"
+        },
+        {
+          "name": "punctuation.separator.key-value.html",
+          "match": "="
+        },
+        {
+          "name": "string.quoted.double.html",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "include": "#action"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.html",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "include": "#action"
+            }
+          ]
+        }
+      ]
+    },
+    "brick-attribute": {
+      "comment": "An engine-owned attribute (brick:click, brick:model.lazy, brick:spread) inside any tag, with its value.",
+      "match": "(?<=\\s)(brick:[A-Za-z][\\w.:-]*)(?:(=)(\"[^\"]*\"|'[^']*'))?(?=[\\s/>])",
+      "captures": {
+        "1": {
+          "name": "entity.other.attribute-name.brick"
+        },
+        "2": {
+          "name": "punctuation.separator.key-value.html"
+        },
+        "3": {
+          "name": "string.quoted.brick"
+        }
+      }
+    }
+  }
+}

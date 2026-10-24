@@ -1,0 +1,10 @@
+---
+use:
+  people: ~/data/demo-people.yaml
+columns:
+  - {key: name, label: Name}
+  - {key: team, label: Team}
+  - {key: seats, label: Seats, align: right}
+  - {key: joined, label: Joined, align: right}
+---
+<DataTable :columns=".Params.columns" :rows=".Data.people" :pageSize="5" :pageSizes="list 5 10" compact striped placeholder="Filter people…" style="width: 100%" />

@@ -1,0 +1,227 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Table: ~/components/Table.html
+props:
+  columns: {type: list, required: true}
+  rows: {type: list, default: []}
+  pageSize: {type: int, default: 10, client: true}
+  pageSizes: {type: list, default: [10, 25, 50]}
+  search: {type: bool, default: true}
+  placeholder: {type: string, default: Search…}
+  selectable: {type: bool, default: false}
+  rowKey: {type: string, default: id}
+  label: {type: string, default: ""}
+  empty: {type: string, default: No results.}
+  striped: {type: bool, default: false}
+  compact: {type: bool, default: false}
+  sticky: {type: bool, default: false}
+  height: {type: string, default: ""}
+---
+{{/*
+DataTable: a Table with a toolbar, column sorting, a text filter,
+pagination and row selection. The server renders every row; the browser
+does the rest, so the table is only as big as one page of data you are
+happy to send (a few thousand rows). For more, page on the server with
+<Table> and <Pagination>.
+
+  <DataTable :columns=".Params.columns" :rows=".Params.people" />
+  <DataTable :columns=".Params.columns" :rows=".Props.rows" selectable pageSize="25">
+    <brick:prop name="cell_status"><Badge>…Slot.value…</Badge></brick:prop>
+    <brick:prop name="toolbar"><Button size="sm" icon="download">Export</Button></brick:prop>
+  </DataTable>
+
+Columns are Table's ({key, label, align, width}) plus sortable: false to
+turn sorting off for one column; the cell, cell_<key> and empty slots are
+Table's too. Sorting compares each cell's raw value (numbers as numbers),
+not what a slot drew. With selectable, each row gets a checkbox named
+"selected" whose value is the row's rowKey field, so a surrounding <form>
+submits the selection without JavaScript; the table also fires a
+"bk-select" DOM event with {keys} whenever the selection changes.
+
+Without JavaScript it is the plain full table: no toolbar, no pager.
+
+label names the table's region and its pager ("<label> pagination"), so
+two tables on one page have distinct landmarks; give each one a label.
+*/}}
+<brick:client>
+// DEFAULT_PAGE_SIZE is used when neither the size select nor the pageSize
+// prop gives a usable number. The pager shows the first and last page, the
+// current page with SIBLINGS either side, and EDGE_RUN pages in a row at
+// either end (so page 3 of 20 reads 1 2 3 4 … 20, not 1 2 3 4 … with a
+// one-page gap).
+const DEFAULT_PAGE_SIZE = 10, SIBLINGS = 1, EDGE_RUN = 4;
+
+brick.mount("DataTable", (el, props) => {
+  const tbody = el.querySelector(".bk-table__table > tbody");
+  const none = tbody.querySelector(".bk-dt__none");
+  const all = [...tbody.children].filter((tr) => tr !== none);
+  const heads = [...el.querySelectorAll(".bk-table__table > thead th[data-col]")];
+  const search = el.querySelector(".bk-dt__search input");
+  const size = el.querySelector(".bk-dt__size select");
+  const range = el.querySelector(".bk-dt__range");
+  const pager = el.querySelector(".bk-dt__pager");
+  const selAll = el.querySelector(".bk-dt__all");
+  const selInfo = el.querySelector(".bk-dt__selected");
+  const text = new Map(all.map((tr) => [tr, tr.textContent.toLowerCase()]));
+  const coll = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+  const st = { q: "", col: -1, dir: 1, page: 1, per: Number(size ? size.value : props.pageSize) || DEFAULT_PAGE_SIZE, view: all, shown: [] };
+  const cell = (tr, i) => tr.querySelector(`:scope > td[data-col="${i}"]`);
+  const valueOf = (tr, i) => { const c = cell(tr, i); return c ? (c.dataset.value ?? c.textContent.trim()) : ""; };
+  const cmp = (a, b) => {
+    const x = valueOf(a, st.col), y = valueOf(b, st.col);
+    const nx = Number(x), ny = Number(y);
+    if (x !== "" && y !== "" && !Number.isNaN(nx) && !Number.isNaN(ny)) return (nx - ny) * st.dir;
+    return coll.compare(x, y) * st.dir;
+  };
+  const btn = (label, page, opts = {}) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "bk-dt__page" + (opts.icon ? " bk-dt__page--icon" : "");
+    b.textContent = opts.icon || label;
+    if (opts.icon) b.setAttribute("aria-label", label);
+    if (opts.current) b.setAttribute("aria-current", "page");
+    b.disabled = Boolean(opts.disabled);
+    b.dataset.page = page;
+    return b;
+  };
+  const pages = () => Math.max(1, Math.ceil(st.view.length / st.per));
+  const renderPager = () => {
+    const n = pages(), p = st.page, out = [];
+    out.push(btn("First page", 1, { icon: "«", disabled: p === 1 }), btn("Previous page", p - 1, { icon: "‹", disabled: p === 1 }));
+    let gap = false;
+    for (let i = 1; i <= n; i++) {
+      const near = Math.abs(i - p) <= SIBLINGS || i === 1 || i === n || (p <= EDGE_RUN - 1 && i <= EDGE_RUN) || (p >= n - EDGE_RUN + 2 && i >= n - EDGE_RUN + 1);
+      if (near) { out.push(btn(String(i), i, { current: i === p })); gap = false; }
+      else if (!gap) { const s = document.createElement("span"); s.className = "bk-dt__gap"; s.textContent = "…"; s.setAttribute("aria-hidden", "true"); out.push(s); gap = true; }
+    }
+    out.push(btn("Next page", p + 1, { icon: "›", disabled: p === n }), btn("Last page", n, { icon: "»", disabled: p === n }));
+    pager.replaceChildren(...out);
+  };
+  const selected = () => all.filter((tr) => { const c = tr.querySelector(".bk-dt__row-check"); return c && c.checked; });
+  const syncSelection = () => {
+    if (!selAll) return;
+    all.forEach((tr) => tr.classList.toggle("bk-dt__row--selected", tr.querySelector(".bk-dt__row-check").checked));
+    const onPage = st.shown.map((tr) => tr.querySelector(".bk-dt__row-check"));
+    const on = onPage.filter((c) => c.checked).length;
+    selAll.checked = on > 0 && on === onPage.length;
+    selAll.indeterminate = on > 0 && on < onPage.length;
+    const n = selected().length;
+    selInfo.hidden = n === 0;
+    selInfo.textContent = `${n} selected`;
+  };
+  const render = () => {
+    const q = st.q;
+    let view = q ? all.filter((tr) => text.get(tr).includes(q)) : all.slice();
+    if (st.col >= 0) view.sort(cmp);
+    st.view = view;
+    st.page = Math.min(Math.max(1, st.page), pages());
+    const from = (st.page - 1) * st.per;
+    st.shown = view.slice(from, from + st.per);
+    const shown = new Set(st.shown);
+    view.forEach((tr) => tbody.insertBefore(tr, none));
+    all.forEach((tr) => { tr.hidden = !shown.has(tr); tr.classList.remove("bk-dt__last"); });
+    if (st.shown.length) st.shown[st.shown.length - 1].classList.add("bk-dt__last");
+    none.hidden = view.length > 0;
+    const fmt = (x) => x.toLocaleString();
+    range.textContent = view.length ? `${fmt(from + 1)}–${fmt(from + st.shown.length)} of ${fmt(view.length)}` : "0 of " + fmt(all.length);
+    renderPager();
+    syncSelection();
+  };
+  const onSort = (e) => {
+    const th = e.target.closest("th[data-col]");
+    if (!th || !e.target.closest(".bk-dt__sort")) return;
+    const i = Number(th.dataset.col);
+    st.dir = st.col === i ? -st.dir : 1;
+    st.col = i;
+    heads.forEach((h) => { if (h === th) h.setAttribute("aria-sort", st.dir > 0 ? "ascending" : "descending"); else h.removeAttribute("aria-sort"); });
+    render();
+  };
+  const onPage = (e) => {
+    const b = e.target.closest(".bk-dt__page");
+    if (!b || b.disabled) return;
+    st.page = Number(b.dataset.page);
+    render();
+    const cur = pager.querySelector("[aria-current]");
+    if (cur && pager.contains(document.activeElement) === false) cur.focus();
+  };
+  const onSearch = () => { st.q = search.value.trim().toLowerCase(); st.page = 1; render(); };
+  const onSize = () => { st.per = Number(size.value) || st.per; st.page = 1; render(); };
+  const onCheck = (e) => {
+    if (e.target === selAll) st.shown.forEach((tr) => { tr.querySelector(".bk-dt__row-check").checked = selAll.checked; });
+    else if (!e.target.classList.contains("bk-dt__row-check")) return;
+    syncSelection();
+    el.dispatchEvent(new CustomEvent("bk-select", { bubbles: true, detail: { keys: selected().map((tr) => tr.querySelector(".bk-dt__row-check").value) } }));
+  };
+  const thead = el.querySelector(".bk-table__table > thead");
+  thead.addEventListener("click", onSort);
+  pager.addEventListener("click", onPage);
+  if (search) search.addEventListener("input", onSearch);
+  if (size) size.addEventListener("change", onSize);
+  el.addEventListener("change", onCheck);
+  el.querySelectorAll(".bk-dt__toolbar, .bk-dt__footer, .bk-dt__all").forEach((n) => { n.hidden = false; });
+  el.classList.add("bk-dt--js");
+  render();
+  return () => {
+    thead.removeEventListener("click", onSort);
+    pager.removeEventListener("click", onPage);
+    if (search) search.removeEventListener("input", onSearch);
+    if (size) size.removeEventListener("change", onSize);
+    el.removeEventListener("change", onCheck);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-dt { display: flex; flex-direction: column; gap: .6rem; min-width: 0; }
+.bk-dt__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.bk-dt__toolbar[hidden], .bk-dt__footer[hidden] { display: none; }
+.bk-dt__search { position: relative; display: flex; align-items: center; flex: 0 1 16rem; min-width: 10rem; }
+.bk-dt__search .bk-icon { position: absolute; left: .55rem; color: var(--bk-muted-fg); pointer-events: none; }
+.bk-dt__search input { width: 100%; height: var(--bk-h-md); padding: 0 .6rem 0 1.9rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm) var(--bk-font); box-shadow: var(--bk-shadow-sm); }
+.bk-dt__search input:focus { outline: 2px solid var(--bk-ring); outline-offset: 0; border-color: var(--bk-primary); }
+.bk-dt__selected { font-size: var(--bk-text-sm); font-weight: 500; color: var(--bk-primary-text); }
+.bk-dt__actions { display: flex; gap: .4rem; margin-left: auto; }
+.bk-dt__sort { display: inline-flex; align-items: center; gap: .3rem; margin: 0 -.35rem; padding: .2rem .35rem; border: 0; border-radius: var(--bk-radius-sm); background: none; color: inherit; font: inherit; cursor: pointer; }
+.bk-dt__sort:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-dt .bk-dt__sort-icon { opacity: .45; }
+.bk-dt:not(.bk-dt--js) .bk-dt__sort { pointer-events: none; }
+.bk-dt:not(.bk-dt--js) .bk-dt__sort-icon { display: none; }
+.bk-dt th[aria-sort] { color: var(--bk-fg); }
+.bk-dt th[aria-sort] .bk-dt__sort-icon { opacity: 1; color: var(--bk-primary); }
+.bk-dt th[aria-sort=ascending] .bk-dt__sort-icon { clip-path: inset(0 0 50% 0); }
+.bk-dt th[aria-sort=descending] .bk-dt__sort-icon { clip-path: inset(50% 0 0 0); }
+.bk-dt .bk-dt__check { width: 2.25rem; padding-right: 0; }
+.bk-dt .bk-dt__check input { width: .95rem; height: .95rem; margin: 0; accent-color: var(--bk-primary); vertical-align: middle; }
+.bk-dt :where(.bk-table__table > tbody > tr:has(+ .bk-dt__none[hidden]), .bk-table__table > tbody > .bk-dt__last) > td { border-bottom: 0; }
+.bk-dt--js :where(.bk-table__table > tbody > tr:not(.bk-dt__last)) > td { border-bottom: 1px solid var(--bk-border); }
+.bk-dt .bk-dt__row--selected { background: color-mix(in oklab, var(--bk-primary) 7%, transparent); }
+.bk-dt__footer { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; font-size: var(--bk-text-sm); color: var(--bk-muted-fg); }
+.bk-dt__range { font-variant-numeric: tabular-nums; }
+.bk-dt__size { display: inline-flex; align-items: center; gap: .4rem; margin-left: auto; }
+.bk-dt__size select { height: var(--bk-h-sm); padding: 0 .4rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm) var(--bk-font); }
+.bk-dt__pager { display: flex; align-items: center; gap: .2rem; }
+.bk-dt__page { min-width: var(--bk-h-sm); height: var(--bk-h-sm); padding: 0 .45rem; border: 1px solid transparent; border-radius: var(--bk-radius); background: none; color: var(--bk-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); font-variant-numeric: tabular-nums; cursor: pointer; }
+.bk-dt__page:hover:not(:disabled) { background: var(--bk-accent); }
+.bk-dt__page[aria-current=page] { border-color: var(--bk-input); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); }
+.bk-dt__page:disabled { opacity: .4; cursor: default; }
+.bk-dt__page--icon { font-size: var(--bk-text-base); }
+.bk-dt__gap { min-width: 1.25rem; text-align: center; }
+</brick:style>
+{{- $cols := .Props.columns -}}
+{{- $key := .Props.rowKey -}}
+<div class="{{ cx `bk-dt` .Attrs.class }}"{{ with .Props.label }} role="region" aria-label="{{ . }}"{{ end }} {{ attrs `class` }}>
+  <div class="bk-dt__toolbar" hidden>
+    {{ if .Props.search }}<label class="bk-dt__search"><Icon name="search" :size="14" /><input type="search" placeholder="{{ .Props.placeholder }}" aria-label="Filter rows"></label>{{ end }}
+    {{ if .Props.selectable }}<span class="bk-dt__selected" aria-live="polite" hidden></span>{{ end }}
+    {{ if hasNode "toolbar" }}<div class="bk-dt__actions">{{ node "toolbar" }}</div>{{ end }}
+  </div>
+  <Table :striped=".Props.striped" :compact=".Props.compact" :sticky=".Props.sticky" :height=".Props.height" hover>
+    <thead><tr>{{ if .Props.selectable }}<th class="bk-dt__check" scope="col"><input type="checkbox" class="bk-dt__all" aria-label="Select all rows on this page" hidden></th>{{ end }}{{ range $i, $c := $cols }}<th scope="col" data-col="{{ $i }}"{{ with $c.align }}{{ if ne . "left" }} class="bk-table__{{ . }}"{{ end }}{{ end }}{{ with $c.width }} style="width: {{ . }}"{{ end }}>{{ if eq (index $c "sortable") false }}{{ $c.label }}{{ else }}<button type="button" class="bk-dt__sort">{{ $c.label }}<Icon name="chevrons-up-down" :size="12" class="bk-dt__sort-icon" /></button>{{ end }}</th>{{ end }}</tr></thead>
+    <tbody>{{ range $row := .Props.rows }}<tr>{{ if $.Props.selectable }}<td class="bk-dt__check"><input type="checkbox" class="bk-dt__row-check" name="selected" value="{{ index $row $key }}" aria-label="Select {{ index $row (index (index $cols 0) `key`) }}"></td>{{ end }}{{ range $i, $col := $cols }}{{ $v := index $row $col.key }}<td data-col="{{ $i }}" data-value="{{ $v }}"{{ with $col.align }}{{ if ne . "left" }} class="bk-table__{{ . }}"{{ end }}{{ end }}>{{ if hasNode (print "cell_" $col.key) }}{{ node (print "cell_" $col.key) (dict "row" $row "col" $col "value" $v) }}{{ else if hasNode "cell" }}{{ node "cell" (dict "row" $row "col" $col "value" $v) }}{{ else }}{{ $v }}{{ end }}</td>{{ end }}</tr>{{ end }}<tr class="bk-dt__none"{{ if .Props.rows }} hidden{{ end }}><td class="bk-table__empty" colspan="{{ add (len $cols) (cond .Props.selectable 1 0) }}">{{ if hasNode "empty" }}{{ node "empty" }}{{ else }}{{ .Props.empty }}{{ end }}</td></tr></tbody>
+  </Table>
+  <div class="bk-dt__footer" hidden>
+    <span class="bk-dt__range" aria-live="polite">{{ len .Props.rows }} rows</span>
+    <label class="bk-dt__size">Rows per page <select>{{ range .Props.pageSizes }}<option{{ if eq . $.Props.pageSize }} selected{{ end }}>{{ . }}</option>{{ end }}</select></label>
+    <nav class="bk-dt__pager" aria-label="{{ with .Props.label }}{{ . }} pagination{{ else }}Pagination{{ end }}"></nav>
+  </div>
+</div>

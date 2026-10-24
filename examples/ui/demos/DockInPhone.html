@@ -1,0 +1,8 @@
+<PhoneMockup label="A phone app with a dock">
+  <div style="flex: 1; padding: 1rem; display: grid; gap: .75rem; align-content: start">
+    <strong style="font-size: var(--bk-text-xl)">Inbox</strong>
+    <div style="padding: .75rem; border-radius: var(--bk-radius); background: var(--bk-muted)">Design review notes</div>
+    <div style="padding: .75rem; border-radius: var(--bk-radius); background: var(--bk-muted)">Quarterly numbers are in</div>
+  </div>
+  <Dock label="Phone dock" :fixed="false" current="/inbox/" :items="list (dict `label` `Home` `href` `/home/` `icon` `home`) (dict `label` `Inbox` `href` `/inbox/` `icon` `inbox` `badge` `2`) (dict `label` `Calendar` `href` `/cal/` `icon` `calendar`) (dict `label` `Settings` `href` `/settings/` `icon` `settings`)" />
+</PhoneMockup>

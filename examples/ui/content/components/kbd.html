@@ -1,0 +1,14 @@
+---
+title: Kbd
+category: Foundations
+description: A keyboard key or a combination of keys, for shortcuts in menus, tooltips and help text.
+api:
+  - {name: keys, type: string, desc: "A combination, split on spaces: \"⌘ K\". Without it, the children are one key."}
+  - {name: size, type: "sm | md", default: md, desc: Key size.}
+---
+<h1>Kbd</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Keys and combinations"><KbdKeys /><brick:prop name="code"><Source src="~/demos/KbdKeys.html" /></brick:prop></Example>
+<Example title="In a menu and in text"><KbdMenu /><brick:prop name="code"><Source src="~/demos/KbdMenu.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

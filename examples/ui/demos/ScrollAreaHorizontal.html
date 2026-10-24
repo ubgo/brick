@@ -1,0 +1,8 @@
+---
+covers: [aurora, dunes, forest, aurora, dunes, forest, aurora, dunes]
+---
+<ScrollArea orientation="horizontal" label="Gallery" style="width: 100%">
+  <Stack direction="row" gap="sm" style="padding-bottom: .5rem; width: max-content">
+    {{ range .Params.covers }}<AspectRatio ratio="4/3" rounded style="width: 12rem"><img src="/demo/{{ . }}.svg" alt=""></AspectRatio>{{ end }}
+  </Stack>
+</ScrollArea>

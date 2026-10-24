@@ -1,0 +1,49 @@
+---
+state:
+  range: 30d
+  page: 1
+---
+{{/*
+DashBoard: the Dashboard app's stateful core. It holds the date range and
+the recent-orders page; DashPanels loads every number for them from the
+orders table. Picking a range (a SegmentedControl: native radios) or a
+page of the orders table (Pagination links to #orders-page-N) calls an
+action through brick.action, so the whole board re-queries and patches in
+place. Changing the range goes back to page 1.
+*/}}
+<brick:script>
+RANGES = ["7d", "30d", "90d"]
+
+def setRange(state, props, value):
+    if value not in RANGES:
+        return state
+    return dict(state, range = value, page = 1)
+
+def page(state, props, n):
+    return dict(state, page = max(1, int(n)))
+</brick:script>
+<brick:client>
+// Radios and pagination links are kit markup, so the actions are wired
+// here: a range change and a click on an #orders-page-N link each call
+// the matching action on this board.
+brick.mount("DashBoard", (el) => {
+  const onChange = (e) => {
+    if (e.target.name === "range" && e.target.checked) brick.action(e.target, "setRange", [e.target.value]);
+  };
+  const onClick = (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#orders-page-"]');
+    if (!a || !el.contains(a)) return;
+    e.preventDefault();
+    brick.action(a, "page", [Number(a.getAttribute("href").slice("#orders-page-".length))]);
+  };
+  el.addEventListener("change", onChange);
+  el.addEventListener("click", onClick);
+  return () => { el.removeEventListener("change", onChange); el.removeEventListener("click", onClick); };
+})
+</brick:client>
+<div class="dash">
+  <PageHeader title="Dashboard" description="Sales and orders across the store, from the live database.">
+    <brick:prop name="actions"><SegmentedControl name="range" label="Date range" size="sm" :value=".State.range" :options="list (dict `value` `7d` `label` `7 days`) (dict `value` `30d` `label` `30 days`) (dict `value` `90d` `label` `90 days`)" /><Button variant="outline" size="sm" icon="download">Export</Button></brick:prop>
+  </PageHeader>
+  <DashPanels :range=".State.range" :page=".State.page" />
+</div>

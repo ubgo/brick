@@ -1,0 +1,109 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  month: {type: string, default: ""}
+  selected: {type: string, default: ""}
+  today: {type: string, default: ""}
+  href: {type: string, default: ""}
+  monthHref: {type: string, default: ""}
+  weekStart: {type: string, default: sunday, oneof: [sunday, monday]}
+---
+{{/*
+Calendar: a month grid rendered on the server — weekday headers, the
+days of the month (with the neighbouring months' days muted), a today
+marker and a selected day. Links are optional, so it works as a display, a
+date picker made of plain links, or a booking page.
+
+  <Calendar month="2026-02" selected="2026-02-14" />
+  <Calendar :month=".Params.month" today="2026-09-27" href="/bookings/?date={date}" monthHref="?month={month}" />
+  <Calendar selected="2026-03-09" weekStart="monday" />
+
+month is YYYY-MM; without it the month of selected, then of today, is
+shown. href turns each day into a link, {date} replaced by YYYY-MM-DD;
+monthHref adds previous/next links, {month} replaced by YYYY-MM. today is a
+prop, not the clock, because a render must give the same bytes every time
+(pass the date in from your app or a loader). The date arithmetic is the
+Starlark below, so the host needs a Scripting backend.
+*/}}
+<brick:script>
+_OFFSETS = [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
+_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+_DAYS = [["Su", "Sunday"], ["Mo", "Monday"], ["Tu", "Tuesday"], ["We", "Wednesday"], ["Th", "Thursday"], ["Fr", "Friday"], ["Sa", "Saturday"]]
+
+def _weekday(y, m, d):
+    # Sakamoto's method: 0 is Sunday.
+    if m < 3:
+        y = y - 1
+    return (y + y // 4 - y // 100 + y // 400 + _OFFSETS[m - 1] + d) % 7
+
+def _days_in(y, m):
+    if m == 2:
+        return 29 if (y % 4 == 0 and y % 100 != 0) or y % 400 == 0 else 28
+    return 30 if m in (4, 6, 9, 11) else 31
+
+def _two(n):
+    return str(n) if n >= 10 else "0" + str(n)
+
+def _ym(y, m):
+    return str(y) + "-" + _two(m)
+
+def _shift(y, m, n):
+    t = y * 12 + (m - 1) + n
+    return t // 12, t % 12 + 1
+
+def bkCalendar(month, selected, today, week_start):
+    src = month or selected[:7] or today[:7]
+    if len(src) < 7 or src[4] != "-":
+        fail("Calendar: month must be YYYY-MM (or pass selected or today), got %r" % src)
+    y, m = int(src[:4]), int(src[5:7])
+    if m < 1 or m > 12:
+        fail("Calendar: month %r is out of range" % src)
+    first = 1 if week_start == "monday" else 0
+    offset = (_weekday(y, m, 1) - first) % 7
+    py, pm = _shift(y, m, -1)
+    ny, nm = _shift(y, m, 1)
+    cells = []
+    for i in range(offset):
+        d = _days_in(py, pm) - offset + 1 + i
+        cells.append((py, pm, d, False))
+    for d in range(1, _days_in(y, m) + 1):
+        cells.append((y, m, d, True))
+    for d in range(1, (7 - len(cells) % 7) % 7 + 1):
+        cells.append((ny, nm, d, False))
+    weeks = []
+    for w in range(len(cells) // 7):
+        row = []
+        for cy, cm, d, inside in cells[w * 7:w * 7 + 7]:
+            date = _ym(cy, cm) + "-" + _two(d)
+            row.append({"day": d, "date": date, "inside": inside, "today": date == today, "selected": date == selected})
+        weeks.append(row)
+    return {
+        "title": _MONTHS[m - 1] + " " + str(y),
+        "month": _ym(y, m),
+        "prev": _ym(py, pm),
+        "next": _ym(ny, nm),
+        "weekdays": _DAYS[first:] + _DAYS[:first],
+        "weeks": weeks,
+    }
+</brick:script>
+<brick:style>
+.bk-calendar { display: inline-flex; flex-direction: column; gap: .5rem; padding: .75rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-sm); font: var(--bk-text-sm)/1 var(--bk-font); }
+.bk-calendar__head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; min-height: 1.75rem; }
+.bk-calendar__title { flex: 1; margin: 0; font-size: var(--bk-text-sm); font-weight: 600; text-align: center; }
+.bk-calendar__nav { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-surface); color: var(--bk-fg); text-decoration: none; }
+.bk-calendar__nav:hover { background: var(--bk-accent); }
+.bk-calendar__grid { border-collapse: separate; border-spacing: 2px; }
+.bk-calendar__grid th { width: 2.25rem; padding: .25rem 0; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 500; }
+.bk-calendar__grid td { padding: 0; text-align: center; }
+.bk-calendar__day { display: grid; place-items: center; width: 2.25rem; height: 2.1rem; border-radius: var(--bk-radius-sm); color: var(--bk-fg); font-variant-numeric: tabular-nums; text-decoration: none; }
+a.bk-calendar__day:hover { background: var(--bk-accent); }
+.bk-calendar__day--out { color: var(--bk-muted-fg); }
+.bk-calendar__day--today { position: relative; font-weight: 700; color: var(--bk-primary-text); }
+.bk-calendar__day--today::after { content: ""; position: absolute; bottom: .25rem; width: .25rem; height: .25rem; border-radius: var(--bk-radius-full); background: currentColor; }
+.bk-calendar__day--selected { background: var(--bk-primary); color: var(--bk-primary-fg); opacity: 1; }
+a.bk-calendar__day--selected:hover { background: var(--bk-primary-hover); }
+</brick:style>
+{{ $c := bkCalendar .Props.month .Props.selected .Props.today .Props.weekStart }}
+{{ $href := .Props.href }}{{ $mh := .Props.monthHref }}
+<div class="{{ cx `bk-calendar` .Attrs.class }}" data-month="{{ $c.month }}" {{ attrs `class` }}><div class="bk-calendar__head">{{ if $mh }}<a class="bk-calendar__nav" href="{{ replace `{month}` $c.prev $mh }}" aria-label="Previous month"><Icon name="chevron-left" :size="14" /></a>{{ end }}<h3 class="bk-calendar__title">{{ $c.title }}</h3>{{ if $mh }}<a class="bk-calendar__nav" href="{{ replace `{month}` $c.next $mh }}" aria-label="Next month"><Icon name="chevron-right" :size="14" /></a>{{ end }}</div><table class="bk-calendar__grid" role="grid" aria-label="{{ $c.title }}"><thead><tr>{{ range $c.weekdays }}<th scope="col" abbr="{{ index . 1 }}">{{ index . 0 }}</th>{{ end }}</tr></thead><tbody>{{ range $c.weeks }}<tr>{{ range . }}{{ $cls := cx `bk-calendar__day` (cond .inside `` `bk-calendar__day--out`) (cond .today `bk-calendar__day--today` ``) (cond .selected `bk-calendar__day--selected` ``) }}<td{{ if .selected }} aria-selected="true"{{ end }}>{{ if $href }}<a class="{{ $cls }}" href="{{ replace `{date}` .date $href }}"{{ if .today }} aria-current="date"{{ end }}>{{ .day }}</a>{{ else }}<span class="{{ $cls }}"{{ if .today }} aria-current="date"{{ end }}>{{ .day }}</span>{{ end }}</td>{{ end }}</tr>{{ end }}</tbody></table></div>

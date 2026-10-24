@@ -1,0 +1,49 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  tone: {type: string, default: neutral, oneof: [neutral, primary, success, warning, danger, info]}
+  size: {type: string, default: md, oneof: [sm, md]}
+  icon: {type: string, default: ""}
+  href: {type: string, default: ""}
+  removeHref: {type: string, default: ""}
+  removeAction: {type: string, default: ""}
+  removeLabel: {type: string, default: Remove}
+---
+{{/*
+Tag: a chip for a keyword, a filter or a selected value, optionally with a
+remove control.
+
+  <Tag>design</Tag>
+  <Tag icon="hash" href="/tags/go/">go</Tag>                 the chip is a link
+  <Tag removeHref="?tag=">status: active</Tag>               remove is a link
+  <Tag :removeAction="print `untag(` .id `)`">go</Tag>     remove calls a server action
+  <Tag tone="primary" size="sm">new</Tag>
+
+There are two remove controls, one per kind of server: removeHref is a
+plain link (a filter URL without this value), so it works without
+JavaScript; removeAction becomes a brick:click on the remove button, so it
+calls an action of the stateful component around the tag. The remove
+control is named "<removeLabel> <the tag's text>" through aria-labelledby,
+so a screen reader hears "Remove go", not just "Remove".
+*/}}
+<brick:style>
+.bk-tag { --bk-tag-c: var(--bk-fg); display: inline-flex; align-items: center; gap: .3rem; height: var(--bk-h-xs); padding: 0 .5rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: 500 var(--bk-text-xs)/1 var(--bk-font); white-space: nowrap; vertical-align: middle; text-decoration: none; }
+.bk-tag--primary { --bk-tag-c: var(--bk-primary); --bk-tag-t: var(--bk-primary-text); }
+.bk-tag--success { --bk-tag-c: var(--bk-success); --bk-tag-t: var(--bk-success-text); }
+.bk-tag--warning { --bk-tag-c: var(--bk-warning); --bk-tag-t: var(--bk-warning-text); }
+.bk-tag--danger { --bk-tag-c: var(--bk-danger); --bk-tag-t: var(--bk-danger-text); }
+.bk-tag--info { --bk-tag-c: var(--bk-info); --bk-tag-t: var(--bk-info-text); }
+.bk-tag:not(.bk-tag--neutral) { border-color: color-mix(in oklab, var(--bk-tag-c) 30%, transparent); background: color-mix(in oklab, var(--bk-tag-c) 8%, var(--bk-surface)); color: var(--bk-tag-t, var(--bk-fg)); }
+.bk-tag--sm { height: 1.25rem; padding: 0 .4rem; font-size: .6875rem; }
+.bk-tag .bk-icon { flex: none; opacity: .7; }
+.bk-tag__link { color: inherit; text-decoration: none; }
+a.bk-tag:hover, .bk-tag__link:hover { text-decoration: underline; text-underline-offset: 2px; }
+.bk-tag--removable { padding-right: .15rem; }
+.bk-tag__remove { display: inline-grid; place-items: center; width: 1.05rem; height: 1.05rem; margin-left: .05rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: none; color: inherit; opacity: .6; cursor: pointer; text-decoration: none; transition: background var(--bk-duration), opacity var(--bk-duration); }
+.bk-tag__remove:hover { opacity: 1; background: color-mix(in oklab, var(--bk-tag-c) 14%, transparent); }
+.bk-tag__remove:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 1px; opacity: 1; }
+</brick:style>
+{{- $removable := or .Props.removeHref .Props.removeAction -}}
+{{- $cls := cx `bk-tag` (print `bk-tag--` .Props.tone) (cond (eq .Props.size `sm`) `bk-tag--sm` ``) (cond $removable `bk-tag--removable` ``) .Attrs.class -}}
+{{ if and .Props.href (not $removable) }}<a class="{{ $cls }}" href="{{ .Props.href }}" {{ attrs `class` }}>{{ with .Props.icon }}<Icon :name="." :size="12" />{{ end }}{{ children }}</a>{{ else }}<span class="{{ $cls }}" {{ attrs `class` }}>{{ with .Props.icon }}<Icon :name="." :size="12" />{{ end }}{{ if .Props.href }}<a class="bk-tag__link" href="{{ .Props.href }}" id="{{ .ID }}-t">{{ children }}</a>{{ else if $removable }}<span id="{{ .ID }}-t">{{ children }}</span>{{ else }}{{ children }}{{ end }}{{ if .Props.removeHref }}<a class="bk-tag__remove" href="{{ .Props.removeHref }}" id="{{ .ID }}-r" aria-label="{{ .Props.removeLabel }}" aria-labelledby="{{ .ID }}-r {{ .ID }}-t"><Icon name="x" :size="12" /></a>{{ else if .Props.removeAction }}<button type="button" class="bk-tag__remove" brick:click="{{ .Props.removeAction }}" id="{{ .ID }}-r" aria-label="{{ .Props.removeLabel }}" aria-labelledby="{{ .ID }}-r {{ .ID }}-t"><Icon name="x" :size="12" /></button>{{ end }}</span>{{ end }}

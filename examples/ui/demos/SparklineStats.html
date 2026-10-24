@@ -1,0 +1,14 @@
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; width: 100%">
+  <div style="padding: .9rem 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface)">
+    <div style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Revenue</div>
+    <div style="display: flex; align-items: end; justify-content: space-between; gap: 1rem"><strong style="font-size: var(--bk-text-2xl)">$48.2k</strong><Sparkline :data="list 31 33 32 36 38 37 42 45 48" variant="area" tone="success" label="Revenue, last 9 weeks" /></div>
+  </div>
+  <div style="padding: .9rem 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface)">
+    <div style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Response time</div>
+    <div style="display: flex; align-items: end; justify-content: space-between; gap: 1rem"><strong style="font-size: var(--bk-text-2xl)">182 ms</strong><Sparkline :data="list 240 231 225 219 210 204 196 190 182" tone="info" label="Response time, last 9 days" /></div>
+  </div>
+  <div style="padding: .9rem 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface)">
+    <div style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Orders</div>
+    <div style="display: flex; align-items: end; justify-content: space-between; gap: 1rem"><strong style="font-size: var(--bk-text-2xl)">1,204</strong><Sparkline :data="list 110 132 128 141 150 139 162" variant="bar" label="Orders, last 7 days" /></div>
+  </div>
+</div>

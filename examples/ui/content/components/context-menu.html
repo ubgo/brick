@@ -1,0 +1,17 @@
+---
+title: ContextMenu
+category: Overlays
+description: "A menu at the pointer on right-click, long-press or Shift+F10 — the kit's keyboard menu, reusing MenuItem, MenuSeparator and MenuLabel."
+api:
+  - {name: label, type: string, default: Actions, desc: "The menu's accessible name."}
+  - {name: focusable, type: bool, default: "true", desc: "Puts the region in the tab order so Shift+F10 can reach it; turn off when it holds a focusable control."}
+  - {name: target, type: "block", desc: "The region that answers the right-click. The caller's attributes land on its wrapper."}
+  - {name: children, type: "MenuItem, MenuSeparator, MenuLabel", desc: "The menu."}
+---
+<h1>ContextMenu</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A region" block><ContextMenuBasic /><brick:prop name="code"><Source src="~/demos/ContextMenuBasic.html" /></brick:prop></Example>
+<Example title="Per-item menus running server actions" block><ContextMenuFiles /><brick:prop name="code"><Source src="~/demos/ContextMenuFiles.html" /></brick:prop></Example>
+<p style="margin: -.5rem 0 1.25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Without JavaScript the browser's own context menu appears and the region is untouched, so keep every action reachable another way too.</p>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

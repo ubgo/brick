@@ -1,0 +1,18 @@
+---
+state:
+  level: 2
+---
+{{/*
+The heading's element name is data: tag writes the whole start tag and
+endtag the matching close, so the level can come from state. They write
+only elements without URL, script or raw-text content, and refuse on*,
+URL and style attributes.
+*/}}
+<div style="display: grid; gap: .6rem">
+  <div style="display: flex; gap: .4rem">
+    <Button id="rh-2" size="sm" variant="outline" brick:click='$set("level", 2)'>h2</Button>
+    <Button id="rh-3" size="sm" variant="outline" brick:click='$set("level", 3)'>h3</Button>
+    <Button id="rh-4" size="sm" variant="outline" brick:click='$set("level", 4)'>h4</Button>
+  </div>
+  {{ $h := print "h" .State.level }}{{ tag $h "id" "rh-heading" "class" "rh-heading" }}A heading at level {{ .State.level }}{{ endtag $h }}
+</div>

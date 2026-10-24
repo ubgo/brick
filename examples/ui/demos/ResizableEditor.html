@@ -1,0 +1,17 @@
+<Resizable id="kit-demo-editor" persist style="height: 18rem">
+  <ResizablePanel :size="22" :min="15" :max="40" label="Files">
+    <div style="padding: .75rem; font-size: var(--bk-text-sm)"><b style="display: block; margin-bottom: .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-transform: uppercase; letter-spacing: .04em">Files</b>{{ range list "brick.go" "compile.go" "runtime.js" "Theme.html" "README.md" }}<div style="display: flex; align-items: center; gap: .4rem; padding: .2rem 0"><Icon name="file" :size="13" />{{ . }}</div>{{ end }}</div>
+  </ResizablePanel>
+  <ResizablePanel :size="48" :min="25" label="Editor">
+    <pre style="margin: 0; padding: .75rem; font-size: var(--bk-text-xs); line-height: 1.7; color: var(--bk-muted-fg)">func (e *Engine) Render(ctx context.Context, page string) (*Result, error) {
+	c, err := e.compile(page)
+	if err != nil {
+		return nil, err
+	}
+	return e.render(ctx, c)
+}</pre>
+  </ResizablePanel>
+  <ResizablePanel :size="30" :min="15" label="Preview">
+    <div style="padding: .75rem; font-size: var(--bk-text-sm); color: var(--bk-muted-fg)">Preview. Drag a handle, or focus one and use the arrow keys; the split is saved for your next visit.</div>
+  </ResizablePanel>
+</Resizable>

@@ -1,0 +1,8 @@
+---
+use: {posts: ~/scripts/posts.star}
+load: posts.one
+brick: {paths: posts.all}
+---
+<h1>{{ .Params.title }}</h1>
+<p>{{ .Params.body }}</p>
+<p class="slug">slug: {{ .Page.Route.slug }}</p>

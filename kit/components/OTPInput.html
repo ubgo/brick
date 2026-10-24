@@ -1,0 +1,101 @@
+---
+inject:
+  bkField: {default: {}}
+props:
+  length: {type: int, default: 6}
+  value: {type: string, default: ""}
+  mode: {type: string, default: numeric, oneof: [numeric, alphanumeric]}
+  group: {type: int, default: 0}
+  label: {type: string, default: Verification code}
+  invalid: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+OTPInput: a one-time code as N boxes that advance as you type.
+
+  <OTPInput name="code" />
+  <OTPInput name="code" :length="4" />
+  <OTPInput name="key" :length="8" :group="4" mode="alphanumeric" />
+
+One text input carries the code (name=, every attribute but class, and
+autocomplete="one-time-code"); without JavaScript it is that input, sized
+for the code. The client module hides it and shows the boxes: typing
+advances, Backspace on an empty box goes back, arrows move, and pasting
+(or an SMS autofill) fills every box. Each change writes the joined code
+into the carrier and fires input and change, so forms and brick:model see
+one value. group= puts a dash after every group characters.
+*/}}
+<brick:client>
+brick.mount("OTPInput", (el) => {
+  const value = el.querySelector(".bk-otp__value");
+  const wrap = el.querySelector(".bk-otp__boxes");
+  const boxes = [...el.querySelectorAll(".bk-otp__box")];
+  const allowed = el.getAttribute("data-mode") === "alphanumeric" ? /[a-z0-9]/i : /[0-9]/;
+  const clean = (s) => [...String(s)].filter((c) => allowed.test(c)).join("");
+  const write = () => {
+    const code = boxes.map((b) => b.value).join("");
+    if (value.value === code) return;
+    value.value = code;
+    value.dispatchEvent(new Event("input", { bubbles: true }));
+    if (code.length === boxes.length) value.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  const fill = (from, text) => {
+    const chars = clean(text).slice(0, boxes.length - from);
+    [...chars].forEach((c, i) => { boxes[from + i].value = c; });
+    const next = Math.min(from + chars.length, boxes.length - 1);
+    boxes[next].focus();
+    write();
+  };
+  const onInput = (e) => {
+    const i = boxes.indexOf(e.target);
+    if (i < 0) return;
+    const v = e.target.value;
+    if (v.length > 1) { e.target.value = ""; fill(i, v); return; }
+    const c = clean(v);
+    e.target.value = c;
+    if (c && i < boxes.length - 1) boxes[i + 1].focus();
+    write();
+  };
+  const onKey = (e) => {
+    const i = boxes.indexOf(e.target);
+    if (i < 0) return;
+    if (e.key === "Backspace" && !e.target.value && i > 0) { e.preventDefault(); boxes[i - 1].value = ""; boxes[i - 1].focus(); write(); }
+    else if (e.key === "ArrowLeft" && i > 0) { e.preventDefault(); boxes[i - 1].focus(); }
+    else if (e.key === "ArrowRight" && i < boxes.length - 1) { e.preventDefault(); boxes[i + 1].focus(); }
+  };
+  const onPaste = (e) => {
+    const i = boxes.indexOf(e.target);
+    if (i < 0) return;
+    e.preventDefault();
+    fill(i, e.clipboardData.getData("text"));
+  };
+  const onFocus = (e) => { if (boxes.includes(e.target)) e.target.select(); };
+  [...clean(value.value)].slice(0, boxes.length).forEach((c, i) => { boxes[i].value = c; });
+  boxes.forEach((b) => { b.disabled = value.disabled; });
+  value.hidden = true;
+  wrap.hidden = false;
+  if (value.id) { boxes[0].id = value.id; value.removeAttribute("id"); }
+  el.addEventListener("input", onInput);
+  el.addEventListener("keydown", onKey);
+  el.addEventListener("paste", onPaste);
+  el.addEventListener("focusin", onFocus);
+  return () => { el.removeEventListener("input", onInput); el.removeEventListener("keydown", onKey); el.removeEventListener("paste", onPaste); el.removeEventListener("focusin", onFocus); };
+})
+</brick:client>
+<brick:style>
+.bk-otp { display: inline-flex; max-width: 100%; }
+.bk-otp__value { width: calc(var(--bk-otp-n) * 1.35ch + 1.5rem); height: var(--bk-h-lg); padding: 0 .75rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: 600 var(--bk-text-lg)/1 var(--bk-mono); letter-spacing: .35ch; box-shadow: var(--bk-shadow-sm); }
+.bk-otp__value:focus-visible { outline: none; border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-otp__boxes { display: flex; align-items: center; gap: .4rem; max-width: 100%; }
+.bk-otp__boxes[hidden] { display: none; }
+.bk-otp__box { flex: 0 1 2.5rem; width: 2.5rem; min-width: 1.6rem; height: 2.75rem; padding: 0; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: 600 var(--bk-text-xl)/1 var(--bk-mono); text-align: center; text-transform: uppercase; caret-color: var(--bk-primary); box-shadow: var(--bk-shadow-sm); transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-otp__box:focus-visible { outline: none; border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-otp__box:disabled { opacity: .55; cursor: not-allowed; background: var(--bk-muted); }
+.bk-otp__sep { flex: none; width: .6rem; height: 2px; border-radius: 1px; background: var(--bk-input); }
+.bk-otp--invalid :is(.bk-otp__box, .bk-otp__value) { border-color: var(--bk-danger); }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $invalid := or .Props.invalid (index $f "invalid") }}
+{{ $n := .Props.length }}{{ $g := .Props.group }}{{ $label := .Props.label }}
+{{ $num := eq .Props.mode "numeric" }}
+<div class="{{ cx `bk-otp` (cond $invalid `bk-otp--invalid` ``) .Attrs.class }}" style="--bk-otp-n: {{ $n }}" data-mode="{{ .Props.mode }}"><input type="text" class="bk-otp__value"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if index $f "required" }} required{{ end }} value="{{ .Props.value }}" maxlength="{{ $n }}" autocomplete="one-time-code" inputmode="{{ cond $num `numeric` `text` }}" pattern="{{ cond $num `[0-9]` `[A-Za-z0-9]` }}{{ print `{` $n `}` }}" aria-label="{{ $label }}" spellcheck="false"{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` `id` }}><div class="bk-otp__boxes" role="group" aria-label="{{ $label }}" hidden>{{ range $k := $n }}{{ $i := add $k 1 }}<input type="text" class="bk-otp__box" inputmode="{{ cond $num `numeric` `text` }}" autocomplete="{{ cond (eq $i 1) `one-time-code` `off` }}" aria-label="Character {{ $i }} of {{ $n }}"{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}>{{ if and $g (lt $i $n) (eq (mod $i $g) 0) }}<span class="bk-otp__sep" aria-hidden="true"></span>{{ end }}{{ end }}</div></div>

@@ -1,0 +1,48 @@
+---
+props:
+  current: {type: string, default: ""}
+  label: {type: string, default: Sidebar}
+  collapsed: {type: bool, default: false}
+  keepScroll: {type: string, default: ""}
+---
+{{/*
+Sidebar: vertical app navigation made of <SidebarGroup> and <SidebarItem>.
+It provides current (the page URL) to every item beneath it, so an item
+marks itself active by comparing its own href — no item needs to be told.
+
+  <Sidebar current="/apps/tasks/">
+    <brick:prop name="header"><a href="/">Acme</a></brick:prop>
+    <SidebarGroup title="Workspace">
+      <SidebarItem href="/apps/inbox/" icon="inbox" label="Inbox" badge="4" />
+      <SidebarItem href="/apps/tasks/" icon="kanban" label="Tasks" />
+    </SidebarGroup>
+    <brick:prop name="footer"><SidebarItem href="/settings/" icon="settings" label="Settings" /></brick:prop>
+  </Sidebar>
+  <Sidebar collapsed>…</Sidebar>   icon-only rail; labels stay for screen readers and become tooltips
+  <Sidebar keepScroll="app-nav">…</Sidebar>   the list keeps its scroll position across brick navigation (brick:scroll)
+
+The provided values are .Ctx.bkSidebarCurrent and .Ctx.bkSidebarCollapsed;
+an item outside a Sidebar sees neither and is active only when told.
+*/}}
+<brick:style>
+.bk-sidebar { display: flex; flex-direction: column; gap: .25rem; width: 100%; height: 100%; min-height: 0; padding: .5rem; background: var(--bk-surface-2); font-size: var(--bk-text-sm); color: var(--bk-fg); }
+.bk-sidebar__header { display: flex; align-items: center; gap: .5rem; min-height: 2.25rem; padding: .25rem .5rem .5rem; font-weight: 700; font-size: var(--bk-text-base); }
+.bk-sidebar__header a { display: inline-flex; align-items: center; gap: .5rem; color: inherit; text-decoration: none; }
+.bk-sidebar__body { display: flex; flex-direction: column; gap: .75rem; flex: 1; min-height: 0; overflow-y: auto; }
+.bk-sidebar__footer { display: flex; flex-direction: column; gap: 1px; padding-top: .5rem; border-top: 1px solid var(--bk-border); }
+.bk-sidebar--collapsed { width: 3.25rem; align-items: center; padding: .5rem .375rem; }
+.bk-sidebar--collapsed .bk-sidebar__header { justify-content: center; padding: .25rem 0 .5rem; }
+.bk-sidebar--collapsed .bk-sidebar__body, .bk-sidebar--collapsed .bk-sidebar__footer { width: 100%; }
+.bk-sidebar--collapsed .bk-sidebar-item { justify-content: center; padding: 0; }
+.bk-sidebar--collapsed .bk-sidebar-item__label, .bk-sidebar--collapsed .bk-sidebar-group__label, .bk-sidebar--collapsed .bk-sidebar-item__chev, .bk-sidebar--collapsed .bk-sidebar-group__chev { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.bk-sidebar--collapsed .bk-sidebar-item__badge { position: absolute; top: .2rem; right: .2rem; min-width: .5rem; height: .5rem; padding: 0; font-size: 0; background: var(--bk-primary); }
+.bk-sidebar--collapsed .bk-sidebar-group__title { justify-content: center; height: 1px; margin: .25rem .5rem; padding: 0; background: var(--bk-border); }
+.bk-sidebar--collapsed .bk-sidebar-group__title .bk-icon { display: none; }
+.bk-sidebar--collapsed .bk-sidebar-item__children { margin-left: 0; padding-left: 0; border-left: 0; }
+</brick:style>
+{{ provide "bkSidebarCurrent" .Props.current }}{{ provide "bkSidebarCollapsed" .Props.collapsed }}
+<nav class="{{ cx `bk-sidebar` (cond .Props.collapsed `bk-sidebar--collapsed` ``) .Attrs.class }}" aria-label="{{ .Props.label }}" {{ attrs `class` }}>
+  {{ if hasNode "header" }}<div class="bk-sidebar__header">{{ node "header" }}</div>{{ end }}
+  <div class="bk-sidebar__body"{{ with .Props.keepScroll }} brick:scroll="{{ . }}"{{ end }}>{{ children }}</div>
+  {{ if hasNode "footer" }}<div class="bk-sidebar__footer">{{ node "footer" }}</div>{{ end }}
+</nav>

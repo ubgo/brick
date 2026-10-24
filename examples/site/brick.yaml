@@ -1,0 +1,12 @@
+defaultLocale: en
+navigation: true
+# The brick kit as a remote library: `task
+# examples:vendor` vendors the whole kit/ folder into brick_modules/ and
+# pins it in brick.lock. prefix keeps the kit's tags apart from this site's
+# own components (it has a Button, a Card and Tabs): <KitTabs>, <KitButton>.
+libraries:
+  - {from: github.com/ubgo/brick/kit@main, prefix: Kit}
+# What the Go host (examples/demosite) supplies, so `brick check` and
+# `brick lsp` can compile the site without it.
+host:
+  globals: [now]

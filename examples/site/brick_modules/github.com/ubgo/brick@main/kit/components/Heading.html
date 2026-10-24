@@ -1,0 +1,35 @@
+---
+props:
+  level: {type: int, default: 2, oneof: [1, 2, 3, 4, 5, 6]}
+  size: {type: string, default: auto, oneof: [auto, xs, sm, md, lg, xl, 2xl, 3xl, 4xl]}
+  weight: {type: string, default: semibold, oneof: [medium, semibold, bold]}
+---
+{{/*
+Heading: an <h1>…<h6> whose look is separate from its level, so the
+document outline stays correct while the size fits the layout.
+
+  <Heading :level="1">Settings</Heading>
+  <Heading>Recent orders</Heading>                    an h2
+  <Heading :level="3" size="sm">Billing</Heading>     an h3 drawn small
+  <Heading size="4xl" weight="bold">Ship faster</Heading>
+
+size auto takes the size from the level (h1 2xl … h6 xs). Pick the level
+for the outline and size for the eye; never the other way round.
+*/}}
+<brick:style>
+.bk-heading { margin: 0; color: var(--bk-fg); font-weight: 600; line-height: 1.25; letter-spacing: -.015em; text-wrap: balance; }
+.bk-heading--xs { font-size: var(--bk-text-sm); letter-spacing: 0; }
+.bk-heading--sm { font-size: var(--bk-text-base); letter-spacing: 0; }
+.bk-heading--md { font-size: var(--bk-text-lg); }
+.bk-heading--lg { font-size: var(--bk-text-xl); }
+.bk-heading--xl { font-size: var(--bk-text-2xl); }
+.bk-heading--2xl { font-size: var(--bk-text-3xl); letter-spacing: -.02em; }
+.bk-heading--3xl { font-size: var(--bk-text-4xl); letter-spacing: -.025em; line-height: 1.15; }
+.bk-heading--4xl { font-size: 3rem; letter-spacing: -.03em; line-height: 1.08; }
+.bk-heading--medium { font-weight: 500; }
+.bk-heading--bold { font-weight: 700; }
+</brick:style>
+{{ $l := .Props.level }}
+{{ $auto := index (dict "1" "2xl" "2" "xl" "3" "lg" "4" "md" "5" "sm" "6" "xs") (print $l) }}
+{{ $cls := cx "bk-heading" (print "bk-heading--" (cond (eq .Props.size "auto") $auto .Props.size)) (cond (ne .Props.weight "semibold") (print "bk-heading--" .Props.weight) "") .Attrs.class }}
+{{ if eq $l 1 }}<h1 class="{{ $cls }}" {{ attrs `class` }}>{{ else if eq $l 2 }}<h2 class="{{ $cls }}" {{ attrs `class` }}>{{ else if eq $l 3 }}<h3 class="{{ $cls }}" {{ attrs `class` }}>{{ else if eq $l 4 }}<h4 class="{{ $cls }}" {{ attrs `class` }}>{{ else if eq $l 5 }}<h5 class="{{ $cls }}" {{ attrs `class` }}>{{ else }}<h6 class="{{ $cls }}" {{ attrs `class` }}>{{ end }}{{ children }}{{ if eq $l 1 }}</h1>{{ else if eq $l 2 }}</h2>{{ else if eq $l 3 }}</h3>{{ else if eq $l 4 }}</h4>{{ else if eq $l 5 }}</h5>{{ else }}</h6>{{ end }}

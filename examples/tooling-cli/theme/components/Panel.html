@@ -1,0 +1,15 @@
+---
+props:
+  title:   {type: string, default: "Panel"}
+---
+<section   class="panel"  id="main">
+<h2>{{ .Props.title }}</h2>   
+<ul>
+{{ range .Props.items }}
+<li><a href="{{ .url }}" class="link" brick:prefetch>{{ .name }}</a></li>
+{{ end }}
+</ul>
+<pre>
+  keep   this
+</pre>
+</section>

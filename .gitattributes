@@ -1,0 +1,40 @@
+# Normalize line endings — keep LF in the repo regardless of OS.
+* text=auto eol=lf
+
+# Golden files are compared byte for byte with rendered output, so they are
+# stored and checked out unchanged: normalizing them would rewrite the thing
+# under test.
+**/testdata/** -text
+
+# Go source is always LF; say so explicitly rather than relying on text=auto.
+*.go text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+
+# Shell and Python scripts must keep LF or they will not execute after a
+# Windows checkout.
+*.sh text eol=lf
+*.py text eol=lf
+
+# Binary assets (don't diff or normalize).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# Generated or vendored — collapse in diffs and exclude from language stats.
+runtime/test/node_modules/** linguist-vendored
+examples/ui/kit/** linguist-generated=true
+brick_modules/** linguist-vendored
+docs/guide.md linguist-generated=true
+docs/cookbook.md linguist-generated=true
+# >>> lore-sync >>>
+.lore/data/**/*.json text eol=lf merge=lore linguist-generated=true
+.lore/data/*.json text eol=lf merge=lore linguist-generated=true
+.lore/LORE.md text eol=lf merge=lore-keep-ours linguist-generated=true
+# <<< lore-sync <<<

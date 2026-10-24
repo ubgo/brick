@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "brick frontmatter (injection into HTML)",
+  "scopeName": "brick.frontmatter",
+  "comment": "The YAML frontmatter of a brick .html file: a --- line on the file's first line (\\A, after an optional BOM) through the next --- line, highlighted by VS Code's own YAML grammar. A --- anywhere else is HTML text, as the engine reads it.",
+  "injectionSelector": "L:text.html -comment",
+  "patterns": [
+    {
+      "include": "#frontmatter"
+    }
+  ],
+  "repository": {
+    "frontmatter": {
+      "name": "meta.embedded.block.frontmatter.brick",
+      "begin": "\\A\\x{FEFF}?(---)[ \\t]*$",
+      "end": "^(---)[ \\t]*$",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.begin.brick"
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "punctuation.definition.frontmatter.end.brick"
+        }
+      },
+      "contentName": "meta.embedded.block.yaml",
+      "patterns": [
+        {
+          "include": "source.yaml"
+        }
+      ]
+    }
+  }
+}

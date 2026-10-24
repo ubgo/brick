@@ -1,0 +1,14 @@
+# Interactivity guides
+
+How a brick page changes without a reload: components that keep state on the server and run actions, the events that call them, the parts of a page that render later than the page, navigation between pages, and the browser-side controls for morphs, transitions and purely visual changes. Each guide is built on a runnable example under [`examples/`](../../../examples/) whose test checks the output the guide shows.
+
+| Guide | What it covers | Example |
+|---|---|---|
+| [Stateful components and actions](stateful-components.md) | `state:`, actions with arguments, `$set` / `$toggle` / `$reset` / `$refresh`, `init:`, `updated:`, renderless actions and `brick.reply`, nested stateful components, Modelable (`brick: {model:}`), `reactive:` props and `:key` rows, `Engine.Instance`, `InstanceEndHook` | [`interactivity-counter`](../../../examples/interactivity-counter/), [`interactivity-nested`](../../../examples/interactivity-nested/) |
+| [State in the URL, the session and the server](url-and-server-state.md) | `query:`, `params:` and `$params`, `remember:`, `temporary:`, `locked:`, `writable:` and `Options.LockState` | [`interactivity-url-state`](../../../examples/interactivity-url-state/) |
+| [Events and modifiers](events-and-modifiers.md) | every event attribute (`brick:click`, `input`, `change`, `focus`, `blur`, `keydown`, `keyup`, `intersect`, `poll`) and every modifier, with the compile errors for typos; `.window`, `.norepeat`, `.dwell`, `brick:offline` and `brick: {log:}` | [`interactivity-events-modifiers`](../../../examples/interactivity-events-modifiers/) |
+| [Islands, lazy islands and streaming](islands-lazy-and-streaming.md) | `brick: {island: true}`, `brick:lazy` (`load`, `visible`, `idle`, `stream`), tickets, `eng.Stream`, `brick.stream`, sealed `Options.IslandTickets`, `brick.WithLazyInline` | [`interactivity-lazy-stream`](../../../examples/interactivity-lazy-stream/) |
+| [Navigation without reloads](navigation.md) | `navigation: true`, `brick:current`, `brick:prefetch`, `brick:persist`, `brick:scroll`, `brick:nav`, fragment navigation | [`interactivity-navigation`](../../../examples/interactivity-navigation/) |
+| [Morph controls, transitions and client commands](morph-transitions-client-commands.md) | `brick:key`, `brick:ignore`, `brick:replace`, `brick:keep`, `brick:transition` and `brick.transition`, `brick:enter` / `brick:leave`, `brick:js.<event>` | [`interactivity-client-commands`](../../../examples/interactivity-client-commands/) |
+
+Every `brick:` attribute with its modifiers and value type is in the [attribute reference](../../reference/attributes.md). Forms (`brick:model` modes, `brick:submit`, loading and confirm, uploads) and live updates (effects, events between components, push, jobs) have their own guide folders.

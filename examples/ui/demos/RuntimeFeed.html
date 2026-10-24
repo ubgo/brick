@@ -1,0 +1,37 @@
+---
+state:
+  rows: 8
+  newest: true
+---
+<brick:script>
+_PAGE = 8
+_TOTAL = 40
+
+def feed_rows(n, newest):
+    # The first n updates in the chosen order; a load appends older ones.
+    ids = list(range(1, _TOTAL + 1))
+    if newest:
+        ids = ids[::-1]
+    return [{"id": i, "title": "Update #" + str(i)} for i in ids[:int(n)]]
+
+def feed_more(n):
+    return int(n) < _TOTAL
+
+def more(state, props):
+    return dict(state, rows=min(int(state["rows"]) + _PAGE, _TOTAL))
+
+def flip(state, props):
+    return dict(state, newest=not state["newest"])
+</brick:script>
+<section brick:transition="feed" style="display: grid; gap: .6rem; width: 100%; max-width: 26rem">
+  <div style="display: flex; align-items: center; gap: .6rem">
+    <Button id="rf-flip" size="sm" variant="outline" brick:click="flip">{{ if .State.newest }}Oldest first{{ else }}Newest first{{ end }}</Button>
+    <span id="rf-count" style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">{{ .State.rows }} of 40 loaded</span>
+  </div>
+  <div id="rf-scroll" style="height: 14rem; overflow: auto; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-md)">
+    <ol style="margin: 0; padding: 0; list-style: none">
+      {{ range (feed_rows .State.rows .State.newest) }}<li brick:key="{{ .id }}" class="rf-row" style="padding: .45rem .75rem; border-bottom: 1px solid var(--bk-border); view-transition-name: rf-{{ .id }}">{{ .title }}</li>{{ end }}
+    </ol>
+    {{ if feed_more .State.rows }}<div id="rf-more" brick:intersect.margin.100px="more" style="padding: .5rem .75rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)"><span brick:loading>Loading…</span></div>{{ else }}<p id="rf-end" style="margin: 0; padding: .5rem .75rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">That is everything.</p>{{ end }}
+  </div>
+</section>

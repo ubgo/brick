@@ -1,0 +1,9 @@
+---
+props:
+  title: string
+  variant: {type: string, default: plain, oneof: [plain, featured]}
+---
+<article class="card card--{{ .Props.variant }}" {{ attrs }}>
+  <h3>{{ .Props.title }}</h3>
+  {{ children }}
+</article>

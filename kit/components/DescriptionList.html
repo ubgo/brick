@@ -1,0 +1,46 @@
+---
+props:
+  items: {type: list, default: []}
+  layout: {type: string, default: horizontal, oneof: [horizontal, stacked, grid]}
+  divided: {type: bool, default: true}
+  termWidth: {type: string, default: 12rem}
+---
+{{/*
+DescriptionList: label → value pairs, such as a record's details or a
+settings summary. A real <dl>, so each pair is announced together.
+
+  <DescriptionList :items=".Params.details" />         items: [{term, desc}]
+  <DescriptionList layout="grid" :items=".Params.specs" />
+  <DescriptionList>
+    <dt>Email</dt><dd><a href="mailto:maya@acme.com">maya@acme.com</a></dd>
+    <dt>Plan</dt><dd><Badge tone="primary">Pro</Badge></dd>
+  </DescriptionList>
+
+horizontal puts the term beside its value (termWidth wide) and stacks on
+narrow screens; stacked puts it above; grid lays pairs out in columns.
+Use children with <dt>/<dd> when a value is markup; :items takes text.
+A term may have several <dd>s. In the grid layout wrap each written pair
+in a <div> (<div><dt>…</dt><dd>…</dd></div>), as :items does.
+*/}}
+<brick:style>
+.bk-dl { margin: 0; font-size: var(--bk-text-sm); }
+.bk-dl dt { color: var(--bk-muted-fg); font-weight: 500; }
+.bk-dl dd { margin: 0; color: var(--bk-fg); min-width: 0; overflow-wrap: anywhere; }
+.bk-dl--horizontal { display: grid; grid-template-columns: minmax(0, var(--bk-dl-term, 12rem)) minmax(0, 1fr); }
+.bk-dl--horizontal dt { grid-column: 1; padding: .6rem 1rem .6rem 0; }
+.bk-dl--horizontal dd { grid-column: 2; padding: .6rem 0; }
+.bk-dl--horizontal dd + dd { padding-top: 0; }
+.bk-dl--horizontal.bk-dl--divided dt:not(:first-of-type), .bk-dl--horizontal.bk-dl--divided dt:not(:first-of-type) + dd { border-top: 1px solid var(--bk-border); }
+.bk-dl--stacked dt { padding-top: .6rem; }
+.bk-dl--stacked dd { padding: .15rem 0 .6rem; }
+.bk-dl--stacked.bk-dl--divided dd + dt { border-top: 1px solid var(--bk-border); }
+.bk-dl--grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .9rem 1.25rem; }
+.bk-dl__pair { min-width: 0; }
+.bk-dl--grid dt { font-size: var(--bk-text-xs); margin-bottom: .15rem; }
+.bk-dl--grid dd { font-weight: 500; }
+@media (max-width: 560px) { .bk-dl--horizontal { grid-template-columns: minmax(0, 1fr); } .bk-dl--horizontal dt, .bk-dl--horizontal dd { grid-column: 1; } .bk-dl--horizontal dt { padding-bottom: 0; } .bk-dl--horizontal dt + dd { padding-top: .15rem; } .bk-dl--horizontal.bk-dl--divided dt:not(:first-of-type) + dd { border-top: 0; } }
+</brick:style>
+{{- $grid := eq .Props.layout "grid" -}}
+<dl class="{{ cx `bk-dl` (print `bk-dl--` .Props.layout) (cond .Props.divided `bk-dl--divided` ``) .Attrs.class }}"{{ if and (eq .Props.layout `horizontal`) (ne .Props.termWidth `12rem`) }} style="--bk-dl-term: {{ .Props.termWidth }}"{{ end }} {{ attrs `class` }}>
+  {{- range .Props.items }}{{ if $grid }}<div class="bk-dl__pair"><dt>{{ .term }}</dt><dd>{{ .desc }}</dd></div>{{ else }}<dt>{{ .term }}</dt><dd>{{ .desc }}</dd>{{ end }}{{ end }}{{ children -}}
+</dl>

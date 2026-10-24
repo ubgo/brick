@@ -1,0 +1,19 @@
+<div class="v18-menu-demo" style="display: grid; gap: .75rem; width: 100%; max-width: 26rem">
+  <style>
+    .v18-fade { transition: opacity .25s ease, transform .25s ease; opacity: 0; transform: translateY(-.25rem); }
+    .v18-panel { border: 1px solid var(--bk-border); border-radius: var(--bk-radius-md); padding: .5rem .75rem; background: var(--bk-bg); }
+    .v18-panel--pinned { border-color: var(--bk-primary); }
+  </style>
+  <div id="v18-wrap" brick:js.click.outside='hide("#v18-menu"); setAttr("#v18-open", "aria-expanded", "false")' brick:js.keydown.escape.window='hide("#v18-menu"); setAttr("#v18-open", "aria-expanded", "false")' style="display: grid; gap: .4rem; justify-items: start">
+    <Button id="v18-open" size="sm" variant="outline" aria-expanded="false" aria-controls="v18-menu" brick:js.click='toggle("#v18-menu"); toggleAttr("this", "aria-expanded", "true", "false")'>Menu</Button>
+    <ul id="v18-menu" class="v18-panel" brick:leave="v18-fade" hidden style="margin: 0; list-style: none; min-width: 12rem">
+      <li><button id="v18-pin" type="button" style="all: unset; cursor: pointer" brick:js.click='toggleClass("#v18-menu", "v18-panel--pinned")'>Pin the border colour</button></li>
+      <li>Click outside or press Escape to close</li>
+    </ul>
+  </div>
+  <div id="v18-card" class="v18-panel" brick:leave="v18-fade" style="display: flex; justify-content: space-between; align-items: center; gap: .5rem">
+    <span>A notice you can dismiss.</span>
+    <Button id="v18-dismiss" size="sm" variant="ghost" aria-label="Dismiss" brick:js.click='hide("closest .v18-panel")'>✕</Button>
+  </div>
+  <Button id="v18-back" size="sm" variant="link" style="justify-self: start" brick:js.click='show("#v18-card")'>Show the notice again</Button>
+</div>

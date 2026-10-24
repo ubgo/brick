@@ -1,0 +1,21 @@
+---
+title: Sortable
+category: Data display
+description: "A list you reorder by dragging or from the keyboard, announced to screen readers; a drop fires bk-sort and can call a server action with the new index; grouped lists trade items."
+api:
+  - {name: action, type: string, desc: "An action of the stateful component around it, called with (id, newIndex) after a drop."}
+  - {name: direction, type: "vertical | horizontal", default: vertical, desc: "A column (ArrowUp/Down) or a wrapping row (ArrowLeft/Right)."}
+  - {name: label, type: string, desc: "The list's accessible name."}
+  - {name: group, type: string, desc: "Lists with the same group trade items: drag across, or lift and press ←/→."}
+  - {name: list, type: string, desc: "This list's name in its group; a grouped drop calls action(id, list, index) with the list it landed in."}
+  - {name: children, type: "SortableItem, or <li data-id>", desc: "The items; a plain li is dragged by its whole body."}
+---
+<h1>Sortable</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Priorities kept on the server" block><SortableTasks /><brick:prop name="code"><Source src="~/demos/SortableTasks.html" /></brick:prop></Example>
+<p style="margin: -.5rem 0 1.25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Each drop calls the component's <code>move(id, index)</code> action; the line under the list is the order the server holds. Keyboard: focus a handle, Space, ↑/↓, Space.</p>
+<Example title="Lists that trade cards — group and list" block><SortableBoard /><brick:prop name="code"><Source src="~/demos/SortableBoard.html" /></brick:prop></Example>
+<p style="margin: -.5rem 0 1.25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Drag a card into another column, or focus its handle, press Space, then ←/→ to change column and ↑/↓ to place it. The drop calls <code>move(id, list, index)</code>; bk-sort's detail carries <code>fromList</code> and <code>toList</code>.</p>
+<Example title="A row of plain items and the bk-sort event" block><SortableTags /><brick:prop name="code"><Source src="~/demos/SortableTags.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

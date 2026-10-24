@@ -1,0 +1,2 @@
+<ToggleGroup name="format" type="multiple" label="Formatting" variant="ghost" :value="list `bold` `underline`" :options="list (dict `value` `bold` `label` `Bold` `icon` `bold`) (dict `value` `italic` `label` `Italic` `icon` `italic`) (dict `value` `underline` `label` `Underline` `icon` `underline`)" />
+<ToggleGroup name="days" type="multiple" label="Days" size="sm" :value="list `Mon` `Wed` `Fri`" :options="list `Mon` `Tue` `Wed` `Thu` `Fri` (dict `value` `Sat` `disabled` true) (dict `value` `Sun` `disabled` true)" />

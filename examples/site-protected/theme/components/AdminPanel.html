@@ -1,0 +1,7 @@
+---
+brick: {island: true}
+inject: {user: {default: ""}}
+use: {auth: ~/scripts/auth.star}
+load: auth.admin
+---
+<section>Welcome, {{ .Props.name }}. Secret numbers: 42.</section>

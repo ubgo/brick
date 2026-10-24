@@ -1,0 +1,7 @@
+<div class="card">
+  <header>{{ node "header" }}</header>
+  <div class="body">{{ children }}</div>
+  {{- if hasNode "footer" }}
+  <footer>{{ node "footer" }}</footer>
+  {{- end }}
+</div>

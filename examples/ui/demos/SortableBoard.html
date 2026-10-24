@@ -1,0 +1,40 @@
+---
+state:
+  cards:
+    - {id: 1, title: Write the launch post, list: todo}
+    - {id: 2, title: Fix the flaky login test, list: todo}
+    - {id: 3, title: Design the pricing page, list: doing}
+    - {id: 4, title: Migrate billing to v2, list: doing}
+    - {id: 5, title: Plan the team offsite, list: done}
+  moves: 0
+---
+<brick:script>
+LISTS = ["todo", "doing", "done"]
+
+def move(state, props, id, list, index):
+    # Grouped Sortables send the list the card landed in, and its index there.
+    moved = [dict(c, list = list) for c in state["cards"] if c["id"] == id]
+    if not moved or list not in LISTS:
+        return state
+    rest = [c for c in state["cards"] if c["id"] != id]
+    there = [c for c in rest if c["list"] == list]
+    index = max(0, min(index, len(there)))
+    cards = []
+    for l in LISTS:
+        col = [c for c in rest if c["list"] == l]
+        cards.extend(col[:index] + moved + col[index:] if l == list else col)
+    return dict(state, cards = cards, moves = state["moves"] + 1)
+</brick:script>
+<div style="display: grid; gap: .6rem; width: 100%">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem">
+    {{ range $l := list (dict `id` `todo` `label` `To do`) (dict `id` `doing` `label` `In progress`) (dict `id` `done` `label` `Done`) }}
+    <div style="padding: .5rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface-2)">
+      <div style="padding: .15rem .25rem .5rem; font-size: var(--bk-text-sm); font-weight: 600">{{ $l.label }}</div>
+      <Sortable group="board" :list="$l.id" :label="$l.label" action="move">
+        {{ $i := 0 }}{{ range $.State.cards }}{{ if eq .list $l.id }}<SortableItem :id=".id" :label=".title" :index="$i"><span style="font-size: var(--bk-text-sm)">{{ .title }}</span></SortableItem>{{ $i = add $i 1 }}{{ end }}{{ end }}
+      </Sortable>
+    </div>
+    {{ end }}
+  </div>
+  <p style="color: var(--bk-muted-fg); font-size: var(--bk-text-xs)">On the server: {{ range $l := list `todo` `doing` `done` }}{{ $l }} [{{ $n := 0 }}{{ range $.State.cards }}{{ if eq .list $l }}{{ if $n }}, {{ end }}{{ .id }}{{ $n = add $n 1 }}{{ end }}{{ end }}] {{ end }}· {{ .State.moves }} moves <span brick:loading hidden>· saving…</span></p>
+</div>

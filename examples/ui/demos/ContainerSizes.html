@@ -1,0 +1,9 @@
+<brick:style>
+.container-demo { width: 100%; display: grid; gap: .5rem; padding: .75rem 0; background: repeating-linear-gradient(45deg, var(--bk-muted) 0 6px, transparent 6px 12px); border-radius: var(--bk-radius); }
+.container-demo .bk-container > div { padding: .5rem .75rem; border: 1px solid color-mix(in oklab, var(--bk-primary) 35%, transparent); border-radius: var(--bk-radius-sm); background: color-mix(in oklab, var(--bk-primary) 10%, var(--bk-surface)); color: var(--bk-primary-text); font: 500 var(--bk-text-xs) var(--bk-mono); }
+</brick:style>
+<div class="container-demo">
+  <Container size="sm"><div>sm · 40rem</div></Container>
+  <Container size="md"><div>md · 48rem</div></Container>
+  <Container><div>lg · 64rem (default)</div></Container>
+</div>

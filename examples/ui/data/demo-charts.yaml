@@ -1,0 +1,44 @@
+# Static data for the Charts demos. The database-backed demos read
+# demos/demo_charts.star instead.
+visitors:
+  - {month: Jan, desktop: 1860, mobile: 800, tablet: 240}
+  - {month: Feb, desktop: 3050, mobile: 2000, tablet: 310}
+  - {month: Mar, desktop: 2370, mobile: 1200, tablet: 290}
+  - {month: Apr, desktop: 730, mobile: 1900, tablet: 180}
+  - {month: May, desktop: 2090, mobile: 1300, tablet: 260}
+  - {month: Jun, desktop: 2140, mobile: 1400, tablet: 330}
+  - {month: Jul, desktop: 2610, mobile: 1720, tablet: 350}
+  - {month: Aug, desktop: 2980, mobile: 2210, tablet: 410}
+  - {month: Sep, desktop: 2450, mobile: 2380, tablet: 390}
+  - {month: Oct, desktop: 3120, mobile: 2640, tablet: 460}
+  - {month: Nov, desktop: 3380, mobile: 2890, tablet: 480}
+  - {month: Dec, desktop: 3710, mobile: 3150, tablet: 520}
+languages:
+  - {label: Go, value: 412}
+  - {label: TypeScript, value: 326}
+  - {label: Python, value: 281}
+  - {label: Rust, value: 174}
+  - {label: Java, value: 139}
+  - {label: Ruby, value: 62}
+browsers:
+  - {label: Chrome, value: 6420}
+  - {label: Safari, value: 3180}
+  - {label: Firefox, value: 1240}
+  - {label: Edge, value: 860}
+plans:
+  - {label: Free, value: 1840}
+  - {label: Pro, value: 620}
+  - {label: Team, value: 210}
+latency:
+  - {hour: "00", p50: 42, p95: 118}
+  - {hour: "02", p50: 38, p95: 104}
+  - {hour: "04", p50: 36, p95: 97}
+  - {hour: "06", p50: 45, p95: 131}
+  - {hour: "08", p50: 61, p95: 188}
+  - {hour: "10", p50: 74, p95: 236}
+  - {hour: "12", p50: 79, p95: 251}
+  - {hour: "14", p50: 72, p95: 229}
+  - {hour: "16", p50: 68, p95: 214}
+  - {hour: "18", p50: 57, p95: 176}
+  - {hour: "20", p50: 51, p95: 152}
+  - {hour: "22", p50: 46, p95: 133}

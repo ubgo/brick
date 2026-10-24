@@ -1,0 +1,8 @@
+<div style="display: flex; flex-wrap: wrap; gap: .5rem">
+  {{ range list "right" "left" "top" "bottom" }}
+  <Drawer :side="." :size="cond (or (eq . `top`) (eq . `bottom`)) `sm` `md`" :title="print `From the ` ." description="Escape, the close button or a click outside closes it.">
+    <brick:prop name="trigger"><Button variant="outline">{{ . }}</Button></brick:prop>
+    <p style="color: var(--bk-muted-fg)">A drawer is a modal dialog placed against one edge. Focus stays inside until it closes, then returns to the button that opened it.</p>
+  </Drawer>
+  {{ end }}
+</div>

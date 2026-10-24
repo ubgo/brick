@@ -1,0 +1,35 @@
+---
+props:
+  height: {type: string, default: md, oneof: [xs, sm, md, lg, xl]}
+  orientation: {type: string, default: vertical, oneof: [vertical, horizontal, both]}
+  label: {type: string, default: ""}
+  bordered: {type: bool, default: false}
+---
+{{/*
+ScrollArea: a box that scrolls its content, with a thin scrollbar that
+matches the theme — a long list in a sidebar, a log, a wide table.
+
+  <ScrollArea height="sm" label="Release notes">…</ScrollArea>
+  <ScrollArea orientation="horizontal"><div style="width: 60rem">…</div></ScrollArea>
+  <ScrollArea bordered style="max-height: 30vh">…</ScrollArea>
+
+Heights (the maximum): xs 8rem · sm 12rem · md 18rem · lg 24rem · xl 32rem;
+a style attribute overrides it. The box takes keyboard focus so it can be
+scrolled with the arrow keys; label names it for screen readers and is
+worth giving whenever the content has no heading.
+*/}}
+<brick:style>
+.bk-scroll-area { max-height: 18rem; overflow: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: color-mix(in oklab, var(--bk-muted-fg) 45%, transparent) transparent; border-radius: var(--bk-radius); }
+.bk-scroll-area:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-scroll-area::-webkit-scrollbar { width: 8px; height: 8px; }
+.bk-scroll-area::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-muted-fg) 45%, transparent) padding-box; }
+.bk-scroll-area::-webkit-scrollbar-track { background: transparent; }
+.bk-scroll-area--xs { max-height: 8rem; }
+.bk-scroll-area--sm { max-height: 12rem; }
+.bk-scroll-area--lg { max-height: 24rem; }
+.bk-scroll-area--xl { max-height: 32rem; }
+.bk-scroll-area--vertical { overflow-x: hidden; }
+.bk-scroll-area--horizontal { max-height: none; overflow-y: hidden; }
+.bk-scroll-area--bordered { border: 1px solid var(--bk-border); background: var(--bk-surface); }
+</brick:style>
+<div class="{{ cx `bk-scroll-area` (print `bk-scroll-area--` .Props.orientation) (cond (ne .Props.height `md`) (print `bk-scroll-area--` .Props.height) ``) (cond .Props.bordered `bk-scroll-area--bordered` ``) .Attrs.class }}" tabindex="0"{{ with .Props.label }} role="region" aria-label="{{ . }}"{{ end }} {{ attrs `class` }}>{{ children }}</div>

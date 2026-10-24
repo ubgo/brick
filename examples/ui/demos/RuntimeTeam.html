@@ -1,0 +1,8 @@
+<brick:script>
+def team_ids():
+    # Five cards, four distinct people: the loader sees each input once.
+    return ["ada", "grace", "linus", "ada", "margaret"]
+</brick:script>
+<ul id="ru-team" style="margin: 0; padding: 0; list-style: none; width: 100%; max-width: 30rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-md)">
+  {{ range team_ids }}<RuntimeUserCard id="{{ . }}" />{{ end }}
+</ul>

@@ -1,0 +1,59 @@
+---
+state:
+  name: ""
+  email: ""
+  plan: pro
+  seats: "3"
+  agree: false
+  saved: false
+---
+<brick:script>
+PLANS = ["hobby", "pro", "team"]
+
+def save(state, props, fields):
+    name = fields.get("name", "").strip()
+    email = fields.get("email", "").strip()
+    plan = fields.get("plan", "")
+    seats = fields.get("seats", "").strip()
+    agree = fields.get("agree", "") == "on"
+    new = dict(state, name = name, email = email, plan = plan, seats = seats, agree = agree)
+    errors = {}
+    if len(name) < 2:
+        errors["name"] = "Enter at least two letters."
+    at = email.find("@")
+    if at < 1 or "." not in email[at:]:
+        errors["email"] = "Enter an e-mail address like ada@example.com."
+    if plan not in PLANS:
+        errors["plan"] = "Choose a plan."
+    if not seats.isdigit() or int(seats) < 1 or int(seats) > 50:
+        errors["seats"] = "Seats must be a whole number from 1 to 50."
+    if not agree:
+        errors["agree"] = "Please accept the terms to continue."
+    if errors:
+        return [new, errors]
+    return dict(new, saved = True)
+
+def restart(state, props):
+    return dict(state, name = "", email = "", seats = "3", agree = False, saved = False)
+</brick:script>
+<form brick:submit="save" novalidate style="display: grid; gap: 1.1rem; width: 100%; max-width: 34rem">
+  {{ if .State.saved }}
+  <div role="status" style="display: grid; justify-items: start; gap: .6rem; padding: 1.25rem; border: 1px solid color-mix(in oklab, var(--bk-success) 35%, transparent); border-radius: var(--bk-radius-lg); background: color-mix(in oklab, var(--bk-success) 8%, var(--bk-surface))">
+    <span style="display: flex; align-items: center; gap: .5rem; color: var(--bk-success-text); font-weight: 600"><Icon name="check-circle" :size="18" />Account created</span>
+    <p style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Welcome, {{ .State.name }}. We sent a confirmation to <b style="color: var(--bk-fg)">{{ .State.email }}</b> — {{ .State.seats }} seats on the {{ .State.plan }} plan.</p>
+    <button type="button" class="bk-btn bk-btn--outline bk-btn--sm" brick:click="restart">Start over</button>
+  </div>
+  {{ else }}
+  <Fieldset :columns="2">
+    <Field label="Name" :error=".Errors.name" required><Input name="name" value="{{ .State.name }}" placeholder="Ada Lovelace" autocomplete="name" /></Field>
+    <Field label="Work e-mail" :error=".Errors.email" required><Input type="email" name="email" value="{{ .State.email }}" placeholder="ada@example.com" icon="mail" autocomplete="email" /></Field>
+    <Field label="Plan" :error=".Errors.plan" class="bk-fieldset__wide"><RadioGroup name="plan" variant="card" :columns="3" :value=".State.plan" :options="list (dict `value` `hobby` `label` `Hobby` `description` `Free, 1 project`) (dict `value` `pro` `label` `Pro` `description` `$12 per seat`) (dict `value` `team` `label` `Team` `description` `$29 per seat`)" /></Field>
+    <Field label="Seats" hint="1 to 50." :error=".Errors.seats"><NumberInput name="seats" value="{{ .State.seats }}" min="1" max="50" /></Field>
+    <Field :error=".Errors.agree" class="bk-fieldset__wide"><Checkbox name="agree" :checked=".State.agree">I accept the <a href="#">terms of service</a></Checkbox></Field>
+  </Fieldset>
+  <FormActions>
+    <span brick:loading hidden><span style="display: inline-flex; align-items: center; gap: .4rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)"><Icon name="loader" :size="14" class="bk-btn__spin" />Checking…</span></span>
+    <Button type="submit">Create account</Button>
+  </FormActions>
+  {{ end }}
+</form>

@@ -1,0 +1,40 @@
+---
+state:
+  label: Cart
+  items:
+    - {name: Tea, qty: 1}
+    - {name: Cake, qty: 2}
+  total: 0
+---
+<brick:script>
+def checkout(state, props):
+    total = 0
+    for item in state["items"]:
+        total += item["qty"]
+    return dict(state, total = total)
+
+def rename(state, props, answer):
+    return dict(state, label = answer)
+
+def empty_cart(state, props):
+    return dict(state, items = [], total = 0)
+</brick:script>
+<brick:client>
+// Ask with the app's own dialogs instead of window.confirm and
+// window.prompt. Each call returns a function that puts the previous
+// asker back; this page never needs it, so it is kept only to show it.
+const restoreConfirm = brick.confirmWith((message, el) =>
+  Promise.resolve(window.confirm("[cart] " + message)));
+const restorePrompt = brick.promptWith((message, el) =>
+  Promise.resolve(window.prompt(message, el.dataset.default || "")));
+window.addEventListener("pagehide", () => { restoreConfirm(); restorePrompt(); });
+</brick:client>
+<form brick:submit="checkout">
+  <h2 id="label">{{ .State.label }}</h2>
+  <input brick:model.defer="items.0.qty" value="{{ (index .State.items 0).qty }}">
+  <input brick:model.defer="items.1.qty" value="{{ (index .State.items 1).qty }}">
+  <p id="total">Total: {{ .State.total }}</p>
+  <button type="button" brick:click="rename" brick:confirm.prompt="Name this cart?" data-default="Cart">Rename</button>
+  <button type="button" brick:click="empty_cart" brick:confirm="Empty the cart?">Empty</button>
+  <button>Check out</button>
+</form>

@@ -1,0 +1,19 @@
+---
+title: Fab
+category: Actions
+description: "A floating action button in a corner of the screen, optionally opening a speed dial of labelled actions."
+api:
+  - {name: label, type: "string", desc: "The accessible name. Required."}
+  - {name: icon, type: "string", default: "plus", desc: "The button’s icon."}
+  - {name: href, type: "string", desc: "Makes a lone button a link."}
+  - {name: actions, type: "list", desc: "Maps of label, icon and href: a speed dial."}
+  - {name: position, type: "bottom-end | bottom-start | top-end | top-start", default: "bottom-end", desc: "The corner."}
+  - {name: fixed, type: "bool", default: "true", desc: "Fixed to the viewport; false positions it in its container."}
+  - {name: tone, type: "primary | neutral", default: "primary", desc: "The colour."}
+---
+<h1>Fab</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A lone button, two corners" block><FabBasic /><brick:prop name="code"><Source src="~/demos/FabBasic.html" /></brick:prop></Example>
+<Example title="Speed dial (click the button)" block><FabSpeedDial /><brick:prop name="code"><Source src="~/demos/FabSpeedDial.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

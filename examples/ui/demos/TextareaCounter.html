@@ -1,0 +1,6 @@
+<div style="display: grid; gap: 1rem; width: 100%; max-width: 24rem">
+  <Field label="Post" hint="Grows as you type.">
+    <Textarea name="post" :maxlength="280" counter autosize placeholder="What's happening?" />
+  </Field>
+  <Textarea name="notes" aria-label="Notes" resize="none" value="Fixed size, no resize handle." :rows="2" />
+</div>

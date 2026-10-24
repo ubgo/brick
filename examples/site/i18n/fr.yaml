@@ -1,0 +1,4 @@
+welcome: "Bienvenue, {name} !"
+about:
+  title: À propos
+  body: Une démo de chaque fonctionnalité de brick.

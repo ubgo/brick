@@ -1,0 +1,17 @@
+---
+title: TagInput
+category: Forms
+description: "Type and press Enter or comma to add chips; × or Backspace removes them. The value is one comma-joined field."
+api:
+  - {name: value, type: "string", desc: "Tags joined by commas."}
+  - {name: placeholder, type: "string", default: "Add a tag…", desc: "Shown while empty."}
+  - {name: max, type: "int", desc: "Stop adding at this count (0: no limit)."}
+  - {name: label, type: "string", default: "Add a tag", desc: "The entry field's accessible name."}
+  - {name: invalid, type: "bool", desc: "Red border."}
+  - {name: disabled, type: "bool", desc: "Disables it."}
+---
+<h1>TagInput</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Tags" block><TagInputBasic /><brick:prop name="code"><Source src="~/demos/TagInputBasic.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

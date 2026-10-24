@@ -1,0 +1,11 @@
+---
+state:
+  title: ""
+  role: viewer
+brick:
+  writable: [title]
+---
+<div class="profile">
+  <input id="title" brick:model="title" value="{{ .State.title }}">
+  <p id="who">title={{ .State.title }} role={{ .State.role }}</p>
+</div>

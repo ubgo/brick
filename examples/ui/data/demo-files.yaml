@@ -1,0 +1,14 @@
+# A small repository for the Tree demos.
+- label: cmd
+  children:
+    - label: brick
+      children: [{label: main.go, href: "#cmd/brick/main.go"}, {label: serve.go, href: "#cmd/brick/serve.go"}]
+- label: kit
+  open: true
+  children:
+    - label: components
+      children: [{label: Avatar.html, href: "#kit/components/Avatar.html"}, {label: Table.html, href: "#kit/components/Table.html"}, {label: Tree.html, href: "#kit/components/Tree.html"}]
+    - label: data
+      children: [{label: icons.yaml, href: "#kit/data/icons.yaml"}]
+- {label: go.mod, href: "#go.mod"}
+- {label: README.md, href: "#README.md", icon: file-text}

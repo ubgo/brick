@@ -1,0 +1,23 @@
+---
+raw: true
+---
+{{/*
+Source: a file shown as written, e.g. <Source src="~/demos/ButtonVariants.html" />.
+It carries the syntax colours, because every code viewer (Example's Code
+tab, CodeView in an app's source drawer) shows a Source, while the
+highlighter that adds the ex-tk-* spans lives in Example's module.
+The <pre> is focusable so the keyboard can scroll it, but not a landmark:
+it always sits inside a named container (Example's Code tab panel, or a
+CodeView <figure> captioned by its file), and dozens of regions all named
+"Code" on one page would make landmark navigation useless.
+*/}}
+<brick:style>
+.ex-tk-tag { color: var(--bk-primary-text); }
+.ex-tk-attr { color: var(--bk-info-text); }
+.ex-tk-str { color: var(--bk-success-text); }
+.ex-tk-tpl { color: var(--bk-warning-text); }
+.ex-tk-com { color: var(--bk-muted-fg); }
+.ex-tk-key { color: var(--bk-danger-text); }
+.ex-tk-val { color: var(--bk-fg); }
+</brick:style>
+<pre tabindex="0"><code>{{ .Raw }}</code></pre>

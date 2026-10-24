@@ -1,0 +1,77 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Input: ~/components/Input.html
+props:
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+  decrementLabel: {type: string, default: Decrease}
+  incrementLabel: {type: string, default: Increase}
+---
+{{/*
+NumberInput: a number field with − and + stepper buttons.
+
+  <NumberInput name="qty" value="1" min="1" max="10" />
+  <NumberInput name="weight" value="2.5" step="0.5" min="0" size="sm" />
+  <NumberInput name="seats" value="{{ .State.seats }}" min="1" invalid />
+
+min, max, step and value are ordinary attributes of the <input
+type="number"> (every attribute but class reaches it), so the browser
+validates them and the arrow keys step natively. The buttons appear with
+JavaScript: they step by step=, clamp to min and max, disable themselves at
+a bound and fire input and change events, so brick:model and forms see the
+change. Without JavaScript it is a plain number input. Write a zero bound
+as :min="0": brick warns about the text "0" on a component, which would
+read as true if it were a declared prop (C6).
+*/}}
+<brick:client>
+brick.mount("NumberInput", (el) => {
+  const input = el.querySelector("input");
+  const dec = el.querySelector("[data-step='-1']");
+  const inc = el.querySelector("[data-step='1']");
+  const num = (s, d) => (s === "" || s == null || isNaN(Number(s)) ? d : Number(s));
+  const bounds = () => [num(input.min, -Infinity), num(input.max, Infinity)];
+  const decimals = () => { const s = String(input.step || ""); return s.includes(".") ? s.split(".")[1].length : 0; };
+  const sync = () => {
+    const [min, max] = bounds();
+    const v = num(input.value, NaN);
+    dec.disabled = input.disabled || v <= min;
+    inc.disabled = input.disabled || v >= max;
+  };
+  const set = (v) => {
+    const [min, max] = bounds();
+    v = Math.min(max, Math.max(min, v));
+    input.value = v.toFixed(decimals());
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    sync();
+  };
+  const step = (dir) => {
+    const s = num(input.step, 1) || 1;
+    const [min] = bounds();
+    const v = num(input.value, NaN);
+    set(isNaN(v) ? (isFinite(min) ? min : 0) : v + dir * s);
+  };
+  const onClick = (e) => { const b = e.target.closest("[data-step]"); if (b && !b.disabled) step(Number(b.dataset.step)); };
+  const onChange = () => { const v = num(input.value, NaN); const [min, max] = bounds(); if (!isNaN(v) && (v < min || v > max)) set(v); else sync(); };
+  dec.hidden = inc.hidden = false;
+  el.classList.add("bk-number--js");
+  el.addEventListener("click", onClick);
+  input.addEventListener("input", sync);
+  input.addEventListener("change", onChange);
+  sync();
+  return () => { el.removeEventListener("click", onClick); input.removeEventListener("input", sync); input.removeEventListener("change", onChange); };
+})
+</brick:client>
+<brick:style>
+.bk-number { width: 100%; }
+.bk-number--js .bk-input__control { text-align: center; font-variant-numeric: tabular-nums; -moz-appearance: textfield; appearance: textfield; }
+.bk-number--js .bk-input__control::-webkit-inner-spin-button, .bk-number--js .bk-input__control::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.bk-number__btn { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; transition: background var(--bk-duration), color var(--bk-duration); }
+.bk-number__btn:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-number__btn:disabled { opacity: .4; cursor: not-allowed; background: transparent; }
+.bk-number__btn[hidden] { display: none; }
+</brick:style>
+<div class="{{ cx `bk-number` .Attrs.class }}"><Input type="number" :size=".Props.size" :invalid=".Props.invalid" :required=".Props.required" :disabled=".Props.disabled" brick:spread="omit .Attrs `class`"><brick:prop name="leading"><button type="button" class="bk-number__btn" data-step="-1" aria-label="{{ .Props.decrementLabel }}" tabindex="-1" hidden><Icon name="minus" :size="14" /></button></brick:prop><brick:prop name="trailing"><button type="button" class="bk-number__btn" data-step="1" aria-label="{{ .Props.incrementLabel }}" tabindex="-1" hidden><Icon name="plus" :size="14" /></button></brick:prop></Input></div>

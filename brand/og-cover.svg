@@ -1,0 +1,17 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="brick">
+  <defs><linearGradient id="og-bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse"><stop stop-color="#312E81"/><stop offset="1" stop-color="#1E1B4B"/></linearGradient><linearGradient id="og-ic" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse"><stop stop-color="#6366F1"/><stop offset="1" stop-color="#3730A3"/></linearGradient></defs>
+  <rect width="1200" height="630" fill="url(#og-bg)"/>
+  <g transform="translate(96,180) scale(0.52)"><rect width="512" height="512" rx="112" fill="url(#og-ic)"/><g fill="#FFFFFF">
+    <rect x="112" y="156" width="136" height="56" rx="12"/>
+    <rect x="264" y="156" width="136" height="56" rx="12"/>
+    <rect x="112" y="228" width="56" height="56" rx="12"/>
+    <rect x="344" y="228" width="56" height="56" rx="12"/>
+    <rect x="112" y="300" width="136" height="56" rx="12"/>
+    <rect x="264" y="300" width="136" height="56" rx="12"/>
+  </g>
+  <rect x="184" y="228" width="144" height="56" rx="12" fill="#FBBF24"/></g>
+  <text x="412" y="292" font-family="'Space Grotesk', 'Geist', ui-sans-serif, system-ui, sans-serif" font-size="132" font-weight="600" letter-spacing="-5" fill="#FFFFFF">brick</text>
+  <rect x="416" y="324" width="86" height="8" rx="4" fill="#FBBF24"/>
+  <text x="414" y="392" font-family="'Space Grotesk', 'Geist', ui-sans-serif, system-ui, sans-serif" font-size="40" font-weight="500" fill="#E0E7FF">Server-rendered HTML components for Go</text>
+  <text x="414" y="446" font-family="'Space Grotesk', 'Geist', ui-sans-serif, system-ui, sans-serif" font-size="29" font-weight="400" fill="#EEF2FF">On html/template · no build step · no new language</text>
+</svg>

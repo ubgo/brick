@@ -1,0 +1,37 @@
+---
+props:
+  app: {type: string, required: true}
+---
+{{/*
+AppSource: the "View source" button every demo app carries — a floating
+button (bottom right) that opens a wide drawer with the app's files, one
+tab each, highlighted and copyable. The page lists the files itself, as
+Tabs of CodeViews, so every path is written literally:
+
+  <AppSource app="Contacts">
+    <Tabs label="Files" size="sm">
+      <Tab title="contacts.html"><CodeView file="content/apps/contacts.html"><Source src="~/content/apps/contacts.html" /></CodeView></Tab>
+      …
+    </Tabs>
+  </AppSource>
+
+Without JavaScript the button still opens the drawer where the browser
+supports invoker commands (Dialog's fallback), and every file tab shows.
+*/}}
+<brick:style>
+.app-src__open { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: var(--bk-z-overlay); display: inline-flex; align-items: center; gap: .45rem; height: 2.4rem; padding: 0 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-full); background: var(--bk-neutral); color: var(--bk-neutral-fg); font: 600 var(--bk-text-sm)/1 var(--bk-font); box-shadow: var(--bk-shadow-lg); cursor: pointer; }
+/* The button sits where the kit Toaster's bottom stack does: lift the
+   stack above it (button height 2.4rem + its 1.25rem inset - the
+   Toaster's own 1rem + a .5rem gap). */
+:root:has(.app-src__open) { --bk-toaster-offset: 3.15rem; }
+.app-src__open:hover { filter: brightness(1.12); }
+.app-src__open:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.app-src__body { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+.app-src__hint { margin: 0; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+</brick:style>
+<div class="app-src" {{ attrs }}>
+  <button type="button" class="app-src__open" data-bk-open="{{ .ID }}-src" commandfor="{{ .ID }}-src" command="show-modal"><Icon name="code" :size="15" />View source</button>
+  <Drawer id="{{ .ID }}-src" title="{{ .Props.app }} — source" description="Every file this app is built from, exactly as it is in examples/ui." size="xl">
+    <div class="app-src__body">{{ children }}</div>
+  </Drawer>
+</div>

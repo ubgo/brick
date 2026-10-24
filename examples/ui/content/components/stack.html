@@ -1,0 +1,19 @@
+---
+title: Stack
+category: Layout
+description: Lays children out in a column or a row with even spacing — the layout primitive most screens need.
+api:
+  - {name: direction, type: "col | row", default: col, desc: The main axis.}
+  - {name: gap, type: "none | xs | sm | md | lg | xl", default: md, desc: "Space between children: 0, .25, .5, 1, 1.5 or 2rem."}
+  - {name: align, type: "auto | start | center | end | stretch | baseline", default: auto, desc: Cross-axis alignment; auto centres a row and stretches a column.}
+  - {name: justify, type: "start | center | end | between | around", default: start, desc: Main-axis distribution.}
+  - {name: wrap, type: bool, desc: Lets a row wrap onto more lines.}
+  - {name: inline, type: bool, desc: "inline-flex: sits in a line of text."}
+---
+<h1>Stack</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A column" block><StackColumn /><brick:prop name="code"><Source src="~/demos/StackColumn.html" /></brick:prop></Example>
+<Example title="Rows and justification" block><StackRow /><brick:prop name="code"><Source src="~/demos/StackRow.html" /></brick:prop></Example>
+<Example title="A toolbar: nested stacks that wrap" block><StackToolbar /><brick:prop name="code"><Source src="~/demos/StackToolbar.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

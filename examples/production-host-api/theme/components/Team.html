@@ -1,0 +1,7 @@
+---
+brick:
+  island: true
+inject:
+  user: {default: "guest"}
+---
+<ul class="team"><li><Greeting name="Ada" /></li><li><Greeting :name=".Ctx.user" /></li></ul>

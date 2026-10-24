@@ -1,0 +1,29 @@
+---
+state:
+  tasks:
+    - {id: 1, title: Write the launch post, tag: Marketing}
+    - {id: 2, title: Fix the flaky login test, tag: Engineering}
+    - {id: 3, title: Design the pricing page, tag: Design}
+    - {id: 4, title: Migrate billing to v2, tag: Engineering}
+    - {id: 5, title: Plan the team offsite, tag: Ops}
+  moves: 0
+---
+<brick:script>
+def move(state, props, id, index):
+    moved = [t for t in state["tasks"] if t["id"] == id]
+    if not moved:
+        return state
+    rest = [t for t in state["tasks"] if t["id"] != id]
+    index = max(0, min(index, len(rest)))
+    return dict(state, tasks = rest[:index] + moved + rest[index:], moves = state["moves"] + 1)
+</brick:script>
+<div style="display: grid; gap: .6rem; width: 100%; max-width: 28rem">
+  <Sortable action="move" label="Priorities">
+    {{ range $i, $t := .State.tasks }}
+    <SortableItem :id="$t.id" :label="$t.title" :index="$i">
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: .5rem; font-size: var(--bk-text-sm)"><span><span style="color: var(--bk-muted-fg); font-variant-numeric: tabular-nums">{{ add $i 1 }}.</span> {{ $t.title }}</span><Badge size="sm">{{ $t.tag }}</Badge></div>
+    </SortableItem>
+    {{ end }}
+  </Sortable>
+  <p style="color: var(--bk-muted-fg); font-size: var(--bk-text-xs)">Order on the server: {{ range $i, $t := .State.tasks }}{{ if $i }}, {{ end }}{{ $t.id }}{{ end }} · {{ .State.moves }} moves <span brick:loading hidden>· saving…</span></p>
+</div>

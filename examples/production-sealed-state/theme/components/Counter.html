@@ -1,0 +1,9 @@
+---
+state:
+  count: 0
+---
+<brick:script>
+def bump(state, props):
+    return dict(state, count = state["count"] + 1)
+</brick:script>
+<div class="counter"><button brick:click="bump">Clicked {{ .State.count }} times</button></div>

@@ -1,0 +1,2 @@
+# brick.yaml — the kit as a second component root
+roots: [components, kit/components]

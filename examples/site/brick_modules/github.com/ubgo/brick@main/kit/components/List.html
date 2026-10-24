@@ -1,0 +1,28 @@
+---
+props:
+  variant: {type: string, default: divided, oneof: [divided, bordered, plain]}
+  size: {type: string, default: md, oneof: [sm, md]}
+  label: {type: string, default: ""}
+---
+{{/*
+List: a vertical list of <ListItem> rows — people, files, notifications,
+settings.
+
+  <List>
+    <ListItem title="Maya Chen" description="maya@acme.com" avatar="Maya Chen" meta="Admin" />
+    <ListItem title="Liam Kim" description="liam@globex.com" avatar="Liam Kim" href="/people/2" />
+  </List>
+  <List variant="bordered" size="sm">…</List>
+
+divided puts a rule between rows; bordered also draws a card around the
+list; plain has neither. It renders a <ul>, so each ListItem is an <li>
+and a screen reader announces the count.
+*/}}
+<brick:style>
+.bk-list { margin: 0; padding: 0; list-style: none; }
+.bk-list--divided > .bk-list-item + .bk-list-item, .bk-list--bordered > .bk-list-item + .bk-list-item { border-top: 1px solid var(--bk-border); }
+.bk-list--bordered { border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); overflow: hidden; }
+.bk-list--bordered > .bk-list-item { padding-left: .9rem; padding-right: .9rem; }
+.bk-list--sm > .bk-list-item { padding-top: .4rem; padding-bottom: .4rem; gap: .6rem; }
+</brick:style>
+<ul class="{{ cx `bk-list` (print `bk-list--` .Props.variant) (cond (eq .Props.size `sm`) `bk-list--sm` ``) .Attrs.class }}"{{ with .Props.label }} aria-label="{{ . }}"{{ end }} {{ attrs `class` }}>{{ children }}</ul>

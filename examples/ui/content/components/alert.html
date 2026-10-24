@@ -1,0 +1,19 @@
+---
+title: Alert
+category: Feedback
+description: "An inline message about the page or a form — five variants, each with its own icon, an optional title, actions, and a close button that JavaScript wires."
+api:
+  - {name: variant, type: "info | success | warning | danger | neutral", default: info, desc: "The colour and default icon. danger and warning are role=alert, the rest role=status."}
+  - {name: title, type: string, desc: "Bold first line."}
+  - {name: icon, type: string, desc: "Replaces the variant's icon."}
+  - {name: noIcon, type: bool, desc: "No icon at all."}
+  - {name: dismissible, type: bool, desc: "A close button, shown and wired by JavaScript; dismissing removes the alert and emits alert:dismiss."}
+  - {name: label, type: string, default: Dismiss, desc: "The close button's accessible name."}
+  - {name: actions, type: "block", desc: "A <brick:prop name=\"actions\"> block of buttons or links under the text."}
+---
+<h1>Alert</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Variants" block><AlertVariants /><brick:prop name="code"><Source src="~/demos/AlertVariants.html" /></brick:prop></Example>
+<Example title="Actions, dismissible, no icon" block><AlertActions /><brick:prop name="code"><Source src="~/demos/AlertActions.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

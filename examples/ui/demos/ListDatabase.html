@@ -1,0 +1,10 @@
+---
+use:
+  demo: ~/demos/demo_data.star
+load: demo.recent_contacts
+props:
+  limit: {type: int, default: 5}
+---
+<List variant="bordered" size="sm" style="width: 100%; max-width: 30rem" label="Newest contacts">
+  {{ range .Props.rows }}<ListItem :title=".name" :description="print .role ` at ` .company" :avatar=".name" :href="print `#contact-` .id" />{{ end }}
+</List>

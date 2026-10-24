@@ -1,0 +1,139 @@
+---
+props:
+  data: {type: list, default: []}
+  dateKey: {type: string, default: date}
+  valueKey: {type: string, default: value}
+  end: {type: string, default: ""}
+  weeks: {type: int, default: 53}
+  weekStart: {type: string, default: sunday, oneof: [sunday, monday]}
+  tone: {type: string, default: success, oneof: [primary, success, info, warning, danger]}
+  unit: {type: string, default: contributions}
+  label: {type: string, default: Activity}
+  legend: {type: bool, default: true}
+---
+{{/*
+CalendarHeatmap: a GitHub-style grid of days — a column per week, a row per
+weekday — shaded by how much happened each day.
+
+  <CalendarHeatmap :data=".Params.commits" unit="commits" />
+  <CalendarHeatmap :data="$rows" dateKey="day" valueKey="n" :weeks="26" end="2026-09-30" tone="primary" />
+
+data is a list of maps with a YYYY-MM-DD date and a number (dates may
+repeat: they add up; days with no row are zero). The grid ends on the
+week holding end (by default the latest date in data) and reaches back
+weeks columns. Shades are five levels of tone: 0 for nothing, then
+quarters of the busiest day (1–25%, …, 76–100%). Each day's title says
+"3 commits on Tue, Sep 2 2026" on hover; screen readers get the label and
+a sentence with the total and the busiest day, since 371 cells would be
+noise. The date arithmetic is the Starlark below (no clock: an empty data
+with no end renders nothing), so the host needs a Scripting backend.
+*/}}
+<brick:script>
+_MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+_DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+
+def _days(iso):
+    # Days since 1970-01-01 (Hinnant's days_from_civil).
+    if len(iso) < 10 or iso[4] != "-" or iso[7] != "-":
+        fail("CalendarHeatmap: dates must be YYYY-MM-DD, got %r" % iso)
+    y, m, d = int(iso[0:4], 10), int(iso[5:7], 10), int(iso[8:10], 10)
+    y = y - 1 if m <= 2 else y
+    era = y // 400
+    yoe = y - era * 400
+    doy = (153 * (m + (-3 if m > 2 else 9)) + 2) // 5 + d - 1
+    doe = yoe * 365 + yoe // 4 - yoe // 100 + doy
+    return era * 146097 + doe - 719468
+
+def _civil(z):
+    z = z + 719468
+    era = z // 146097
+    doe = z - era * 146097
+    yoe = (doe - doe // 1460 + doe // 36524 - doe // 146096) // 365
+    doy = doe - (365 * yoe + yoe // 4 - yoe // 100)
+    mp = (5 * doy + 2) // 153
+    d = doy - (153 * mp + 2) // 5 + 1
+    m = mp + 3 if mp < 10 else mp - 9
+    return yoe + era * 400 + (1 if m <= 2 else 0), m, d
+
+def _two(n):
+    return str(n) if n >= 10 else "0" + str(n)
+
+def _num(v):
+    # Integral values print without a decimal point.
+    return str(int(v)) if v == int(v) else str(v)
+
+def bkHeatmap(data, date_key, value_key, end, weeks, week_start, unit):
+    by = {}
+    last = -1
+    for row in data:
+        z = _days(str(row[date_key]))
+        by[z] = by.get(z, 0) + (row.get(value_key) or 0)
+        last = max(last, z)
+    if end:
+        last = _days(end)
+    if last < 0:
+        return {"weeks": [], "months": [], "total": 0, "summary": "No " + unit + "."}
+    first_dow = 1 if week_start == "monday" else 0
+    col = last - ((last + 4 - first_dow) % 7)
+    start = col - 7 * (max(1, weeks) - 1)
+    top = 0
+    for z in range(start, last + 1):
+        top = max(top, by.get(z, 0))
+    total, best, best_z = 0, 0, -1
+    grid, months = [], []
+    prev_label = -3
+    for c in range(max(1, weeks)):
+        cells = []
+        for r in range(7):
+            z = start + c * 7 + r
+            y, m, d = _civil(z)
+            if d == 1 and z <= last and c - prev_label >= 3:
+                months.append({"col": c, "label": _MON[m - 1]})
+                prev_label = c
+            if z > last:
+                cells.append({"out": True})
+                continue
+            v = by.get(z, 0)
+            total += v
+            if v > best:
+                best, best_z = v, z
+            level = 0 if v <= 0 or top <= 0 else min(4, int(v * 4 / top + 0.9999))
+            date = str(y) + "-" + _two(m) + "-" + _two(d)
+            text = ("No " + unit if v <= 0 else _num(v) + " " + unit) + " on " + _DOW[(z + 4) % 7] + ", " + _MON[m - 1] + " " + str(d) + " " + str(y)
+            cells.append({"out": False, "date": date, "level": level, "title": text})
+        grid.append(cells)
+    sy, sm, sd = _civil(start)
+    summary = _num(total) + " " + unit + " from " + _MON[sm - 1] + " " + str(sd) + " " + str(sy)
+    if best_z >= 0:
+        _, bm, bd = _civil(best_z)
+        summary += "; the busiest day was " + _MON[bm - 1] + " " + str(bd) + " with " + _num(best) + "."
+    else:
+        summary += "."
+    rows = _DOW[first_dow:] + _DOW[:first_dow]
+    return {"weeks": grid, "months": months, "total": total, "summary": summary, "rows": rows, "count": len(grid)}
+</brick:script>
+<brick:style>
+.bk-heatmap { --bk-heatmap-cell: 11px; --bk-heatmap-gap: 3px; --bk-c: var(--bk-success); display: inline-flex; flex-direction: column; gap: .4rem; max-width: 100%; margin: 0; color: var(--bk-muted-fg); font-size: .6875rem; }
+.bk-heatmap--primary { --bk-c: var(--bk-primary); }
+.bk-heatmap--info { --bk-c: var(--bk-info); }
+.bk-heatmap--warning { --bk-c: var(--bk-warning); }
+.bk-heatmap--danger { --bk-c: var(--bk-danger); }
+.bk-heatmap__scroll { max-width: 100%; overflow-x: auto; padding-bottom: 2px; }
+.bk-heatmap__grid { display: grid; grid-template-columns: 1.9rem repeat(var(--bk-heatmap-weeks), var(--bk-heatmap-cell)); grid-template-rows: 1rem repeat(7, var(--bk-heatmap-cell)); grid-auto-flow: column; gap: var(--bk-heatmap-gap); width: max-content; }
+.bk-heatmap__month { grid-row: 1; white-space: nowrap; line-height: 1rem; }
+.bk-heatmap__day { grid-column: 1; line-height: var(--bk-heatmap-cell); }
+.bk-heatmap__cell { display: block; width: var(--bk-heatmap-cell); height: var(--bk-heatmap-cell); border-radius: 2px; background: var(--bk-muted); outline: 1px solid color-mix(in oklab, var(--bk-fg) 5%, transparent); outline-offset: -1px; }
+.bk-heatmap__cell[data-level="1"] { background: color-mix(in oklab, var(--bk-c) 28%, var(--bk-muted)); }
+.bk-heatmap__cell[data-level="2"] { background: color-mix(in oklab, var(--bk-c) 50%, var(--bk-muted)); }
+.bk-heatmap__cell[data-level="3"] { background: color-mix(in oklab, var(--bk-c) 75%, var(--bk-muted)); }
+.bk-heatmap__cell[data-level="4"] { background: var(--bk-c); }
+.bk-heatmap__cell--out { visibility: hidden; }
+.bk-heatmap__foot { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.bk-heatmap__legend { display: flex; align-items: center; gap: var(--bk-heatmap-gap); }
+.bk-heatmap__legend .bk-heatmap__cell { margin: 0 1px; }
+</brick:style>
+{{ $h := bkHeatmap .Props.data .Props.dateKey .Props.valueKey .Props.end .Props.weeks .Props.weekStart .Props.unit }}
+<figure class="{{ cx `bk-heatmap` (cond (ne .Props.tone `success`) (print `bk-heatmap--` .Props.tone) ``) .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-heatmap__scroll"><div class="bk-heatmap__grid" role="img" aria-label="{{ .Props.label }}: {{ $h.summary }}" style="--bk-heatmap-weeks: {{ len $h.weeks }}">{{ range $h.months }}<span class="bk-heatmap__month" style="grid-column: {{ add .col 2 }}" aria-hidden="true">{{ .label }}</span>{{ end }}{{ range $i, $d := $h.rows }}<span class="bk-heatmap__day" style="grid-row: {{ add $i 2 }}" aria-hidden="true">{{ if or (eq $d "Mon") (eq $d "Wed") (eq $d "Fri") }}{{ $d }}{{ end }}</span>{{ end }}{{ range $c, $w := $h.weeks }}{{ range $r, $cell := $w }}<i class="bk-heatmap__cell{{ if $cell.out }} bk-heatmap__cell--out{{ end }}" style="grid-column: {{ add $c 2 }}; grid-row: {{ add $r 2 }}"{{ if not $cell.out }} data-level="{{ $cell.level }}" data-date="{{ $cell.date }}" title="{{ $cell.title }}"{{ end }}></i>{{ end }}{{ end }}</div></div>
+  <figcaption class="bk-heatmap__foot"><span>{{ $h.summary }}</span>{{ if .Props.legend }}<span class="bk-heatmap__legend" aria-hidden="true">Less<i class="bk-heatmap__cell" data-level="0"></i><i class="bk-heatmap__cell" data-level="1"></i><i class="bk-heatmap__cell" data-level="2"></i><i class="bk-heatmap__cell" data-level="3"></i><i class="bk-heatmap__cell" data-level="4"></i>More</span>{{ end }}</figcaption>
+</figure>

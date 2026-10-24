@@ -1,0 +1,46 @@
+---
+state:
+  lo: 1
+  hi: 1
+  batch: [1, 2, 3]
+  recounts: 0
+---
+<brick:script>
+# Two regions, each a brick:ref element with brick:ignore: ordinary
+# re-renders leave them alone, and only an action that names one changes
+# it. The feed region renders just this answer's batch; "newer" appends
+# it and "older" prepends it, so the pages loaded earlier live only in the
+# browser. The stats region is replaced only by "recount".
+_PAGE = 3
+
+def batch_of(page):
+    # Page 1 is items 1-3, page 0 is -2 to 0, and so on downwards.
+    return list(range((page - 1) * _PAGE + 1, page * _PAGE + 1))
+
+def newer(state, props):
+    hi = state["hi"] + 1
+    brick.region("feed", "append")
+    return dict(state, hi = hi, batch = batch_of(hi))
+
+def older(state, props):
+    lo = state["lo"] - 1
+    brick.region("feed", "prepend")
+    return dict(state, lo = lo, batch = batch_of(lo))
+
+def recount(state, props):
+    brick.region("stats")
+    return dict(state, recounts = state["recounts"] + 1)
+</brick:script>
+<div style="display: grid; gap: .6rem; width: 100%; max-width: 30rem">
+  <div style="display: flex; gap: .5rem; flex-wrap: wrap">
+    <button id="rf-older" type="button" brick:click="older">Load older</button>
+    <button id="rf-newer" type="button" brick:click="newer">Load newer</button>
+    <button id="rf-recount" type="button" brick:click="recount">Recount</button>
+    <button id="rf-refresh" type="button" brick:click="$refresh">Re-render</button>
+  </div>
+  <p id="rf-pages" style="margin: 0">Pages {{ .State.lo }} to {{ .State.hi }} (outside the regions: every render updates this).</p>
+  <p id="rf-stats" brick:ref="stats" brick:ignore style="margin: 0">Recounted {{ .State.recounts }} time(s); pages {{ .State.lo }} to {{ .State.hi }}.</p>
+  <ul id="rf-feed" brick:ref="feed" brick:ignore style="margin: 0; padding: 0; list-style: none; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-md)">
+    {{ range .State.batch }}<li brick:key="{{ . }}" class="rf-item" style="padding: .3rem .75rem; border-bottom: 1px solid var(--bk-border)">Item {{ . }}</li>{{ end }}
+  </ul>
+</div>

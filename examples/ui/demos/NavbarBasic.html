@@ -1,0 +1,4 @@
+<Navbar label="Site" current="/components/navbar/" style="width: 100%; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg)" :items="list (dict `label` `Components` `href` `/components/navbar/`) (dict `label` `Theming` `href` `/theming/`) (dict `label` `Apps` `href` `/apps/dashboard/`)">
+  <brick:prop name="brand"><a href="/"><Icon name="zap" :size="18" /> Acme</a></brick:prop>
+  <brick:prop name="actions"><ThemeToggle /><Button size="sm">Sign up</Button></brick:prop>
+</Navbar>

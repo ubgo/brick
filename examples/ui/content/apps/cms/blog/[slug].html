@@ -1,0 +1,25 @@
+---
+title: Post
+layout: app
+description: One published post of the Blog CMS demo, at its own URL — /apps/cms/blog/<slug>/ — through a dynamic route segment.
+use:
+  cms: ~/apps/cms/cms.star
+load: cms.post_page
+brick:
+  paths: cms.public_slugs
+---
+{{/*
+A dynamic route: this file answers /apps/cms/blog/<slug>/.
+paths: lists the live slugs, so an unknown slug is a 404 without running
+the page, and a static export writes one page per post. The loader still
+calls brick.not_found() for a slug that is not live, which is what a site
+without paths: relies on. The post itself is the CmsPost island, given
+the slug from the URL, so an edit in the CMS shows at once while the page
+around it stays cached. The old /apps/cms/blog/post/?slug= page still
+works: a static page always beats a pattern.
+*/}}
+<CmsBlogHeader current="/apps/cms/blog/" />
+<main class="cms-post-page"><CmsPost :slug=".Page.Route.slug" /></main>
+<brick:style>
+.cms-post-page { padding: 2rem 1rem 4rem; }
+</brick:style>

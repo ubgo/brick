@@ -1,0 +1,180 @@
+---
+use:
+  tasks: ~/apps/tasks/tasks.star
+load: tasks.board
+state:
+  assignee: ""
+  priority: ""
+  view: 0
+  adding: false
+  editing: 0
+  draft: {}
+---
+{{/*
+TaskBoard: the Task board app — a kanban board over the tasks table, and
+the same tasks as a table. The loader (apps/tasks/tasks.star) reads every task on
+each render; the state holds only what the viewer chose: the filters, the
+view, and which dialog is open. Every change is an action that writes the
+table and re-renders the board:
+
+  move(id, status, position)   drag and drop and the keyboard (each column is a
+                               kit Sortable in group "board", list = its status)
+                               and the card menu's "Move to…" (status as a
+                               column index, position 999 = the end)
+  add / save(fields)           the task dialog's form; errors come back inline
+  remove(id), edit(id), startAdd, cancel, view(i), assignee(v), priority(v),
+  clearFilters
+
+Without JavaScript the board and table render and every link works; the
+actions need the runtime.
+*/}}
+<brick:script>
+load("~/apps/tasks/tasks.star", tasks_move = "move", tasks_validate = "validate", tasks_add = "add", tasks_update = "update", tasks_remove = "remove")
+
+def move(state, props, id, status, position):
+    tasks_move(int(id), status, int(position))
+    return state
+
+def startAdd(state, props):
+    return dict(state, adding = True, editing = 0, draft = {})
+
+def edit(state, props, id):
+    return dict(state, adding = False, editing = int(id), draft = {})
+
+def cancel(state, props):
+    return dict(state, adding = False, editing = 0, draft = {})
+
+def save(state, props, fields):
+    t, errors = tasks_validate(fields)
+    if errors:
+        return [dict(state, draft = t), errors]
+    if state["editing"]:
+        tasks_update(state["editing"], t)
+    else:
+        tasks_add(t)
+    return dict(state, adding = False, editing = 0, draft = {})
+
+def remove(state, props, id):
+    tasks_remove(int(id))
+    return dict(state, editing = 0)
+
+def view(state, props, i):
+    return dict(state, view = 1 if int(i) == 1 else 0)
+
+def assignee(state, props, value):
+    return dict(state, assignee = value)
+
+def priority(state, props, value):
+    return dict(state, priority = value)
+
+def clearFilters(state, props):
+    return dict(state, assignee = "", priority = "")
+</brick:script>
+<brick:client>
+// The columns are grouped kit Sortables (drag and keyboard moves between
+// and within columns call move(id, status, position)). This module only
+// keeps the chosen view — Board or Table — in state, so a re-render after
+// an action keeps it.
+brick.mount("TaskBoard", (el) => {
+  const onTab = (e) => {
+    const tab = e.target.closest && e.target.closest("[role=tab]");
+    if (!tab || !el.contains(tab)) return;
+    const i = [...tab.parentNode.children].indexOf(tab);
+    if (String(i) !== el.dataset.view) { el.dataset.view = String(i); brick.action(tab, "view", [i]); }
+  };
+  el.dataset.view = String([...el.querySelectorAll("[role=tab]")].findIndex((t) => t.getAttribute("aria-selected") === "true"));
+  el.addEventListener("click", onTab);
+  return () => el.removeEventListener("click", onTab);
+})
+</brick:client>
+<brick:style>
+.tb { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.tb > .bk-tabs, .tb-cols { min-width: 0; }
+.tb-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.tb-toolbar .bk-select { width: auto; min-width: 10rem; }
+.tb-toolbar__count { margin-left: auto; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.tb-cols { display: grid; grid-template-columns: repeat(3, minmax(16rem, 1fr)); gap: .9rem; align-items: start; }
+.tb-col { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface-2); transition: border-color var(--bk-duration), background var(--bk-duration); }
+.tb-col:has(.bk-sortable__item--dragging, .bk-sortable__item--lifted) { border-color: color-mix(in oklab, var(--bk-primary) 55%, transparent); background: color-mix(in oklab, var(--bk-primary) 4%, var(--bk-surface-2)); }
+.tb-col__head { display: flex; align-items: center; gap: .5rem; padding: .6rem .75rem .45rem; font-size: var(--bk-text-sm); font-weight: 600; }
+.tb-col__dot { width: .5rem; height: .5rem; border-radius: 50%; background: var(--bk-muted-fg); }
+.tb-col--doing .tb-col__dot { background: var(--bk-info); }
+.tb-col--done .tb-col__dot { background: var(--bk-success); }
+.tb-col__title { margin: 0; font-size: inherit; font-weight: inherit; }
+.tb-col__count { color: var(--bk-muted-fg); font-weight: 500; font-variant-numeric: tabular-nums; }
+.tb-col__add { margin-left: auto; }
+.tb-col .bk-sortable__list { gap: .5rem; min-height: 6rem; padding: .25rem .5rem .6rem; }
+.tb-col .bk-sortable__list:has([data-id]) > .tb-empty { display: none; }
+.tb-card { display: grid; gap: .5rem; padding: .65rem .7rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); cursor: grab; transition: box-shadow var(--bk-duration), opacity var(--bk-duration), border-color var(--bk-duration); }
+.tb-card:hover { border-color: var(--bk-input); box-shadow: var(--bk-shadow); }
+.tb-card.bk-sortable__item--whole:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.tb-card__top { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: -.2rem -.3rem -.35rem 0; }
+.tb-card__id { color: var(--bk-muted-fg); font: var(--bk-text-xs) var(--bk-mono); }
+.tb-card__title { margin: 0; font-size: var(--bk-text-sm); font-weight: 500; line-height: 1.35; }
+.tb-col--done .tb-card__title { color: var(--bk-muted-fg); text-decoration: line-through; text-decoration-color: color-mix(in oklab, var(--bk-muted-fg) 60%, transparent); }
+.tb-card__meta { display: flex; align-items: center; gap: .45rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.tb-due { display: inline-flex; align-items: center; gap: .25rem; font-variant-numeric: tabular-nums; }
+.tb-card__who { margin-left: auto; display: inline-flex; }
+.tb .bk-badge { text-transform: capitalize; }
+.tb-due--overdue { color: var(--bk-danger-text); font-weight: 600; }
+.tb-empty { display: grid; place-items: center; min-height: 5rem; border: 1px dashed var(--bk-border); border-radius: var(--bk-radius); color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.tb-person { display: inline-flex; align-items: center; gap: .45rem; }
+@media (max-width: 900px) { .tb-cols { grid-template-columns: repeat(3, minmax(15rem, 82vw)); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: .5rem; } .tb-col { scroll-snap-align: start; } }
+</brick:style>
+{{ $st := .State }}{{ $shown := 0 }}{{ range .Props.tasks }}{{ if and (or (not $st.assignee) (eq .assignee $st.assignee)) (or (not $st.priority) (eq .priority $st.priority)) }}{{ $shown = add $shown 1 }}{{ end }}{{ end }}
+{{ $edit := dict }}{{ range .Props.tasks }}{{ if eq (print .id) (print $st.editing) }}{{ $edit = . }}{{ end }}{{ end }}
+{{ $form := cond $st.draft $st.draft $edit }}
+<div class="tb">
+  <div class="tb-toolbar">
+    <Select name="assignee" size="sm" brick:change="assignee" aria-label="Filter by assignee" :value="$st.assignee" :options="list (dict `value` `` `label` `All assignees`)">{{ range .Props.people }}<option value="{{ . }}"{{ if eq . $st.assignee }} selected{{ end }}>{{ . }}</option>{{ end }}</Select>
+    <Select name="priority" size="sm" brick:change="priority" aria-label="Filter by priority" :value="$st.priority" :options="list (dict `value` `` `label` `All priorities`) (dict `value` `high` `label` `High`) (dict `value` `medium` `label` `Medium`) (dict `value` `low` `label` `Low`)" />
+    {{ if or $st.assignee $st.priority }}<Button variant="ghost" size="sm" icon="x" brick:click="clearFilters">Clear</Button>{{ end }}
+    <span class="tb-toolbar__count">{{ $shown }} of {{ len .Props.tasks }} tasks</span>
+    <Button size="sm" icon="plus" brick:click="startAdd">New task</Button>
+  </div>
+  <Tabs label="View" variant="segmented" size="sm" :selected="$st.view">
+    <Tab title="Board" icon="kanban">
+      <div class="tb-cols">{{ range $c := .Props.columns }}
+        <section class="tb-col tb-col--{{ $c.status }}" aria-label="{{ $c.label }}">
+          <header class="tb-col__head"><i class="tb-col__dot" aria-hidden="true"></i><h2 class="tb-col__title">{{ $c.label }}</h2><span class="tb-col__count">{{ len $c.tasks }}</span></header>
+          <Sortable group="board" :list="$c.status" :label="$c.label" action="move"><li class="tb-empty">Drop a task here</li>{{ range $t := $c.tasks }}{{ if and (or (not $st.assignee) (eq $t.assignee $st.assignee)) (or (not $st.priority) (eq $t.priority $st.priority)) }}
+            <li class="tb-card" data-id="{{ $t.id }}" data-label="{{ $t.title }}" aria-label="{{ $t.title }}">
+              <div class="tb-card__top"><span class="tb-card__id">T-{{ $t.id }}</span>
+                <DropdownMenu icon="more-horizontal" label="Actions for {{ $t.title }}" square :caret="false" variant="ghost" size="sm" align="end">
+                  <MenuLabel>Move to</MenuLabel>
+                  {{ range $i, $to := $.Props.columns }}{{ if ne $to.status $t.status }}<MenuItem icon="arrow-right" brick:click="move({{ $t.id }}, {{ $i }}, 999)">{{ $to.label }}</MenuItem>{{ end }}{{ end }}
+                  <MenuSeparator />
+                  <MenuItem icon="pencil" brick:click="edit({{ $t.id }})">Edit</MenuItem>
+                  <MenuItem icon="trash" danger brick:click="remove({{ $t.id }})">Delete</MenuItem>
+                </DropdownMenu>
+              </div>
+              <h3 class="tb-card__title">{{ $t.title }}</h3>
+              <div class="tb-card__meta"><Badge :tone="$t.priorityTone" size="sm" dot>{{ $t.priority }}</Badge><span class="tb-due{{ if $t.overdue }} tb-due--overdue{{ end }}"{{ if $t.overdue }} title="Overdue"{{ end }}><Icon name="calendar" :size="12" />{{ $t.dueLabel }}{{ if $t.overdue }}<span class="bk-sr-only"> (overdue)</span>{{ end }}</span><span class="tb-card__who" title="{{ $t.assignee }}"><Avatar :name="$t.assignee" size="xs" /><span class="bk-sr-only">Assigned to {{ $t.assignee }}</span></span></div>
+            </li>{{ end }}{{ end }}
+          </Sortable>
+        </section>{{ end }}
+      </div>
+    </Tab>
+    <Tab title="Table" icon="list">
+      <Table hover compact :rows=".Props.tasks" :columns="list (dict `key` `title` `label` `Task`) (dict `key` `statusLabel` `label` `Status`) (dict `key` `priority` `label` `Priority`) (dict `key` `assignee` `label` `Assignee`) (dict `key` `dueLabel` `label` `Due`) (dict `key` `id` `label` `` `align` `right`)">
+        <brick:prop name="cell_statusLabel"><Badge :tone="cond (eq .Slot.row.status `done`) `success` (cond (eq .Slot.row.status `doing`) `info` `neutral`)" size="sm">{{ .Slot.value }}</Badge></brick:prop>
+        <brick:prop name="cell_priority"><Badge :tone=".Slot.row.priorityTone" size="sm" dot>{{ .Slot.value }}</Badge></brick:prop>
+        <brick:prop name="cell_assignee"><span class="tb-person"><Avatar :name=".Slot.value" size="xs" />{{ .Slot.value }}</span></brick:prop>
+        <brick:prop name="cell_dueLabel"><span class="{{ if .Slot.row.overdue }}tb-due--overdue{{ end }}">{{ .Slot.value }}</span></brick:prop>
+        <brick:prop name="cell_id"><Button variant="ghost" size="xs" icon="pencil" brick:click="edit({{ .Slot.value }})">Edit</Button></brick:prop>
+      </Table>
+    </Tab>
+  </Tabs>
+  <Dialog id="tb-task" :title="cond $st.editing `Edit task` `New task`" description="Every field is required." :open="not (not (or $st.adding $st.editing))" :dismissible="false">
+    <form id="tb-task-form" brick:submit="save" novalidate>
+      <Fieldset :columns="2">
+        <Field label="Title" :error=".Errors.title" required class="bk-fieldset__wide"><Input name="title" value="{{ index $form `title` }}" placeholder="Ship the mobile nav" autocomplete="off" /></Field>
+        <Field label="Column" :error=".Errors.status"><Select name="status" :value="default `todo` (index $form `status`)" :options="list (dict `value` `todo` `label` `To do`) (dict `value` `doing` `label` `In progress`) (dict `value` `done` `label` `Done`)" /></Field>
+        <Field label="Priority" :error=".Errors.priority" required><Select name="priority" placeholder="Choose…" :value="print (default `` (index $form `priority`))" :options="list (dict `value` `high` `label` `High`) (dict `value` `medium` `label` `Medium`) (dict `value` `low` `label` `Low`)" /></Field>
+        <Field label="Assignee" :error=".Errors.assignee" required><Select name="assignee" placeholder="Choose…" :value="print (default `` (index $form `assignee`))" :options=".Props.people" /></Field>
+        <Field label="Due" :error=".Errors.due" required><Input type="date" name="due" value="{{ index $form `due` }}" /></Field>
+      </Fieldset>
+    </form>
+    <brick:prop name="footer"><Button variant="ghost" brick:click="cancel">Cancel</Button><Button type="submit" form="tb-task-form">{{ if $st.editing }}Save changes{{ else }}Add task{{ end }}</Button></brick:prop>
+  </Dialog>
+</div>

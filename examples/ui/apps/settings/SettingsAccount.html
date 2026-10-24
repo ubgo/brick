@@ -1,0 +1,88 @@
+---
+use:
+  settings: ~/data/settings.yaml
+state:
+  email: ada@example.com
+  language: en
+  timezone: Europe/London
+  birthday: "1815-12-10"
+  saves: 0
+  saved: false
+  deleting: false
+---
+{{/*
+SettingsAccount: the Account section — e-mail, language, time zone and
+birthday, plus a danger zone whose ConfirmDialog runs the deleteAccount
+action. Deletion is a scheduled state the visitor can undo, so the demo
+never locks anyone out.
+*/}}
+<brick:script>
+LANGS = ["en", "de", "fr", "es", "hi", "ja"]
+ZONES = ["America/Los_Angeles", "America/Denver", "America/Chicago", "America/New_York", "America/Sao_Paulo", "Europe/London", "Europe/Berlin", "Europe/Athens", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney"]
+
+def save(state, props, fields):
+    email = fields.get("email", "").strip()
+    language = fields.get("language", "")
+    timezone = fields.get("timezone", "")
+    birthday = fields.get("birthday", "").strip()
+    new = dict(state, email = email, language = language, timezone = timezone, birthday = birthday, saved = False)
+    errors = {}
+    at = email.find("@")
+    if at < 1 or "." not in email[at:] or " " in email:
+        errors["email"] = "Enter an e-mail address like ada@example.com."
+    if language not in LANGS:
+        errors["language"] = "Choose a language."
+    if timezone not in ZONES:
+        errors["timezone"] = "Choose a time zone from the list."
+    if birthday and (len(birthday) != 10 or birthday[4] != "-" or birthday[7] != "-"):
+        errors["birthday"] = "Use a date like 1990-04-21."
+    elif birthday and birthday > today():
+        errors["birthday"] = "Your birthday cannot be in the future."
+    if errors:
+        return [new, errors]
+    return dict(new, saved = True, saves = state["saves"] + 1)
+
+def deleteAccount(state, props):
+    return dict(state, deleting = True, saved = False)
+
+def undoDelete(state, props):
+    return dict(state, deleting = False, saved = False)
+</brick:script>
+<form brick:submit="save" novalidate class="settings-form settings-stack">
+  <Card :level="2" title="Account" description="Your sign-in e-mail and regional preferences." padding="lg">
+    <div class="settings-grid">
+      <Field label="E-mail" hint="Used to sign in and for receipts." :error=".Errors.email" required class="settings-wide"><Input type="email" name="email" value="{{ .State.email }}" icon="mail" autocomplete="email" /></Field>
+      <Field label="Language" :error=".Errors.language"><Select name="language" :value=".State.language" :options=".Data.settings.languages" /></Field>
+      <Field label="Birthday" optional :error=".Errors.birthday"><DatePicker name="birthday" value="{{ .State.birthday }}" max="2026-12-31" /></Field>
+      <Field label="Time zone" hint="Dates and reminders use this zone." :error=".Errors.timezone" class="settings-wide"><Combobox name="timezone" :value=".State.timezone" :options=".Data.settings.timezones" placeholder="Search time zones…" /></Field>
+    </div>
+    <brick:prop name="footer"><span brick:loading hidden><span class="settings-busy"><Icon name="loader" :size="14" class="bk-btn__spin" />Saving…</span></span></brick:prop>
+    <brick:prop name="actions"><Button type="submit">Save account</Button></brick:prop>
+  </Card>
+  {{ if .State.deleting }}
+  <Card :level="2" variant="outline" padding="lg" class="settings-danger">
+    <brick:prop name="header"><Heading :level="3" size="sm">Danger zone</Heading></brick:prop>
+    <Alert variant="warning" title="Account scheduled for deletion">Your account and all projects will be removed in 14 days. You can undo this until then.
+      <brick:prop name="actions"><button type="button" class="bk-btn bk-btn--outline bk-btn--sm" brick:click="undoDelete">Undo</button></brick:prop>
+    </Alert>
+  </Card>
+  {{ else }}
+  <Card :level="2" variant="outline" padding="lg" class="settings-danger">
+    <brick:prop name="header"><Heading :level="3" size="sm">Danger zone</Heading></brick:prop>
+    <div class="settings-row">
+      <div><b>Delete account</b><Text size="sm" tone="muted">Permanently remove your account, projects and invoices. This cannot be undone.</Text></div>
+      <ConfirmDialog id="settings-delete" title="Delete your account?" message="Your account, 7 projects and every invoice will be removed after a 14-day grace period." confirmLabel="Delete account" icon="alert-triangle" action="deleteAccount">
+        <brick:prop name="trigger"><Button variant="danger" icon="trash">Delete account</Button></brick:prop>
+      </ConfirmDialog>
+    </div>
+  </Card>
+  {{ end }}
+  {{ if .State.saved }}<Toast variant="success" title="Account saved" id="settings-account-{{ .State.saves }}" />{{ end }}
+</form>
+<brick:style>
+.settings-danger { border-color: color-mix(in oklab, var(--bk-danger) 40%, var(--bk-border)); }
+.settings-danger .bk-heading { color: var(--bk-danger-text); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem 1.5rem; }
+.settings-row > div { display: flex; flex-direction: column; gap: .2rem; min-width: 0; }
+@media (max-width: 640px) { .settings-row { flex-direction: column; align-items: stretch; } }
+</brick:style>

@@ -1,0 +1,61 @@
+---
+state:
+  name: ""
+  avatar: null
+  photos: []
+brick:
+  uploads:
+    avatar: {accept: [image/png, image/jpeg], max_size: 2MB}
+    photos: {accept: [image/*], max_files: 2}
+---
+<brick:script>
+def save(state, props, form):
+    name = str(form.get("name", "")).strip()
+    if not name:
+        return [state, {"name": "Enter a name."}]
+    return dict(state, name = name)
+</brick:script>
+<brick:client>
+// A drop zone for the photos field. brick.upload(el, field, files) sends
+// the files as a brick:upload input would: the same limits, the same
+// events, one queue with the component's other actions. It resolves when
+// every accepted file is done; a refused file emits upload-error and is
+// not sent.
+document.addEventListener("dragover", (event) => {
+  if (event.target.closest("[data-photo-drop]")) event.preventDefault();
+});
+document.addEventListener("drop", (event) => {
+  const zone = event.target.closest("[data-photo-drop]");
+  if (!zone) return;
+  event.preventDefault();
+  brick.upload(zone, "photos", event.dataTransfer.files).catch((err) => console.error(err));
+});
+
+// The runtime's upload events, for a status line of your own.
+const status = () => document.querySelector("[data-upload-status]");
+brick.on("upload-progress", (d) => {
+  status().textContent = d.name + ": " + Math.round((100 * d.loaded) / d.total) + "%";
+});
+brick.on("upload-done", (d) => { status().textContent = d.name + " uploaded"; });
+brick.on("upload-error", (d) => { status().textContent = d.name + ": " + d.message; });
+</brick:client>
+<form brick:submit="save">
+  {{ if .State.name }}<p>Saved: {{ .State.name }}</p>{{ end }}
+  <input name="name" value="{{ .State.name }}">
+  {{ with .Errors.name }}<p class="error">{{ . }}</p>{{ end }}
+  {{ with .State.avatar }}
+    <img src="{{ .url }}" alt="{{ .name }}" width="72" height="72">
+    <button type="button" brick:click='$removeUpload("avatar", "{{ .id }}")'>Remove</button>
+  {{ else }}
+    <span>No photo</span>
+  {{ end }}
+  <input type="file" accept="image/png,image/jpeg" brick:upload="avatar">
+  <progress brick:upload-progress="avatar" value="0" max="1"></progress>
+  <button type="button" brick:click='$cancelUpload("avatar")'>Cancel</button>
+  {{ with .Errors.avatar }}<p class="error">{{ . }}</p>{{ end }}
+  <ul>{{ range .State.photos }}<li>{{ .name }} ({{ .size }} bytes)</li>{{ end }}</ul>
+  <input type="file" multiple accept="image/*" brick:upload="photos">
+  <div data-photo-drop>Drop photos here</div>
+  <p data-upload-status></p>
+  <button>Save</button>
+</form>

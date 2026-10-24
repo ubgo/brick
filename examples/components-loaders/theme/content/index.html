@@ -1,0 +1,14 @@
+---
+title: Recent posts
+pinned:
+  - {title: Pinned, url: /pinned}
+---
+<brick:script>
+def price(n):
+    return "$%d" % n
+</brick:script>
+<h1>{{ .Title }}</h1>
+<RecentPosts />
+<RecentPosts :limit="1" />
+<RecentPosts :items=".Params.pinned" />
+<p>Pro costs {{ price 12 }}.</p>

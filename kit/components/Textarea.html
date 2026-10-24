@@ -1,0 +1,74 @@
+---
+inject:
+  bkField: {default: {}}
+props:
+  value: {type: string, default: ""}
+  rows: {type: int, default: 3}
+  maxlength: {type: int, default: 0}
+  counter: {type: bool, default: false}
+  autosize: {type: bool, default: false}
+  resize: {type: string, default: vertical, oneof: [vertical, none]}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+  readonly: {type: bool, default: false}
+---
+{{/*
+Textarea: multi-line text. autosize grows it with its content; counter
+shows "used / maxlength" (or the character count without a maxlength).
+
+  <Textarea name="bio" placeholder="A few words about you" />
+  <Textarea name="notes" :rows="5" value="{{ .Params.notes }}" />
+  <Textarea name="tweet" :maxlength="280" counter autosize />
+
+The text goes in value= (not children), so a bound form re-renders it from
+state. The caller's class goes on the wrapper; every other attribute
+reaches the <textarea>. Without JavaScript the box keeps its rows and the
+counter shows the count it was rendered with
+(in bytes, as Go counts a string; the client module counts characters).
+*/}}
+<brick:client>
+// BORDER_PX is the control's top + bottom border: scrollHeight excludes it,
+// so autosize adds it back or the box would scroll by two pixels.
+const BORDER_PX = 2;
+
+brick.mount("Textarea", (el) => {
+  const ta = el.querySelector(".bk-textarea__control");
+  const count = el.querySelector(".bk-textarea__count");
+  const max = ta.maxLength > 0 ? ta.maxLength : 0;
+  const grow = () => {
+    if (!el.classList.contains("bk-textarea--autosize")) return;
+    ta.style.height = "auto";
+    ta.style.height = ta.scrollHeight + BORDER_PX + "px";
+  };
+  const update = () => {
+    if (count) {
+      const n = ta.value.length;
+      count.textContent = max ? `${n} / ${max}` : String(n);
+      count.classList.toggle("bk-textarea__count--full", max > 0 && n >= max);
+    }
+    grow();
+  };
+  ta.addEventListener("input", update);
+  update();
+  return () => ta.removeEventListener("input", update);
+})
+</brick:client>
+<brick:style>
+.bk-textarea { position: relative; display: flex; flex-direction: column; width: 100%; }
+.bk-textarea__control { display: block; width: 100%; min-height: calc(var(--bk-h-md) * 1.5); margin: 0; padding: .45rem .65rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm)/1.5 var(--bk-font); box-shadow: var(--bk-shadow-sm); resize: vertical; transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-textarea__control::placeholder { color: var(--bk-muted-fg); opacity: .85; }
+.bk-textarea__control:hover { border-color: color-mix(in oklab, var(--bk-input), var(--bk-fg) 15%); }
+.bk-textarea__control:focus-visible { outline: none; border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-textarea--counter .bk-textarea__control { padding-bottom: 1.5rem; }
+.bk-textarea--noresize .bk-textarea__control, .bk-textarea--autosize .bk-textarea__control { resize: none; overflow: hidden; }
+.bk-textarea--invalid .bk-textarea__control { border-color: var(--bk-danger); }
+.bk-textarea--invalid .bk-textarea__control:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-danger) 18%, transparent); }
+.bk-textarea__control:disabled { background: var(--bk-muted); opacity: .6; cursor: not-allowed; }
+.bk-textarea__control:read-only { background: var(--bk-surface-2); }
+.bk-textarea__count { position: absolute; right: .6rem; bottom: .35rem; font-size: var(--bk-text-xs); color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; pointer-events: none; }
+.bk-textarea__count--full { color: var(--bk-danger-text); }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $invalid := or .Props.invalid (index $f "invalid") }}
+<div class="{{ cx `bk-textarea` (cond .Props.autosize `bk-textarea--autosize` ``) (cond (eq .Props.resize `none`) `bk-textarea--noresize` ``) (cond .Props.counter `bk-textarea--counter` ``) (cond $invalid `bk-textarea--invalid` ``) .Attrs.class }}"><textarea class="bk-textarea__control" rows="{{ .Props.rows }}"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if or .Props.required (index $f "required") }} required{{ end }}{{ with .Props.maxlength }} maxlength="{{ . }}"{{ end }}{{ if .Props.disabled }} disabled{{ end }}{{ if .Props.readonly }} readonly{{ end }} {{ attrs `class` `id` }}>{{ .Props.value }}</textarea>{{ if .Props.counter }}<span class="bk-textarea__count" aria-hidden="true">{{ len .Props.value }}{{ with .Props.maxlength }} / {{ . }}{{ end }}</span>{{ end }}</div>

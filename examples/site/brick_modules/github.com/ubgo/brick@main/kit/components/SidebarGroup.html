@@ -1,0 +1,31 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  title: {type: string, default: ""}
+  icon: {type: string, default: ""}
+  collapsible: {type: bool, default: false}
+  open: {type: bool, default: true}
+---
+{{/*
+SidebarGroup: a titled section of <SidebarItem>s inside a <Sidebar>.
+Collapsible groups are a native <details>, so they fold with no JavaScript
+and remember nothing between pages (pass open to choose the start state).
+
+  <SidebarGroup title="Workspace">…items…</SidebarGroup>
+  <SidebarGroup title="Projects" icon="folder" collapsible :open="false">…</SidebarGroup>
+
+A plain group is role="group", named by its title.
+*/}}
+<brick:style>
+.bk-sidebar-group { display: flex; flex-direction: column; gap: 1px; }
+.bk-sidebar-group__title { display: flex; align-items: center; gap: .4rem; height: 1.75rem; padding: 0 .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; letter-spacing: .02em; }
+.bk-sidebar-group > summary.bk-sidebar-group__title { cursor: pointer; list-style: none; border-radius: var(--bk-radius-sm); user-select: none; }
+.bk-sidebar-group > summary.bk-sidebar-group__title::-webkit-details-marker { display: none; }
+.bk-sidebar-group > summary.bk-sidebar-group__title:hover { color: var(--bk-fg); }
+.bk-sidebar-group > summary.bk-sidebar-group__title:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.bk-sidebar-group__chev { margin-left: auto; transition: transform var(--bk-duration); }
+.bk-sidebar-group[open] > summary .bk-sidebar-group__chev { transform: rotate(180deg); }
+.bk-sidebar-group__items { display: flex; flex-direction: column; gap: 1px; }
+</brick:style>
+{{ if .Props.collapsible }}<details class="{{ cx `bk-sidebar-group` .Attrs.class }}"{{ if .Props.open }} open{{ end }} {{ attrs `class` }}><summary class="bk-sidebar-group__title">{{ with .Props.icon }}<Icon :name="." :size="13" />{{ end }}<span class="bk-sidebar-group__label">{{ .Props.title }}</span><Icon name="chevron-down" :size="13" class="bk-sidebar-group__chev" /></summary><div class="bk-sidebar-group__items">{{ children }}</div></details>{{ else }}<div class="{{ cx `bk-sidebar-group` .Attrs.class }}" role="group"{{ if .Props.title }} aria-labelledby="{{ .ID }}-t"{{ end }} {{ attrs `class` }}>{{ with .Props.title }}<div class="bk-sidebar-group__title" id="{{ $.ID }}-t">{{ with $.Props.icon }}<Icon :name="." :size="13" />{{ end }}<span class="bk-sidebar-group__label">{{ . }}</span></div>{{ end }}<div class="bk-sidebar-group__items">{{ children }}</div></div>{{ end }}

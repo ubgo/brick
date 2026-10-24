@@ -1,0 +1,10 @@
+---
+activity:
+  - {user: Maya Chen, action: opened pull request, target: "#218 Add DataTable", time: 2h ago}
+  - {user: Liam Kim, action: commented on, target: "#218", time: 1h ago}
+  - {user: Ava Patel, action: approved, target: "#218", time: 40m ago, tone: success}
+  - {user: Maya Chen, action: merged, target: "#218 into main", time: 12m ago, tone: primary, icon: git-commit}
+---
+<Timeline :items=".Params.activity" size="sm" style="max-width: 30rem">
+  <brick:prop name="item"><div style="display: flex; justify-content: space-between; gap: 1rem"><span><b>{{ .Slot.user }}</b> <span style="color: var(--bk-muted-fg)">{{ .Slot.action }}</span> <a href="#pr">{{ .Slot.target }}</a></span><span style="color: var(--bk-muted-fg); font-size: var(--bk-text-xs); white-space: nowrap">{{ .Slot.time }}</span></div></brick:prop>
+</Timeline>

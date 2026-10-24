@@ -1,0 +1,9 @@
+---
+state:
+  on: false
+---
+<brick:script>
+def flip(state, props):
+    return dict(state, on = not state["on"])
+</brick:script>
+<div class="toggle"><button brick:click="flip">{{ if .State.on }}On{{ else }}Off{{ end }}</button></div>

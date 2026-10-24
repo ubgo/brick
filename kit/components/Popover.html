@@ -1,0 +1,152 @@
+---
+use:
+  Button: ~/components/Button.html
+props:
+  label: {type: string, default: ""}
+  icon: {type: string, default: ""}
+  variant: {type: string, default: outline, oneof: [primary, secondary, outline, ghost, soft]}
+  size: {type: string, default: md, oneof: [xs, sm, md, lg]}
+  side: {type: string, default: bottom, oneof: [bottom, top, left, right]}
+  align: {type: string, default: start, oneof: [start, center, end]}
+  title: {type: string, default: ""}
+---
+{{/*
+Popover: a button that opens a small floating panel next to it — a
+filter form, a colour picker, a share box. Built on the native Popover
+API (popover + popovertarget), so it opens, closes on Escape and on a
+click outside, and sits in the top layer without any JavaScript.
+
+  <Popover label="Filters" icon="filter">…form…</Popover>
+  <Popover side="top" align="end" variant="ghost" icon="more-horizontal" label="More">…</Popover>
+  <Popover title="Share">
+    <brick:prop name="trigger"><Icon name="send" /> Share</brick:prop>
+    …
+  </Popover>
+
+The trigger is a kit Button; its content is label (and icon), or a
+trigger block for richer content. title names the panel for screen
+readers. side and align place the panel against the trigger: CSS anchor
+positioning does it where the browser has it (flipping to the other side
+near an edge); elsewhere the client module measures and places it, with
+the same flip. Where the Popover API itself is missing, the module falls
+back to toggling hidden. Without JavaScript and anchor positioning the
+panel opens centred on screen. The caller's attributes, with id and
+class, land on the panel, so any button can open it with
+popovertarget="<id>".
+*/}}
+<brick:client>
+// GAP is the space between the trigger and the panel; EDGE the margin the
+// panel keeps from every viewport edge when it is flipped or clamped. Used
+// only without CSS anchor positioning (where the stylesheet places it).
+const GAP = 6, EDGE = 8;
+
+// place positions a floating panel against its trigger, flipping to the
+// opposite side when the preferred one would leave the viewport. It is the
+// one placement routine of the kit: Popover uses it without CSS anchor
+// positioning, and the field pickers (Combobox, DatePicker, MultiSelect,
+// TimePicker) import it from this module for the list they lift into the
+// top layer. (The import line is not quoted here: brick scans a module's
+// text for imports, comments included, and would read it as a cycle.)
+//
+// Options, each with the default Popover uses:
+//   side   "bottom" | "top" | "left" | "right" — the preferred side ("bottom")
+//   align  "start" | "center" | "end" — along the trigger ("start")
+//   gap    px between trigger and panel (GAP)
+//   edge   px kept from the viewport edges when flipping or clamping (EDGE)
+//   clamp  "both" | "x" | "none" — which axes are kept inside the viewport
+//          ("both"); a field's list only flips vertically and otherwise
+//          stays under its field, even when that runs off-screen
+//   width  "" | "match" | "min" — also set the panel's width (or min-width)
+//          to the trigger's, for a list that lines up with its field ("")
+// It sets position: fixed and the coordinates, and records the side it
+// chose in data-side for the CSS arrow and animation.
+export function place(trigger, panel, { side = "bottom", align = "start", gap = GAP, edge = EDGE, clamp = "both", width = "" } = {}) {
+  const t = trigger.getBoundingClientRect();
+  const p = panel.getBoundingClientRect();
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const flip = { bottom: "top", top: "bottom", left: "right", right: "left" };
+  const fits = (s) => s === "bottom" ? t.bottom + gap + p.height <= vh - edge
+    : s === "top" ? t.top - gap - p.height >= edge
+    : s === "right" ? t.right + gap + p.width <= vw - edge
+    : t.left - gap - p.width >= edge;
+  if (!fits(side) && fits(flip[side])) side = flip[side];
+  let top, left;
+  if (side === "bottom" || side === "top") {
+    top = side === "bottom" ? t.bottom + gap : t.top - gap - p.height;
+    left = align === "start" ? t.left : align === "end" ? t.right - p.width : t.left + (t.width - p.width) / 2;
+  } else {
+    left = side === "right" ? t.right + gap : t.left - gap - p.width;
+    top = align === "start" ? t.top : align === "end" ? t.bottom - p.height : t.top + (t.height - p.height) / 2;
+  }
+  if (clamp !== "none") left = Math.max(edge, Math.min(left, vw - edge - p.width));
+  if (clamp === "both") top = Math.max(edge, Math.min(top, vh - edge - p.height));
+  Object.assign(panel.style, { position: "fixed", inset: "auto", margin: "0", top: top + "px", left: left + "px" });
+  if (width === "match") panel.style.width = t.width + "px";
+  else if (width === "min") panel.style.minWidth = t.width + "px";
+  panel.dataset.side = side;
+}
+
+brick.mount("Popover", (el) => {
+  const trigger = el.querySelector(":scope > .bk-popover__trigger");
+  const panel = el.querySelector(":scope > .bk-popover__panel");
+  if (!trigger || !panel) return;
+  const side = panel.dataset.placeSide || "bottom", align = panel.dataset.placeAlign || "start";
+  const anchored = typeof CSS !== "undefined" && CSS.supports && CSS.supports("anchor-name: --a");
+  const native = typeof panel.showPopover === "function";
+  const isOpen = () => native ? panel.matches(":popover-open") : !panel.hidden;
+  const reflow = () => { if (isOpen() && !anchored) place(trigger, panel, { side, align }); };
+  const sync = () => { trigger.setAttribute("aria-expanded", String(isOpen())); reflow(); };
+  const offs = [];
+  const on = (t, ev, fn, o) => { t.addEventListener(ev, fn, o); offs.push(() => t.removeEventListener(ev, fn, o)); };
+  on(window, "resize", reflow);
+  on(window, "scroll", reflow, true);
+  if (native) {
+    on(panel, "toggle", sync);
+  } else {
+    // No Popover API: the same behaviour by hand.
+    trigger.removeAttribute("popovertarget");
+    panel.removeAttribute("popover");
+    panel.hidden = true;
+    const set = (open) => { panel.hidden = !open; sync(); if (!open && panel.contains(document.activeElement)) trigger.focus(); };
+    on(trigger, "click", (e) => { e.preventDefault(); set(panel.hidden); });
+    on(document, "click", (e) => { if (!panel.hidden && !el.contains(e.target)) set(false); });
+    on(document, "keydown", (e) => { if (e.key === "Escape" && !panel.hidden) set(false); });
+  }
+  sync();
+  return () => offs.forEach((off) => off());
+})
+</brick:client>
+<brick:style>
+.bk-popover { position: relative; display: inline-flex; }
+.bk-popover__panel { min-width: 12rem; max-width: min(24rem, calc(100vw - 1rem)); padding: .75rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); font-size: var(--bk-text-sm); z-index: var(--bk-z-dropdown); opacity: 0; transform: translateY(-4px) scale(.98); transition: opacity var(--bk-duration) ease, transform var(--bk-duration) ease, overlay var(--bk-duration) allow-discrete, display var(--bk-duration) allow-discrete; }
+.bk-popover__panel:popover-open { opacity: 1; transform: none; }
+.bk-popover__panel:not([popover]):not([hidden]) { opacity: 1; transform: none; }
+@starting-style { .bk-popover__panel:popover-open { opacity: 0; transform: translateY(-4px) scale(.98); } }
+.bk-popover__panel[hidden] { display: none; }
+.bk-popover__panel:not([popover]) { position: absolute; }
+.bk-popover__title { margin: 0 0 .5rem; font-size: var(--bk-text-sm); font-weight: 600; }
+@supports (anchor-name: --a) {
+  .bk-popover__panel { inset: auto; margin: 6px 0; position-try-fallbacks: flip-block; }
+  .bk-popover__panel--left, .bk-popover__panel--right { margin: 0 6px; position-try-fallbacks: flip-inline; }
+  .bk-popover__panel--bottom.bk-popover__panel--start { position-area: bottom span-right; }
+  .bk-popover__panel--bottom.bk-popover__panel--center { position-area: bottom; }
+  .bk-popover__panel--bottom.bk-popover__panel--end { position-area: bottom span-left; }
+  .bk-popover__panel--top.bk-popover__panel--start { position-area: top span-right; }
+  .bk-popover__panel--top.bk-popover__panel--center { position-area: top; }
+  .bk-popover__panel--top.bk-popover__panel--end { position-area: top span-left; }
+  .bk-popover__panel--right.bk-popover__panel--start { position-area: right span-bottom; }
+  .bk-popover__panel--right.bk-popover__panel--center { position-area: right; }
+  .bk-popover__panel--right.bk-popover__panel--end { position-area: right span-top; }
+  .bk-popover__panel--left.bk-popover__panel--start { position-area: left span-bottom; }
+  .bk-popover__panel--left.bk-popover__panel--center { position-area: left; }
+  .bk-popover__panel--left.bk-popover__panel--end { position-area: left span-top; }
+}
+</brick:style>
+{{ $id := or .Attrs.id (print .ID `-popover`) }}
+<div class="bk-popover">
+  <Button :variant=".Props.variant" :size=".Props.size" :icon=".Props.icon" class="bk-popover__trigger" popovertarget="{{ $id }}" aria-controls="{{ $id }}" style="anchor-name: --{{ $id }}">{{ if hasNode "trigger" }}{{ node "trigger" }}{{ else }}{{ .Props.label }}{{ end }}</Button>
+  <div popover id="{{ $id }}" class="{{ cx `bk-popover__panel` (print `bk-popover__panel--` .Props.side) (print `bk-popover__panel--` .Props.align) .Attrs.class }}" role="dialog"{{ with .Props.title }} aria-label="{{ . }}"{{ end }} data-place-side="{{ .Props.side }}" data-place-align="{{ .Props.align }}" style="position-anchor: --{{ $id }}" {{ attrs `class` `id` }}>
+    {{ with .Props.title }}<h3 class="bk-popover__title">{{ . }}</h3>{{ end }}
+    {{ children }}
+  </div>
+</div>

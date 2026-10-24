@@ -1,0 +1,9 @@
+<div style="display: grid; gap: 1rem; width: 100%; max-width: 24rem">
+  <Input name="site" prefix="https://" placeholder="example" suffix=".com" />
+  <Input name="invite" value="brick.dev/i/8f2k1x" readonly aria-label="Invite link">
+    <brick:prop name="trailing"><Button size="xs" variant="ghost" icon="copy">Copy</Button></brick:prop>
+  </Input>
+  <Input name="tag" placeholder="Search tags">
+    <brick:prop name="leading"><Icon name="hash" :size="14" /></brick:prop>
+  </Input>
+</div>

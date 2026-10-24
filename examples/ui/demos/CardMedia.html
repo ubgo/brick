@@ -1,0 +1,19 @@
+---
+posts:
+  - {title: "Designing for no JavaScript", excerpt: "Progressive enhancement is a design constraint, not an afterthought.", img: /demo/aurora.svg, tag: Design, date: Sep 12}
+  - {title: "A week without a bundler", excerpt: "What we learned shipping a production app with zero build steps.", img: /demo/dunes.svg, tag: Engineering, date: Sep 18}
+  - {title: "Server components in Go", excerpt: "Components as files, props as attributes, and html/template underneath.", img: /demo/forest.svg, tag: Go, date: Sep 24}
+---
+<Grid :md="3" style="width: 100%">
+  {{ range .Params.posts }}
+  <Card href="#" variant="default" padding="md">
+    <brick:prop name="media"><AspectRatio><img src="{{ .img }}" alt=""></AspectRatio></brick:prop>
+    <brick:prop name="header">
+      <Text as="span" size="xs" tone="primary" weight="semibold">{{ .tag }}</Text>
+      <h3 class="bk-card__title">{{ .title }}</h3>
+    </brick:prop>
+    <Text size="sm" tone="muted">{{ .excerpt }}</Text>
+    <brick:prop name="footer"><Icon name="calendar" :size="13" />&nbsp;{{ .date }} · 5 min read</brick:prop>
+  </Card>
+  {{ end }}
+</Grid>

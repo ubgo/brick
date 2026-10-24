@@ -1,0 +1,143 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  direction: {type: string, default: horizontal, oneof: [horizontal, vertical]}
+  step: {type: float, default: 5}
+  grip: {type: bool, default: false}
+  persist: {type: bool, default: false}
+  label: {type: string, default: Resize}
+---
+{{/*
+Resizable: panels side by side (or stacked) with a handle between each
+pair that drags to share the space — a sidebar and an editor, a list and
+a preview. The children are <ResizablePanel>s.
+
+  <Resizable id="editor" persist style="height: 24rem">
+    <ResizablePanel :size="30" :min="20" label="Files">…</ResizablePanel>
+    <ResizablePanel :size="70" label="Editor">…</ResizablePanel>
+  </Resizable>
+  <Resizable direction="vertical" grip style="height: 30rem">…</Resizable>
+
+A handle is a focusable role="separator" whose aria-valuenow is the size
+(percent) of the panel before it. Drag it, or focus it and use the arrow
+keys (step percent a press; Home and End go to that panel's min and max).
+Each panel stays inside its own min and max, and its neighbour's. With
+persist and an id, the sizes are saved in localStorage ("bk-resizable:" +
+id) and restored on the next visit. grip draws a small grip on the
+handles. A vertical group needs a height.
+
+Without JavaScript the panels keep their default sizes and the handles are
+plain dividers.
+*/}}
+<brick:client>
+// DEFAULT_STEP is the percentage one arrow key moves a handle when the
+// component sets no data-step; STORAGE_PREFIX namespaces the sizes a
+// persisted group (persist + an id) keeps in localStorage.
+const DEFAULT_STEP = 5, STORAGE_PREFIX = "bk-resizable:";
+// FULL is a move larger than any pair of panels (sizes are percentages), so
+// Home and End push a handle to its bound; move() clamps it.
+const FULL = 100;
+
+brick.mount("Resizable", (el) => {
+  const vertical = el.classList.contains("bk-resizable--vertical");
+  const panels = [...el.querySelectorAll(":scope > .bk-resizable__panel")];
+  const handles = [...el.querySelectorAll(":scope > .bk-resizable__handle")];
+  if (panels.length < 2) return;
+  const step = Number(el.dataset.step) || DEFAULT_STEP;
+  const key = el.dataset.persist !== undefined && el.id ? STORAGE_PREFIX + el.id : "";
+  const num = (v, d) => { const n = parseFloat(v); return Number.isFinite(n) ? n : d; };
+  const bounds = panels.map((p) => ({ min: num(p.dataset.min, 0), max: num(p.dataset.max, 100) }));
+  // Start from what the page drew, as percentages of the group.
+  const total = () => panels.reduce((a, p) => a + (vertical ? p.getBoundingClientRect().height : p.getBoundingClientRect().width), 0);
+  let sizes = (() => {
+    const grows = panels.map((p) => num(p.style.flexGrow, 1));
+    const sum = grows.reduce((a, b) => a + b, 0) || 1;
+    return grows.map((g) => (g / sum) * 100);
+  })();
+  if (key) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) || "null");
+      if (Array.isArray(saved) && saved.length === panels.length && saved.every(Number.isFinite)) sizes = saved;
+    } catch (e) {}
+  }
+  // Sizes are reported and saved to one decimal: enough for a layout, and
+  // aria-valuenow does not read out a float's noise.
+  const round = (n) => Math.round(n * 10) / 10;
+  const apply = () => {
+    panels.forEach((p, i) => { p.style.flex = `${sizes[i]} 1 0px`; });
+    handles.forEach((h, i) => {
+      h.setAttribute("aria-valuenow", String(round(sizes[i])));
+      h.setAttribute("aria-valuemin", String(bounds[i].min));
+      h.setAttribute("aria-valuemax", String(bounds[i].max));
+    });
+  };
+  const save = () => { if (key) { try { localStorage.setItem(key, JSON.stringify(sizes.map(round))); } catch (e) {} } };
+  // move grows panel i by delta (percent) at the expense of panel i+1,
+  // within both panels' bounds.
+  const move = (i, delta) => {
+    const a = sizes[i], b = sizes[i + 1], pair = a + b;
+    let next = a + delta;
+    next = Math.max(next, bounds[i].min, pair - bounds[i + 1].max);
+    next = Math.min(next, bounds[i].max, pair - bounds[i + 1].min);
+    sizes[i] = next;
+    sizes[i + 1] = pair - next;
+    apply();
+  };
+  const offs = [];
+  handles.forEach((h, i) => {
+    h.tabIndex = 0;
+    const onKey = (e) => {
+      const back = vertical ? "ArrowUp" : "ArrowLeft", fwd = vertical ? "ArrowDown" : "ArrowRight";
+      if (e.key === back) move(i, -step);
+      else if (e.key === fwd) move(i, step);
+      else if (e.key === "Home") move(i, -FULL);
+      else if (e.key === "End") move(i, FULL);
+      else return;
+      e.preventDefault();
+      save();
+    };
+    const onDown = (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      h.focus();
+      const start = vertical ? e.clientY : e.clientX;
+      const px = total() || 1;
+      const from = sizes[i];
+      h.classList.add("bk-resizable__handle--active");
+      if (h.setPointerCapture) { try { h.setPointerCapture(e.pointerId); } catch (x) {} }
+      const onMove = (m) => { move(i, from + (((vertical ? m.clientY : m.clientX) - start) / px) * 100 - sizes[i]); };
+      const onUp = () => {
+        h.classList.remove("bk-resizable__handle--active");
+        h.removeEventListener("pointermove", onMove);
+        h.removeEventListener("pointerup", onUp);
+        h.removeEventListener("pointercancel", onUp);
+        save();
+      };
+      h.addEventListener("pointermove", onMove);
+      h.addEventListener("pointerup", onUp);
+      h.addEventListener("pointercancel", onUp);
+    };
+    h.addEventListener("keydown", onKey);
+    h.addEventListener("pointerdown", onDown);
+    offs.push(() => { h.removeEventListener("keydown", onKey); h.removeEventListener("pointerdown", onDown); });
+  });
+  apply();
+  return () => offs.forEach((off) => off());
+})
+</brick:client>
+<brick:style>
+.bk-resizable { display: flex; width: 100%; min-height: 0; overflow: hidden; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); }
+.bk-resizable--vertical { flex-direction: column; }
+.bk-resizable__handle { position: relative; flex: none; display: grid; place-items: center; width: 1px; background: var(--bk-border); cursor: col-resize; touch-action: none; outline: none; }
+.bk-resizable--vertical > .bk-resizable__handle { width: auto; height: 1px; cursor: row-resize; }
+.bk-resizable__handle::after { content: ""; position: absolute; inset: 0 -4px; }
+.bk-resizable--vertical > .bk-resizable__handle::after { inset: -4px 0; }
+.bk-resizable__handle:hover, .bk-resizable__handle--active, .bk-resizable__handle:focus-visible { background: var(--bk-primary); }
+.bk-resizable__handle:focus-visible { box-shadow: 0 0 0 2px var(--bk-ring); }
+.bk-resizable__grip { position: relative; z-index: 1; display: grid; place-items: center; width: .85rem; height: 1.4rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-surface); color: var(--bk-muted-fg); }
+.bk-resizable--vertical .bk-resizable__grip { width: 1.4rem; height: .85rem; transform: rotate(90deg); }
+</brick:style>
+<div class="{{ cx `bk-resizable` (print `bk-resizable--` .Props.direction) .Attrs.class }}" data-step="{{ .Props.step }}"{{ if .Props.persist }} data-persist{{ end }} {{ attrs `class` }}>
+  {{ range $i, $c := .Children }}{{ if $i }}<div class="bk-resizable__handle" role="separator" aria-orientation="{{ cond (eq $.Props.direction `horizontal`) `vertical` `horizontal` }}" aria-label="{{ $.Props.label }}{{ with index (index $.Children (sub $i 1)).Props `label` }} {{ . }}{{ end }}"{{ with (index $.Children (sub $i 1)).Props.size }} aria-valuenow="{{ . }}"{{ end }} aria-valuemin="0" aria-valuemax="100">{{ if $.Props.grip }}<span class="bk-resizable__grip" aria-hidden="true"><Icon name="grip-vertical" :size="12" /></span>{{ end }}</div>{{ end }}{{ child $c }}{{ end }}
+</div>

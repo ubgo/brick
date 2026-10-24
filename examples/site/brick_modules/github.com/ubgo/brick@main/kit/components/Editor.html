@@ -1,0 +1,189 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  value: {type: string, default: ""}
+  placeholder: {type: string, default: Write something…}
+  rows: {type: int, default: 6}
+  label: {type: string, default: ""}
+  tools: {type: list, default: [bold, italic, underline, link, heading, bullets, numbers, quote, code]}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+Editor: a small rich-text editor — bold, italic, underline, links,
+headings, lists, quotes and code — for comments, descriptions and notes.
+
+  <Editor name="body" />
+  <Editor name="notes" :tools="list `bold` `italic` `link`"><brick:prop name="value" raw><p>Hello <b>world</b></p></brick:prop></Editor>
+  <Editor name="body" :value=".State.body" />
+  <Field label="Description"><Editor name="description" :rows="8" /></Field>
+
+The value is HTML in a <textarea> (name= and every attribute but class
+land on it), which is the whole component without JavaScript: the user
+types into a plain text box. The client module hides it and shows a
+role="toolbar" (arrow keys move between tools, a roving tabindex) over a
+contenteditable box; every edit writes the box's HTML back to the
+textarea, cleaned to the tags the tools make (p, br, b, strong, i, em, u,
+a href, h2, h3, ul, ol, li, blockquote, pre, code) with every attribute
+but a safe href dropped, and fires input and change.
+
+That cleaning is for the editing experience only. The submitted HTML is
+still untrusted data: the host must sanitize it when it shows it —
+{{ sanitize .content }} with Options.Sanitizer set — never trust the
+browser's copy.
+*/}}
+<brick:client>
+// ALLOWED is what the tools produce; anything else is unwrapped (its text
+// kept) or, for script-like elements, dropped with its content.
+const ALLOWED = new Set(["P", "BR", "B", "STRONG", "I", "EM", "U", "A", "H2", "H3", "UL", "OL", "LI", "BLOCKQUOTE", "PRE", "CODE", "DIV"]);
+const DROP = new Set(["SCRIPT", "STYLE", "IFRAME", "OBJECT", "EMBED", "TEMPLATE", "SVG", "MATH", "LINK", "META"]);
+const clean = (html) => {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html;
+  const walk = (node) => {
+    [...node.childNodes].forEach((n) => {
+      if (n.nodeType === 8) { n.remove(); return; }
+      if (n.nodeType !== 1) return;
+      if (DROP.has(n.tagName)) { n.remove(); return; }
+      walk(n);
+      if (!ALLOWED.has(n.tagName)) { n.replaceWith(...n.childNodes); return; }
+      const href = n.tagName === "A" ? (n.getAttribute("href") || "").trim() : "";
+      [...n.attributes].forEach((a) => n.removeAttribute(a.name));
+      if (href && /^(https?:|mailto:|\/|#)/i.test(href)) n.setAttribute("href", href);
+    });
+  };
+  walk(tpl.content);
+  return tpl.innerHTML;
+};
+// COMMANDS maps each toolbar tool to its execCommand call. execCommand is
+// deprecated but is still the only API that edits a contenteditable with
+// undo history in every browser; the output is cleaned by clean() anyway.
+// formatBlock tools toggle: applying the block they are already in turns it
+// back into a paragraph (see run).
+const COMMANDS = {
+  bold: ["bold"], italic: ["italic"], underline: ["underline"],
+  heading: ["formatBlock", "<h2>"], bullets: ["insertUnorderedList"], numbers: ["insertOrderedList"],
+  quote: ["formatBlock", "<blockquote>"], code: ["formatBlock", "<pre>"],
+};
+brick.mount("Editor", (el) => {
+  const source = el.querySelector(".bk-editor__source");
+  const ui = el.querySelector(".bk-editor__ui");
+  const bar = el.querySelector(".bk-editor__toolbar");
+  const box = el.querySelector(".bk-editor__content");
+  const tools = [...bar.querySelectorAll("button")];
+  const sync = () => {
+    const html = clean(box.innerHTML);
+    source.value = box.textContent.trim() === "" && !box.querySelector("li") ? "" : html;
+    box.classList.toggle("bk-editor__content--empty", source.value === "");
+    source.dispatchEvent(new Event("input", { bubbles: true }));
+    source.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  const state = () => {
+    tools.forEach((b) => {
+      const c = COMMANDS[b.dataset.tool];
+      if (!c) return;
+      let on = false;
+      // queryCommand* throw in some browsers when the selection is outside
+      // an editable region; a tool then simply shows as not pressed.
+      try {
+        if (c[0] === "formatBlock") on = (document.queryCommandValue("formatBlock") || "").toLowerCase() === c[1].slice(1, -1);
+        else on = document.queryCommandState(c[0]);
+      } catch (e) {}
+      b.setAttribute("aria-pressed", String(!!on));
+    });
+  };
+  const run = (tool) => {
+    box.focus();
+    if (tool === "link") {
+      const url = prompt("Link address", "https://");
+      if (url === null) return;
+      if (url.trim() === "") document.execCommand("unlink");
+      else document.execCommand("createLink", false, url.trim());
+    } else {
+      const c = COMMANDS[tool];
+      if (!c) return;
+      if (c[0] === "formatBlock") {
+        const cur = (document.queryCommandValue("formatBlock") || "").toLowerCase();
+        document.execCommand("formatBlock", false, cur === c[1].slice(1, -1) ? "<p>" : c[1]);
+      } else document.execCommand(c[0], false, c[1]);
+    }
+    sync();
+    state();
+  };
+  const onClick = (e) => { const b = e.target.closest("button[data-tool]"); if (b) { e.preventDefault(); run(b.dataset.tool); } };
+  const onBarKey = (e) => {
+    const i = tools.indexOf(document.activeElement);
+    if (i < 0) return;
+    const n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tools.length - 1 }[e.key];
+    if (n === undefined) return;
+    e.preventDefault();
+    const j = (n + tools.length) % tools.length;
+    tools.forEach((b, k) => { b.tabIndex = k === j ? 0 : -1; });
+    tools[j].focus();
+  };
+  const onPaste = (e) => {
+    const html = e.clipboardData && e.clipboardData.getData("text/html");
+    if (!html) return;
+    e.preventDefault();
+    document.execCommand("insertHTML", false, clean(html));
+  };
+  const onSel = () => { if (el.contains(document.activeElement)) state(); };
+  // Enter makes <p>, not <div>, so the output matches the tools' own blocks.
+  if (document.execCommand) { try { document.execCommand("defaultParagraphSeparator", false, "p"); } catch (e) {} }
+  box.innerHTML = clean(source.value);
+  box.classList.toggle("bk-editor__content--empty", source.value.trim() === "");
+  box.setAttribute("contenteditable", source.disabled ? "false" : "true");
+  const labels = [...(source.labels || [])]; // before the id moves: <label for> finds the textarea by it
+  if (source.id) { box.id = source.id; source.removeAttribute("id"); }
+  ["aria-describedby", "aria-invalid", "aria-required", "aria-label"].forEach((a) => { if (source.hasAttribute(a)) box.setAttribute(a, source.getAttribute(a)); });
+  // The box needs its own accessible name: the textarea's aria-label (copied
+  // above), else the textarea's <label>s (a Field's), else the placeholder.
+  if (!box.hasAttribute("aria-label")) {
+    labels.forEach((l, i) => { if (!l.id) l.id = (box.id || "bk-editor") + "-label-" + i; });
+    if (labels.length) box.setAttribute("aria-labelledby", labels.map((l) => l.id).join(" "));
+    else box.setAttribute("aria-label", box.dataset.placeholder || "Rich text");
+  }
+  tools.forEach((b, k) => { b.tabIndex = k === 0 ? 0 : -1; });
+  source.hidden = true;
+  ui.hidden = false;
+  const keep = (e) => { if (e.target.closest("button")) e.preventDefault(); };
+  bar.addEventListener("mousedown", keep);
+  bar.addEventListener("click", onClick);
+  bar.addEventListener("keydown", onBarKey);
+  box.addEventListener("input", sync);
+  box.addEventListener("paste", onPaste);
+  document.addEventListener("selectionchange", onSel);
+  return () => { bar.removeEventListener("mousedown", keep); bar.removeEventListener("click", onClick); bar.removeEventListener("keydown", onBarKey); box.removeEventListener("input", sync); box.removeEventListener("paste", onPaste); document.removeEventListener("selectionchange", onSel); };
+})
+</brick:client>
+<brick:style>
+.bk-editor { width: 100%; }
+.bk-editor__source { display: block; width: 100%; padding: .5rem .65rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm)/1.5 var(--bk-font); resize: vertical; }
+.bk-editor__source[hidden], .bk-editor__ui[hidden] { display: none; }
+.bk-editor__ui { border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-editor__ui:focus-within { border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-editor--invalid .bk-editor__ui, .bk-editor--invalid .bk-editor__source { border-color: var(--bk-danger); }
+.bk-editor__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: .25rem; border-bottom: 1px solid var(--bk-border); }
+.bk-editor__toolbar button { display: grid; place-items: center; width: var(--bk-h-sm); height: var(--bk-h-sm); padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: none; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-editor__toolbar button:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-editor__toolbar button[aria-pressed=true] { background: color-mix(in oklab, var(--bk-fg) 9%, transparent); color: var(--bk-fg); }
+.bk-editor__toolbar button:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -1px; }
+.bk-editor__sep { width: 1px; height: 1.1rem; margin: 0 .2rem; background: var(--bk-border); }
+.bk-editor__content { min-height: calc(var(--bk-editor-rows, 6) * 1.5em + 1.2rem); max-height: 28rem; overflow-y: auto; padding: .6rem .75rem; outline: 0; color: var(--bk-fg); font: var(--bk-text-sm)/1.55 var(--bk-font); }
+.bk-editor__content--empty::before { content: attr(data-placeholder); color: var(--bk-muted-fg); pointer-events: none; }
+.bk-editor__content :where(p, ul, ol, blockquote, pre, h2, h3) { margin: 0 0 .6em; }
+.bk-editor__content :where(h2) { font-size: var(--bk-text-lg); font-weight: 600; }
+.bk-editor__content :where(h3) { font-size: var(--bk-text-base); font-weight: 600; }
+.bk-editor__content :where(ul, ol) { padding-left: 1.4em; }
+.bk-editor__content :where(blockquote) { padding-left: .8em; border-left: 3px solid var(--bk-border); color: var(--bk-muted-fg); }
+.bk-editor__content :where(pre, code) { font-family: var(--bk-mono); font-size: .92em; }
+.bk-editor__content :where(pre) { padding: .5em .7em; border-radius: var(--bk-radius-sm); background: var(--bk-muted); white-space: pre-wrap; }
+.bk-editor__content :where(a) { color: var(--bk-primary-text); }
+</brick:style>
+{{ $f := .Ctx.bkField }}{{ $invalid := or .Props.invalid (index $f "invalid") }}
+{{ $names := dict "bold" "Bold" "italic" "Italic" "underline" "Underline" "link" "Link" "heading" "Heading" "bullets" "Bulleted list" "numbers" "Numbered list" "quote" "Quote" "code" "Code block" }}{{ $icons := dict "bold" "bold" "italic" "italic" "underline" "underline" "link" "link" "heading" "heading" "bullets" "list" "numbers" "list-ordered" "quote" "quote" "code" "code" }}
+<div class="{{ cx `bk-editor` (cond $invalid `bk-editor--invalid` ``) .Attrs.class }}" style="--bk-editor-rows: {{ .Props.rows }}"><textarea class="bk-editor__source" rows="{{ .Props.rows }}" placeholder="{{ .Props.placeholder }}"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if or .Props.required (index $f "required") }} required{{ end }}{{ if .Props.disabled }} disabled{{ end }}{{ with .Props.label }} aria-label="{{ . }}"{{ end }} {{ attrs `class` `id` }}>{{ .Props.value }}</textarea><div class="bk-editor__ui" hidden><div class="bk-editor__toolbar" role="toolbar" aria-label="Formatting">{{ range $i, $t := .Props.tools }}{{ if and $i (or (eq $t "link") (eq $t "heading")) }}<span class="bk-editor__sep" aria-hidden="true"></span>{{ end }}<button type="button" data-tool="{{ $t }}" aria-label="{{ index $names $t }}" title="{{ index $names $t }}"{{ if ne $t "link" }} aria-pressed="false"{{ end }}><Icon :name="index $icons $t" :size="15" /></button>{{ end }}</div><div class="bk-editor__content" role="textbox" aria-multiline="true" data-placeholder="{{ .Props.placeholder }}"{{ with .Props.label }} aria-label="{{ . }}"{{ end }}></div></div></div>

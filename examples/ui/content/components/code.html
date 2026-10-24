@@ -1,0 +1,13 @@
+---
+title: Code
+category: Foundations
+description: Inline code inside running text — a command, a file name, an identifier.
+api:
+  - {name: tone, type: "default | primary", default: default, desc: The colour.}
+---
+<h1>Code</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Inline"><CodeInline /><brick:prop name="code"><Source src="~/demos/CodeInline.html" /></brick:prop></Example>
+<Prose><p>For a block of code, use <code>&lt;pre&gt;&lt;code&gt;</code> inside <a href="/components/prose/">Prose</a>, or show a file as written with a raw component such as this site's <code>&lt;Source src="…" /&gt;</code>.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

@@ -1,0 +1,19 @@
+---
+title: Stat
+category: Data display
+description: "One headline number with its label, change, trend and context — a card on its own, or a cell in Stats."
+api:
+  - {name: label, type: string, desc: "What the number is. Required."}
+  - {name: value, type: string, desc: "The number, already formatted (numberFormat, a currency). Required."}
+  - {name: delta, type: string, desc: "The change, e.g. +12.5%."}
+  - {name: trend, type: "up | down | flat", default: from delta, desc: "The arrow; read from delta's sign when omitted."}
+  - {name: invert, type: bool, desc: "Down is good (churn, latency, errors): swaps green and red."}
+  - {name: description, type: string, desc: "Context after the delta, e.g. “vs. last month”."}
+  - {name: icon, type: string, desc: "An icon in the corner."}
+  - {name: href, type: string, desc: "Makes the whole card a link to the detail."}
+---
+<h1>Stat</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Trends"><StatBasic /><brick:prop name="code"><Source src="~/demos/StatBasic.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

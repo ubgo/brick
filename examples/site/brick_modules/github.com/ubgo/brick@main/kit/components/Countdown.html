@@ -1,0 +1,81 @@
+---
+props:
+  to: {type: string, required: true, client: true}
+  label: {type: string, default: ""}
+  done: {type: string, default: "It's time.", client: true}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  seconds: {type: bool, default: true}
+---
+{{/*
+Countdown: days, hours, minutes and seconds until a moment.
+
+  <Countdown to="2026-12-31T23:59:59Z" label="Launch in" />
+  <Countdown to="2026-11-01T09:00:00+01:00" size="sm" :seconds="false" done="Doors are open" />
+
+to is an ISO 8601 date-time; give it an offset or Z, or it is read in the
+visitor's time zone. A template has no clock, so the server cannot know how
+long is left: without JavaScript the component shows the target date
+itself ("until Dec 31, 2026 23:59"), and the browser replaces it with the
+ticking boxes. When the time comes it shows done and fires a "bk-done" DOM
+event. The boxes are a timer (role="timer"), not a live region, so a screen
+reader is not interrupted every second.
+*/}}
+<brick:client>
+// TICK_MS is the refresh interval: the smallest unit shown is a second.
+const TICK_MS = 1000;
+
+brick.mount("Countdown", (el, props) => {
+  const target = Date.parse(props.to);
+  if (Number.isNaN(target)) return;
+  const boxes = el.querySelector(".bk-countdown__boxes");
+  const fallback = el.querySelector(".bk-countdown__until");
+  const doneEl = el.querySelector(".bk-countdown__done");
+  const cells = Object.fromEntries([...el.querySelectorAll("[data-unit]")].map((n) => [n.dataset.unit, n]));
+  let timer = 0;
+  const tick = () => {
+    const left = Math.max(0, target - Date.now());
+    const s = Math.floor(left / TICK_MS);
+    const parts = { d: Math.floor(s / 86400), h: Math.floor(s / 3600) % 24, m: Math.floor(s / 60) % 60, s: s % 60 };
+    for (const [u, n] of Object.entries(cells)) n.textContent = u === "d" ? String(parts[u]) : String(parts[u]).padStart(2, "0");
+    boxes.setAttribute("aria-label", `${parts.d} days ${parts.h} hours ${parts.m} minutes left`);
+    if (left === 0) {
+      clearInterval(timer);
+      boxes.hidden = true;
+      doneEl.hidden = false;
+      el.dispatchEvent(new CustomEvent("bk-done", { bubbles: true }));
+    }
+  };
+  fallback.hidden = true;
+  boxes.hidden = false;
+  tick();
+  if (target > Date.now()) timer = setInterval(tick, TICK_MS);
+  return () => clearInterval(timer);
+})
+</brick:client>
+<brick:style>
+.bk-countdown { display: inline-flex; flex-direction: column; gap: .4rem; }
+.bk-countdown__label { font-size: var(--bk-text-sm); font-weight: 500; color: var(--bk-muted-fg); }
+.bk-countdown__boxes { display: flex; align-items: flex-start; gap: .4rem; }
+.bk-countdown__boxes[hidden], .bk-countdown__until[hidden], .bk-countdown__done[hidden] { display: none; }
+.bk-countdown__box { display: flex; flex-direction: column; align-items: center; min-width: 3.5rem; padding: .5rem .4rem .4rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); }
+.bk-countdown__num { font-size: var(--bk-text-2xl); font-weight: 650; line-height: 1.1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--bk-fg); }
+.bk-countdown__unit { margin-top: .15rem; font-size: .6875rem; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--bk-muted-fg); }
+.bk-countdown__until, .bk-countdown__done { font-size: var(--bk-text-lg); font-weight: 600; color: var(--bk-fg); }
+.bk-countdown--sm .bk-countdown__box { min-width: 2.5rem; padding: .3rem .3rem .25rem; border-radius: var(--bk-radius); }
+.bk-countdown--sm .bk-countdown__num { font-size: var(--bk-text-lg); }
+.bk-countdown--sm .bk-countdown__unit { font-size: .625rem; }
+.bk-countdown--lg .bk-countdown__box { min-width: 5rem; padding: .8rem .6rem .6rem; }
+.bk-countdown--lg .bk-countdown__num { font-size: var(--bk-text-4xl); }
+</brick:style>
+<div class="{{ cx `bk-countdown` (cond (ne .Props.size `md`) (print `bk-countdown--` .Props.size) ``) .Attrs.class }}" {{ attrs `class` }}>
+  {{- with .Props.label }}<span class="bk-countdown__label">{{ . }}</span>{{ end }}
+  <time class="bk-countdown__until" datetime="{{ .Props.to }}">until {{ dateFormat "Jan 2, 2006 15:04" .Props.to }}</time>
+  <div class="bk-countdown__boxes" role="timer" hidden>
+    <span class="bk-countdown__box"><span class="bk-countdown__num" data-unit="d">0</span><span class="bk-countdown__unit">days</span></span>
+    <span class="bk-countdown__box"><span class="bk-countdown__num" data-unit="h">00</span><span class="bk-countdown__unit">hours</span></span>
+    <span class="bk-countdown__box"><span class="bk-countdown__num" data-unit="m">00</span><span class="bk-countdown__unit">min</span></span>
+    {{- if .Props.seconds }}
+    <span class="bk-countdown__box"><span class="bk-countdown__num" data-unit="s">00</span><span class="bk-countdown__unit">sec</span></span>{{ end }}
+  </div>
+  <span class="bk-countdown__done" hidden>{{ .Props.done }}</span>
+</div>

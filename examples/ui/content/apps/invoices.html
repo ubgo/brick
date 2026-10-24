@@ -1,0 +1,25 @@
+---
+title: Invoices
+layout: app
+description: A CRUD app over SQLite — list, filter, search and page invoices, edit line items with server-computed totals, and print a clean invoice.
+---
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/invoices/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Invoices`)" />
+    <div class="inv-top"><ThemeToggle /></div>
+  </brick:prop>
+  <InvoicesApp />
+  <Toaster />
+</AppShell>
+
+<AppSource app="Invoices">
+  <Tabs label="Invoices files" size="sm">
+    <Tab title="invoices.html"><CodeView file="content/apps/invoices.html"><Source src="~/content/apps/invoices.html" /></CodeView></Tab>
+    <Tab title="InvoicesApp.html"><CodeView file="apps/invoices/InvoicesApp.html"><Source src="~/apps/invoices/InvoicesApp.html" /></CodeView></Tab>
+    <Tab title="invoices.star"><CodeView file="apps/invoices/invoices.star"><Source src="~/apps/invoices/invoices.star" /></CodeView></Tab>
+    <Tab title="db_invoices.go"><CodeView file="demodb/db_invoices.go"><Source src="~/demodb/db_invoices.go" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+    <Tab title="main.go"><CodeView file="main.go"><Source src="~/main.go" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

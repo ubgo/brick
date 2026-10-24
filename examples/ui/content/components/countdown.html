@@ -1,0 +1,18 @@
+---
+title: Countdown
+category: Data display
+description: "Days, hours, minutes and seconds until a moment, ticking in the browser; the target date itself without JavaScript."
+api:
+  - {name: to, type: string, desc: "The moment, as ISO 8601 with an offset (2026-12-31T23:59:59Z). Required."}
+  - {name: label, type: string, desc: "Text above the boxes (“Launch in”)."}
+  - {name: done, type: string, default: "It's time.", desc: "Shown when the time comes; a bk-done event fires too."}
+  - {name: size, type: "sm | md | lg", default: md, desc: "Box size."}
+  - {name: seconds, type: bool, default: "true", desc: "Shows the seconds box."}
+---
+<h1>Countdown</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Basic"><CountdownBasic /><brick:prop name="code"><Source src="~/demos/CountdownBasic.html" /></brick:prop></Example>
+<Example title="Sizes, without seconds"><CountdownSizes /><brick:prop name="code"><Source src="~/demos/CountdownSizes.html" /></brick:prop></Example>
+<Prose><p>A template has no clock, so the server renders the target (“until Jan 1, 2027 00:00”) and the browser swaps in the boxes.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

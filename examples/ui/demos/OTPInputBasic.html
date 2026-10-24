@@ -1,0 +1,5 @@
+<div style="display: grid; gap: 1.25rem">
+  <Field label="Verification code" hint="We sent a 6-digit code to ada@example.com."><OTPInput name="code" /></Field>
+  <Field label="PIN"><OTPInput name="pin" :length="4" /></Field>
+  <Field label="Licence key"><OTPInput name="key" :length="8" :group="4" mode="alphanumeric" /></Field>
+</div>

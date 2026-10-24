@@ -1,0 +1,29 @@
+# The docs sidebar: categories in order. A component page joins one with
+# `category:` in its frontmatter; the sidebar lists that category's pages
+# alphabetically. A page naming a category missing here is not listed, and
+# TestEveryPageIsInTheNav fails.
+categories:
+  - Getting started
+  - Foundations
+  - Actions
+  - Forms
+  - Data display
+  - Feedback
+  - Navigation
+  - Overlays
+  - Layout
+  - Charts
+  - Mockups
+apps:
+  - {title: Contacts (CRUD), url: /apps/contacts/, icon: users}
+  - {title: Task board, url: /apps/tasks/, icon: kanban}
+  - {title: Dashboard, url: /apps/dashboard/, icon: layout-dashboard}
+  - {title: Inbox, url: /apps/inbox/, icon: inbox}
+  - {title: Store, url: /apps/store/, icon: shopping-cart}
+  - {title: Invoices, url: /apps/invoices/, icon: file}
+  - {title: Chat, url: /apps/chat/, icon: message-square}
+  - {title: Calendar, url: /apps/calendar/, icon: calendar}
+  - {title: Blog CMS, url: /apps/cms/, icon: pencil}
+  - {title: Settings, url: /apps/settings/, icon: settings}
+  - {title: Sign in, url: /apps/auth/, icon: log-in}
+  - {title: Landing page, url: /apps/landing/, icon: globe}

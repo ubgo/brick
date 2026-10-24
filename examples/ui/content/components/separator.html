@@ -1,0 +1,16 @@
+---
+title: Separator
+category: Foundations
+description: A thin rule between groups of content, horizontal or vertical, with an optional label in the line.
+api:
+  - {name: orientation, type: "horizontal | vertical", default: horizontal, desc: "Vertical needs a flex-row parent."}
+  - {name: label, type: string, desc: "Text in the line: \"or\", \"Today\"."}
+  - {name: align, type: "start | center | end", default: center, desc: Where the label sits.}
+  - {name: spacing, type: "none | sm | md | lg", default: md, desc: The margin around the line.}
+---
+<h1>Separator</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Horizontal and vertical" block><SeparatorBasic /><brick:prop name="code"><Source src="~/demos/SeparatorBasic.html" /></brick:prop></Example>
+<Example title="With a label" block><SeparatorLabel /><brick:prop name="code"><Source src="~/demos/SeparatorLabel.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

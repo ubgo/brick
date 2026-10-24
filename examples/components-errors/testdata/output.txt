@@ -1,0 +1,29 @@
+== content/index.html in Prod mode
+<section class="hero"><h1>Welcome</h1></section>
+<blockquote>Less, but better.</blockquote>
+
+<p class="fallback">Recent posts are unavailable. (This part of the page could not be shown. (error 08587a4e))</p>
+
+== OnError heard
+components/RecentPosts.html: load: recent: Traceback (most recent call last):
+  components/RecentPosts.html#script:6:9: in recent
+Error in fail: fail: the posts database is down
+
+== content/index.html in Dev mode
+<section data-brick-loc="components/Hero.html:5" class="hero"><h1>Welcome</h1></section>
+<blockquote data-brick-loc="components/Quote.html:5">Less, but better.</blockquote>
+
+<pre class="brick-error" style="background:#fff1f0;color:#a8071a;border:1px solid #ffa39e;padding:12px;white-space:pre-wrap;font:13px/1.5 monospace">components/RecentPosts.html: load: recent: Traceback (most recent call last):
+  components/RecentPosts.html#script:6:9: in recent
+Error in fail: fail: the posts database is down</pre><p class="fallback">Recent posts are unavailable. (components/RecentPosts.html: load: recent: Traceback (most recent call last):
+  components/RecentPosts.html#script:6:9: in recent
+Error in fail: fail: the posts database is down)</p>
+
+== OnError heard
+components/RecentPosts.html: load: recent: Traceback (most recent call last):
+  components/RecentPosts.html#script:6:9: in recent
+Error in fail: fail: the posts database is down
+
+== CompileAll("broken")
+broken/typo.html:2:3: error: unknown component <Crad> — no file in use: or the roots (components) defines it
+broken/unbalanced.html:4:1: warning: </main> closes <div> (line 2), which is still open

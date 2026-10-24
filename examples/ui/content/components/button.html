@@ -1,0 +1,28 @@
+---
+title: Button
+category: Actions
+description: A button, or a link that looks like one — seven variants, four sizes, icons and a loading state.
+api:
+  - {name: variant, type: "primary | secondary | outline | ghost | soft | danger | link", default: primary, desc: The look.}
+  - {name: size, type: "xs | sm | md | lg", default: md, desc: Height and padding.}
+  - {name: href, type: string, desc: "Renders an <a>, so navigation stays a real link."}
+  - {name: type, type: "button | submit | reset", default: button, desc: The button's form behaviour.}
+  - {name: icon, type: string, desc: An icon before the label.}
+  - {name: iconRight, type: string, desc: An icon after the label.}
+  - {name: label, type: string, desc: The accessible name; required when the button has only an icon.}
+  - {name: square, type: bool, desc: "Equal width and height, for an icon-only button."}
+  - {name: block, type: bool, desc: Full width.}
+  - {name: loading, type: bool, desc: Shows a spinner and disables the button.}
+  - {name: disabled, type: bool, desc: Disables the button (a link gets aria-disabled).}
+---
+<h1>Button</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Variants"><ButtonVariants /><brick:prop name="code"><Source src="~/demos/ButtonVariants.html" /></brick:prop></Example>
+<Example title="Sizes"><ButtonSizes /><brick:prop name="code"><Source src="~/demos/ButtonSizes.html" /></brick:prop></Example>
+<Example title="With icons"><ButtonIcons /><brick:prop name="code"><Source src="~/demos/ButtonIcons.html" /></brick:prop></Example>
+<Example title="Icon only — label is the accessible name"><ButtonIconOnly /><brick:prop name="code"><Source src="~/demos/ButtonIconOnly.html" /></brick:prop></Example>
+<Example title="Loading and disabled"><ButtonStates /><brick:prop name="code"><Source src="~/demos/ButtonStates.html" /></brick:prop></Example>
+<Example title="As a link — href renders a real anchor"><ButtonLinks /><brick:prop name="code"><Source src="~/demos/ButtonLinks.html" /></brick:prop></Example>
+<Example title="Full width" block><ButtonBlock /><brick:prop name="code"><Source src="~/demos/ButtonBlock.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

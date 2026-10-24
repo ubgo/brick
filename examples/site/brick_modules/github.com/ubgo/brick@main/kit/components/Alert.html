@@ -1,0 +1,75 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  variant: {type: string, default: info, oneof: [info, success, warning, danger, neutral]}
+  title: {type: string, default: ""}
+  icon: {type: string, default: ""}
+  noIcon: {type: bool, default: false}
+  dismissible: {type: bool, default: false}
+  label: {type: string, default: Dismiss}
+---
+{{/*
+Alert: an inline message about the page or a form: a tinted box with an
+icon, an optional title, the body (children) and an optional actions block.
+
+  <Alert title="Heads up">Your trial ends in 3 days.</Alert>
+  <Alert variant="danger" title="Payment failed">Update your card.</Alert>
+  <Alert variant="success" dismissible>Saved.</Alert>
+  <Alert variant="warning" title="Unsaved changes">
+    You have edits on this page.
+    <brick:prop name="actions"><Button size="sm">Save</Button></brick:prop>
+  </Alert>
+
+Each variant has its own icon (icon="…" replaces it, noIcon drops it).
+danger and warning are role="alert", the rest role="status": an alert is
+announced at once, so keep it for messages that need attention now.
+dismissible adds a close button that JavaScript shows and wires; without
+JavaScript the button stays hidden, because a button that does nothing is
+worse than none. Dismissing removes the element and emits
+brick.emit("alert:dismiss", {id}).
+*/}}
+<brick:client>
+brick.mount("Alert", (el) => {
+  const btn = el.querySelector(".bk-alert__close");
+  if (!btn) return;
+  btn.hidden = false;
+  const dismiss = () => {
+    el.classList.add("bk-alert--leaving");
+    const done = () => { el.remove(); brick.emit("alert:dismiss", { id: el.id }); };
+    const ms = parseFloat(getComputedStyle(el).getPropertyValue("--bk-duration")) || 0;
+    // Not cleared by the cleanup on purpose: removing the element is what
+    // unmounts it, and the dismiss event must still fire after that.
+    if (ms > 0) setTimeout(done, ms * 1000); else done();
+  };
+  btn.addEventListener("click", dismiss);
+  return () => btn.removeEventListener("click", dismiss);
+})
+</brick:client>
+<brick:style>
+.bk-alert { --bk-alert-c: var(--bk-info); position: relative; display: flex; gap: .65rem; padding: .7rem .85rem; border: 1px solid color-mix(in oklab, var(--bk-alert-c) 28%, var(--bk-border)); border-radius: var(--bk-radius-lg); background: color-mix(in oklab, var(--bk-alert-c) 7%, var(--bk-surface)); color: var(--bk-fg); font-size: var(--bk-text-base); line-height: 1.5; transition: opacity var(--bk-duration), transform var(--bk-duration); }
+.bk-alert--success { --bk-alert-c: var(--bk-success); }
+.bk-alert--warning { --bk-alert-c: var(--bk-warning); }
+.bk-alert--danger { --bk-alert-c: var(--bk-danger); }
+.bk-alert--neutral { --bk-alert-c: var(--bk-muted-fg); background: var(--bk-surface-2); border-color: var(--bk-border); }
+.bk-alert__icon { flex: none; margin-top: .15rem; color: var(--bk-alert-c); }
+.bk-alert__body { flex: 1; min-width: 0; }
+.bk-alert__title { font-weight: 600; font-size: var(--bk-text-base); line-height: 1.4; }
+.bk-alert__text { color: color-mix(in oklab, var(--bk-fg) 80%, var(--bk-muted-fg)); }
+.bk-alert__title + .bk-alert__text { margin-top: .15rem; }
+.bk-alert__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .6rem; }
+.bk-alert__close { flex: none; display: inline-grid; place-items: center; width: var(--bk-h-xs); height: var(--bk-h-xs); margin: -.1rem -.3rem 0 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-alert__close[hidden] { display: none; }
+.bk-alert__close:hover { background: color-mix(in oklab, var(--bk-alert-c) 12%, transparent); color: var(--bk-fg); }
+.bk-alert--leaving { opacity: 0; transform: translateY(-2px); }
+</brick:style>
+{{ $icons := dict "info" "info" "success" "check-circle" "warning" "alert-triangle" "danger" "alert-circle" "neutral" "bell" }}
+<div class="{{ cx `bk-alert` (print `bk-alert--` .Props.variant) .Attrs.class }}" role="{{ cond (or (eq .Props.variant `danger`) (eq .Props.variant `warning`)) `alert` `status` }}" {{ attrs `class` }}>
+  {{ if not .Props.noIcon }}<Icon :name="or .Props.icon (index $icons .Props.variant)" class="bk-alert__icon" />{{ end }}
+  <div class="bk-alert__body">
+    {{ with .Props.title }}<div class="bk-alert__title">{{ . }}</div>{{ end }}
+    {{ if hasNode "children" }}<div class="bk-alert__text">{{ children }}</div>{{ end }}
+    {{ if hasNode "actions" }}<div class="bk-alert__actions">{{ node "actions" }}</div>{{ end }}
+  </div>
+  {{ if .Props.dismissible }}<button type="button" class="bk-alert__close" aria-label="{{ .Props.label }}" hidden><Icon name="x" :size="14" /></button>{{ end }}
+</div>

@@ -1,0 +1,70 @@
+{
+  "name": "brick-lsp",
+  "displayName": "brick",
+  "description": "Highlighting, diagnostics, completion, hover, go-to-definition, formatting, find references, component and prop rename for brick .html templates, plus YAML highlighting and as-you-type schema checks for their frontmatter; the language features come from the brick language server (brick lsp).",
+  "version": "0.11.0",
+  "publisher": "ubgo",
+  "private": true,
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ubgo/brick"
+  },
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/brick.yaml",
+    "workspaceContains:**/site.yaml"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "brick",
+      "properties": {
+        "brick.path": {
+          "type": "string",
+          "default": "brick",
+          "description": "The brick binary that runs the language server (brick lsp). A bare name is looked up on PATH."
+        }
+      }
+    },
+    "grammars": [
+      {
+        "scopeName": "brick.injection",
+        "path": "./syntaxes/brick.injection.tmLanguage.json",
+        "injectTo": [
+          "text.html.basic",
+          "text.html.derivative"
+        ]
+      },
+      {
+        "scopeName": "brick.frontmatter",
+        "path": "./syntaxes/brick.frontmatter.tmLanguage.json",
+        "injectTo": [
+          "text.html.basic",
+          "text.html.derivative"
+        ],
+        "embeddedLanguages": {
+          "meta.embedded.block.yaml": "yaml"
+        }
+      }
+    ]
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "vscode-languageclient": "9.0.1",
+    "yaml": "2.9.1"
+  },
+  "scripts": {
+    "test": "node --test test/grammar.test.js test/frontmatter.test.js test/extension.test.js"
+  },
+  "devDependencies": {
+    "vscode-oniguruma": "2.0.1",
+    "vscode-textmate": "9.1.0"
+  }
+}

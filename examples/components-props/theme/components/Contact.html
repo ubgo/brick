@@ -1,0 +1,6 @@
+---
+props:
+  to: email
+  price: int
+---
+<a href="mailto:{{ .Props.to }}">{{ .Props.to }}</a> <span>{{ money .Props.price }}</span>

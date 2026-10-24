@@ -1,0 +1,49 @@
+---
+order: 4
+title: Theming
+category: Getting started
+description: Every colour, size and radius is a --bk-* custom property. Dark mode, accents and your own brand are all token overrides — never a component edit.
+tokens:
+  - {group: Colour, name: "--bk-primary / -hover / -fg", desc: "The accent: primary buttons, links, focus rings, selected states."}
+  - {group: Colour, name: "--bk-bg / --bk-fg", desc: "The page background and the main text colour."}
+  - {group: Colour, name: "--bk-surface / --bk-surface-2", desc: "Cards, inputs and menus; the recessed variant for headers and code."}
+  - {group: Colour, name: "--bk-muted / --bk-muted-fg", desc: "Filled secondary backgrounds; secondary text."}
+  - {group: Colour, name: "--bk-accent / --bk-accent-fg", desc: "Hover and highlighted rows in menus and lists."}
+  - {group: Colour, name: "--bk-border / --bk-input", desc: "Hairlines; the stronger border of form controls."}
+  - {group: Colour, name: "--bk-danger / success / warning / info (+ -fg)", desc: "Status colours and the text drawn on them."}
+  - {group: Colour, name: "--bk-neutral / --bk-neutral-fg", desc: "A high-contrast fill: dark in light mode, light in dark mode."}
+  - {group: Colour, name: "--bk-ring / --bk-backdrop", desc: "The focus ring; the dim behind dialogs and drawers."}
+  - {group: Colour, name: "--bk-swatch-*", desc: "The accent palette: indigo, blue, emerald, rose, amber, violet, zinc."}
+  - {group: Type, name: "--bk-font / --bk-mono", desc: "The sans and monospace stacks."}
+  - {group: Type, name: "--bk-text-xs … --bk-text-4xl", desc: "12, 13, 14, 16, 18, 22, 28 and 36px."}
+  - {group: Size, name: "--bk-h-xs … --bk-h-xl", desc: "Control heights: 24, 28, 32 (md, the default), 38 and 44px."}
+  - {group: Size, name: "--bk-space-1 … --bk-space-8", desc: "4, 8, 12, 16, 24 and 32px."}
+  - {group: Shape, name: "--bk-radius-sm / --bk-radius / --bk-radius-lg / --bk-radius-full", desc: "Corner radii."}
+  - {group: Shape, name: "--bk-shadow-sm / --bk-shadow / --bk-shadow-lg", desc: "Elevation; darker in dark mode."}
+  - {group: Motion, name: "--bk-duration", desc: "Every transition; 0s when the user prefers reduced motion."}
+  - {group: Layer, name: "--bk-z-dropdown / sticky / overlay / toast / tooltip", desc: "Stacking order: 50, 40, 60, 70, 80."}
+---
+<h1>Theming</h1>
+<p class="lead">{{ .Params.description }}</p>
+
+<h2>Dark mode</h2>
+<Prose><p>Dark mode follows the system. <code>data-theme="dark"</code> or <code>data-theme="light"</code> on <code>&lt;html&gt;</code> forces one, and <a href="/components/theme-toggle/">ThemeToggle</a> switches it and remembers the choice. Only colour tokens change between the two, so a component written with tokens gets dark mode for free.</p></Prose>
+
+<h2>Accents</h2>
+<Prose><p><code>data-accent</code> on <code>&lt;html&gt;</code> swaps the primary colour for the whole page: indigo (the default), blue, emerald, rose, amber, violet or zinc. Try it — the <a href="/components/accent-picker/">AccentPicker</a> below sets it and saves it, and every primary colour on this site follows.</p></Prose>
+<Example title="Live: pick an accent and a theme"><ThemingAccents /><brick:prop name="code"><Source src="~/demos/ThemingAccents.html" /></brick:prop></Example>
+
+<h2>Your own brand</h2>
+<Prose><p>Override tokens in a stylesheet loaded after <code>&lt;Theme /&gt;</code>. Set the dark values under <code>:root[data-theme=dark]</code> (and, if you follow the system, inside <code>@media (prefers-color-scheme: dark)</code> too).</p></Prose>
+<Prose class="bk-prose--wide"><Source src="~/snippets/tokens-override.css" /></Prose>
+
+<h2>One section only</h2>
+<Prose><p>Tokens are inherited custom properties, so setting them on any element rethemes everything inside it — a rose danger zone, a squarer marketing block — and nothing outside.</p></Prose>
+<Example title="Tokens set with style on a card" block><ThemingScoped /><brick:prop name="code"><Source src="~/demos/ThemingScoped.html" /></brick:prop></Example>
+
+<h2>Tokens</h2>
+<Prose class="bk-prose--wide" size="sm"><table>
+  <thead><tr><th>Group</th><th>Token</th><th>Use</th></tr></thead>
+  <tbody>{{ range .Params.tokens }}<tr><td>{{ .group }}</td><td><code>{{ .name }}</code></td><td>{{ .desc }}</td></tr>{{ end }}</tbody>
+</table></Prose>
+<Prose><p>The full list, with the light and dark values, is in <code>kit/components/Theme.html</code>; the <a href="/components/theme/">Theme</a> page shows them rendered.</p></Prose>

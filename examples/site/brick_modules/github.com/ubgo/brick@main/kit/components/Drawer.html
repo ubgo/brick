@@ -1,0 +1,84 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  title: {type: string, default: ""}
+  description: {type: string, default: ""}
+  side: {type: string, default: right, oneof: [left, right, top, bottom]}
+  size: {type: string, default: md, oneof: [sm, md, lg, xl, full]}
+  open: {type: bool, default: false}
+  closable: {type: bool, default: true}
+  dismissible: {type: bool, default: true}
+  label: {type: string, default: Close}
+  closeAction: {type: string, default: ""}
+---
+{{/*
+Drawer: a panel that slides in from an edge of the screen — filters, a
+record's details, a mobile menu, a cart. It is a modal native <dialog>,
+exactly like Dialog, placed against one side.
+
+  <Drawer title="Filters" side="left">
+    <brick:prop name="trigger"><Button variant="outline" icon="filter">Filters</Button></brick:prop>
+    …
+    <brick:prop name="footer"><Button block data-bk-close>Show 24 results</Button></brick:prop>
+  </Drawer>
+
+  <Drawer id="cart" title="Your cart" size="sm">…</Drawer>
+  <Button data-bk-open="cart" icon="shopping-cart">Cart</Button>
+
+side picks the edge; size is the width (the height for top and bottom):
+sm 20rem, md 26rem, lg 34rem, xl 44rem, full the whole screen. Opening,
+closing, focus and the no-JavaScript fallbacks are Dialog's, and so is the
+code (it imports Dialog's enhance()): a trigger block, open, or
+data-bk-open / commandfor on any element; Escape, the close button, the
+backdrop and data-bk-close to close; closeAction to tell a stateful
+component the visitor closed it. The caller's attributes, with id and
+class, land on the <dialog>.
+*/}}
+<brick:client>
+import { enhance } from "brick:Dialog";
+
+brick.mount("Drawer", (el) => enhance(el.querySelector(":scope > dialog")))
+</brick:client>
+<brick:style>
+.bk-drawer-host { display: contents; }
+.bk-drawer { --bk-drawer-s: 26rem; --bk-drawer-from: translateX(100%); position: fixed; margin: 0; padding: 0; max-width: 100vw; max-height: 100dvh; border: 0; background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); transform: var(--bk-drawer-from); transition: transform calc(var(--bk-duration) * 1.6) cubic-bezier(.32, .72, 0, 1), overlay calc(var(--bk-duration) * 1.6) allow-discrete, display calc(var(--bk-duration) * 1.6) allow-discrete; }
+.bk-drawer[open] { display: flex; flex-direction: column; transform: none; }
+@starting-style { .bk-drawer[open] { transform: var(--bk-drawer-from); } }
+.bk-drawer::backdrop { background: var(--bk-backdrop, color-mix(in oklab, black 50%, transparent)); opacity: 0; transition: opacity calc(var(--bk-duration) * 1.6) ease, overlay calc(var(--bk-duration) * 1.6) allow-discrete, display calc(var(--bk-duration) * 1.6) allow-discrete; }
+.bk-drawer[open]::backdrop { opacity: 1; }
+@starting-style { .bk-drawer[open]::backdrop { opacity: 0; } }
+.bk-drawer--right, .bk-drawer--left { top: 0; bottom: 0; width: min(100vw, var(--bk-drawer-s)); height: 100dvh; }
+.bk-drawer--right { left: auto; right: 0; border-left: 1px solid var(--bk-border); }
+.bk-drawer--left { right: auto; left: 0; border-right: 1px solid var(--bk-border); --bk-drawer-from: translateX(-100%); }
+.bk-drawer--top, .bk-drawer--bottom { left: 0; right: 0; width: 100vw; height: min(100dvh, var(--bk-drawer-s)); }
+.bk-drawer--top { bottom: auto; top: 0; border-bottom: 1px solid var(--bk-border); --bk-drawer-from: translateY(-100%); }
+.bk-drawer--bottom { top: auto; bottom: 0; border-top: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg) var(--bk-radius-lg) 0 0; --bk-drawer-from: translateY(100%); }
+.bk-drawer--sm { --bk-drawer-s: 20rem; }
+.bk-drawer--lg { --bk-drawer-s: 34rem; }
+.bk-drawer--xl { --bk-drawer-s: 44rem; }
+.bk-drawer--full { --bk-drawer-s: 100vw; }
+.bk-drawer--top.bk-drawer--full, .bk-drawer--bottom.bk-drawer--full { --bk-drawer-s: 100dvh; }
+.bk-drawer__header { position: relative; flex: none; padding: 1rem 3rem .75rem 1.25rem; border-bottom: 1px solid var(--bk-border); }
+.bk-drawer__title { margin: 0; font-size: var(--bk-text-lg); font-weight: 600; line-height: 1.35; }
+.bk-drawer__desc { margin: .15rem 0 0; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.bk-drawer__x { position: absolute; top: .75rem; right: .75rem; margin: 0; }
+.bk-drawer__close { display: inline-grid; place-items: center; width: var(--bk-h-sm); height: var(--bk-h-sm); border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-drawer__close:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-drawer__body { flex: 1; min-height: 0; overflow: auto; padding: 1rem 1.25rem; font-size: var(--bk-text-base); }
+.bk-drawer__footer { flex: none; display: flex; justify-content: flex-end; gap: .5rem; padding: .75rem 1.25rem; border-top: 1px solid var(--bk-border); background: var(--bk-surface-2); }
+@media (prefers-reduced-motion: reduce) { .bk-drawer { transition: none; } }
+</brick:style>
+{{ $id := or .Attrs.id (print .ID `-drawer`) }}
+<div class="bk-drawer-host">
+  {{ if hasNode "trigger" }}<span class="bk-dialog__trigger" data-bk-open="{{ $id }}">{{ node "trigger" }}</span>{{ end }}
+  <dialog id="{{ $id }}" class="{{ cx `bk-drawer` (print `bk-drawer--` .Props.side) (print `bk-drawer--` .Props.size) .Attrs.class }}"{{ if .Props.title }} aria-labelledby="{{ $id }}-title"{{ end }}{{ if .Props.description }} aria-describedby="{{ $id }}-desc"{{ end }}{{ if not .Props.dismissible }} data-dismissible="false"{{ end }}{{ with .Props.closeAction }} data-bk-close-action="{{ . }}"{{ end }}{{ if .Props.open }} open{{ end }} {{ attrs `class` `id` }}>
+    {{ if or .Props.title .Props.description .Props.closable }}<header class="bk-drawer__header">
+      {{ with .Props.title }}<h2 class="bk-drawer__title" id="{{ $id }}-title">{{ . }}</h2>{{ end }}
+      {{ with .Props.description }}<p class="bk-drawer__desc" id="{{ $id }}-desc">{{ . }}</p>{{ end }}
+      {{ if .Props.closable }}<form method="dialog" class="bk-drawer__x"><button class="bk-drawer__close bk-dialog__close" aria-label="{{ .Props.label }}"><Icon name="x" /></button></form>{{ end }}
+    </header>{{ end }}
+    <div class="bk-drawer__body">{{ children }}</div>
+    {{ if hasNode "footer" }}<footer class="bk-drawer__footer">{{ node "footer" }}</footer>{{ end }}
+  </dialog>
+</div>

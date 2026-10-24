@@ -1,0 +1,20 @@
+# The CommandPalette demos' groups: links to showcase pages and apps, and
+# commands without an href, which the palette emits as brick "command"
+# events.
+groups:
+  - label: Components
+    items:
+      - {label: Dialog, href: /components/dialog/, icon: file, keywords: modal window}
+      - {label: Drawer, href: /components/drawer/, icon: panel-left, keywords: sheet side panel}
+      - {label: Dropdown menu, href: /components/dropdown-menu/, icon: list, keywords: menu actions}
+      - {label: Toast, href: /components/toast/, icon: bell, keywords: notification snackbar}
+      - {label: Tooltip, href: /components/tooltip/, icon: message-square, keywords: hint}
+  - label: Apps
+    items:
+      - {label: Contacts, href: /apps/contacts/, icon: users, shortcut: G C, keywords: crud people}
+      - {label: Dashboard, href: /apps/dashboard/, icon: layout-dashboard, shortcut: G D, keywords: stats charts}
+      - {label: Settings, href: /apps/settings/, icon: settings, shortcut: G S}
+  - label: Commands
+    items:
+      - {label: Toggle dark mode, value: theme, icon: moon, keywords: theme light dark}
+      - {label: Copy page link, value: copy-link, icon: copy}

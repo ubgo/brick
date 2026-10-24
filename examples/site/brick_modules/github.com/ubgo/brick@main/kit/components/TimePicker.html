@@ -1,0 +1,125 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  value: {type: string, default: ""}
+  min: {type: string, default: "00:00"}
+  max: {type: string, default: "23:59"}
+  step: {type: int, default: 30}
+  hour12: {type: bool, default: false}
+  size: {type: string, default: md, oneof: [sm, md]}
+  label: {type: string, default: Choose a time}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+TimePicker: a time field with a list of times to pick from — every step
+minutes between min and max.
+
+  <TimePicker name="start" value="09:30" />
+  <TimePicker name="slot" min="09:00" max="17:00" :step="15" hour12 />
+  <Field label="Reminder"><TimePicker name="at" required /></Field>
+
+The value lives in a native <input type="time"> (name= and every attribute
+but class land on it; the browser's own picker and typing work, and min,
+max and step are enforced there too), which is the whole component
+without JavaScript. The client module adds the list button: it opens a
+listbox of the times (hour12 shows them as 9:30 AM; the value stays
+24-hour HH:MM); ArrowUp/Down, Home and End move, Enter picks, Escape
+closes. Picking sets the input and fires input and change. label names
+the button and the list. Times are HH:MM; step is minutes (1–720).
+*/}}
+<brick:client>
+import { place as placePanel } from "brick:Popover";
+// LIST_GAP and FLIP_ROOM place the list as MultiSelect's is (see there);
+// PAGE_STEP is how many options PageUp and PageDown jump.
+const LIST_GAP = 4, FLIP_ROOM = 8, PAGE_STEP = 4;
+
+brick.mount("TimePicker", (el) => {
+  const input = el.querySelector(".bk-timepicker__input");
+  const button = el.querySelector(".bk-timepicker__toggle");
+  const list = el.querySelector(".bk-timepicker__list");
+  const opts = [...list.querySelectorAll("[role=option]")];
+  let active = -1;
+  const layer = typeof list.showPopover === "function";
+  if (layer) list.setAttribute("popover", "manual");
+  const box = el.querySelector(".bk-timepicker__box");
+  const place = () => placePanel(box, list, { gap: LIST_GAP, edge: FLIP_ROOM, clamp: "none", width: "min" });
+  const setActive = (i) => {
+    active = Math.max(0, Math.min(opts.length - 1, i));
+    opts.forEach((o, j) => o.classList.toggle("bk-timepicker__option--active", j === active));
+    if (opts[active]) { list.setAttribute("aria-activedescendant", opts[active].id); opts[active].scrollIntoView && opts[active].scrollIntoView({ block: "nearest" }); }
+  };
+  const open = () => {
+    if (!list.hidden || input.disabled) return;
+    list.hidden = false;
+    if (layer) { list.showPopover(); place(); }
+    button.setAttribute("aria-expanded", "true");
+    opts.forEach((o) => o.setAttribute("aria-selected", String(o.dataset.value === input.value)));
+    // Values are zero-padded "HH:MM", so string order is time order: start
+    // on the first option at or after the current value.
+    const at = opts.findIndex((o) => o.dataset.value >= (input.value || ""));
+    setActive(at < 0 ? opts.length - 1 : at);
+    list.focus();
+  };
+  const close = (focus) => {
+    if (list.hidden) return;
+    if (layer && list.matches(":popover-open")) list.hidePopover();
+    list.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    if (focus) button.focus();
+  };
+  const pick = (o) => {
+    input.value = o.dataset.value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    close(true);
+  };
+  const onKey = (e) => {
+    const k = { ArrowDown: active + 1, ArrowUp: active - 1, Home: 0, End: opts.length - 1, PageDown: active + PAGE_STEP, PageUp: active - PAGE_STEP }[e.key];
+    if (k !== undefined) { e.preventDefault(); setActive(k); }
+    else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (opts[active]) pick(opts[active]); }
+    else if (e.key === "Escape" || e.key === "Tab") { if (e.key === "Escape") e.preventDefault(); close(e.key === "Escape"); }
+  };
+  const onInputKey = (e) => { if (e.key === "ArrowDown" && e.altKey) { e.preventDefault(); open(); } };
+  const onClick = () => { if (list.hidden) open(); else close(true); };
+  const onDown = (e) => { const o = e.target.closest("[role=option]"); if (o) { e.preventDefault(); pick(o); } };
+  const onOut = (e) => { if (!el.contains(e.relatedTarget) && !list.contains(e.relatedTarget)) close(false); };
+  el.classList.add("bk-timepicker--js");
+  button.hidden = false;
+  button.addEventListener("click", onClick);
+  list.addEventListener("keydown", onKey);
+  list.addEventListener("mousedown", onDown);
+  input.addEventListener("keydown", onInputKey);
+  el.addEventListener("focusout", onOut);
+  return () => { close(false); button.removeEventListener("click", onClick); list.removeEventListener("keydown", onKey); list.removeEventListener("mousedown", onDown); input.removeEventListener("keydown", onInputKey); el.removeEventListener("focusout", onOut); };
+})
+</brick:client>
+<brick:style>
+.bk-timepicker { position: relative; display: inline-block; width: 100%; max-width: 12rem; }
+.bk-timepicker__box { display: flex; align-items: center; gap: .45rem; height: var(--bk-h-md); padding: 0 .3rem 0 .6rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-timepicker--sm .bk-timepicker__box { height: var(--bk-h-sm); }
+.bk-timepicker__box:focus-within { border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-timepicker--invalid .bk-timepicker__box { border-color: var(--bk-danger); }
+.bk-timepicker__box > .bk-icon { flex: none; color: var(--bk-muted-fg); }
+.bk-timepicker__input { flex: 1; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0; outline: 0; background: none; color: var(--bk-fg); font: var(--bk-text-sm)/1.25 var(--bk-font); font-variant-numeric: tabular-nums; }
+.bk-timepicker__input:disabled { cursor: not-allowed; opacity: .6; }
+.bk-timepicker--js .bk-timepicker__input::-webkit-calendar-picker-indicator { display: none; }
+.bk-timepicker__toggle { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-timepicker__toggle[hidden] { display: none; }
+.bk-timepicker__toggle:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-timepicker__toggle:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+.bk-timepicker__list { position: absolute; z-index: var(--bk-z-dropdown); top: calc(100% + .3rem); left: 0; min-width: 100%; max-height: 14rem; margin: 0; padding: .25rem; overflow-y: auto; list-style: none; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); animation: bk-pop-in var(--bk-duration); }
+.bk-timepicker__list[hidden] { display: none; }
+.bk-timepicker__list[popover] { position: fixed; inset: auto; margin: 0; }
+.bk-timepicker__list:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+.bk-timepicker__option { padding: .3rem .55rem; border-radius: var(--bk-radius-sm); font-size: var(--bk-text-sm); font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer; }
+.bk-timepicker__option--active { background: var(--bk-accent); }
+.bk-timepicker__option[aria-selected=true] { color: var(--bk-primary-text); font-weight: 600; }
+</brick:style>
+{{ $f := .Ctx.bkField }}{{ $invalid := or .Props.invalid (index $f "invalid") }}
+{{ $lo := add (mul 60 (mul 1 (index (split ":" .Props.min) 0))) (mul 1 (index (split ":" .Props.min) 1)) }}{{ $hi := add (mul 60 (mul 1 (index (split ":" .Props.max) 0))) (mul 1 (index (split ":" .Props.max) 1)) }}{{ $step := max 1 (min 720 .Props.step) }}{{ $lid := print "bk-tp" .ID }}
+<div class="{{ cx `bk-timepicker` (cond (eq .Props.size `sm`) `bk-timepicker--sm` ``) (cond $invalid `bk-timepicker--invalid` ``) .Attrs.class }}"><div class="bk-timepicker__box"><Icon name="clock" :size="14" /><input type="time" class="bk-timepicker__input"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }} value="{{ .Props.value }}" min="{{ .Props.min }}" max="{{ .Props.max }}" step="{{ mul $step 60 }}"{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if or .Props.required (index $f "required") }} required{{ end }}{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` `id` }}><button type="button" class="bk-timepicker__toggle" aria-label="{{ .Props.label }}" aria-haspopup="listbox" aria-expanded="false" aria-controls="{{ $lid }}" hidden><Icon name="chevron-down" :size="14" /></button></div><ul class="bk-timepicker__list" id="{{ $lid }}" role="listbox" tabindex="-1" aria-label="{{ .Props.label }}" hidden>{{ range $m := seq 0 1439 }}{{ if and (ge (mul 1.0 $m) (mul 1.0 $lo)) (le (mul 1.0 $m) (mul 1.0 $hi)) (eq (mod (sub (mul 1.0 $m) (mul 1.0 $lo)) (mul 1.0 $step)) 0.0) }}{{ $h := div $m 60 }}{{ $v := printf "%02d:%02d" $h (mod $m 60) }}<li class="bk-timepicker__option" role="option" id="{{ $lid }}-{{ $m }}" data-value="{{ $v }}" aria-selected="{{ eq $v $.Props.value }}">{{ if $.Props.hour12 }}{{ printf "%d:%02d %s" (cond (eq (mod $h 12) 0) 12 (mod $h 12)) (mod $m 60) (cond (lt $h 12) `AM` `PM`) }}{{ else }}{{ $v }}{{ end }}</li>{{ end }}{{ end }}</ul></div>

@@ -1,0 +1,17 @@
+<div style="display: flex; flex-wrap: wrap; gap: .5rem; min-height: 15rem; align-items: flex-start">
+  <DropdownMenu label="My account" icon="user">
+    <MenuLabel>ada@example.com</MenuLabel>
+    <MenuItem href="/apps/settings/" icon="user">Profile</MenuItem>
+    <MenuItem href="/apps/settings/" icon="credit-card" shortcut="⌘B">Billing</MenuItem>
+    <MenuItem href="/apps/settings/" icon="settings" shortcut="⌘,">Settings</MenuItem>
+    <MenuSeparator />
+    <MenuItem icon="help-circle" disabled>Support (offline)</MenuItem>
+    <MenuItem href="/apps/auth/" icon="log-out" danger>Sign out</MenuItem>
+  </DropdownMenu>
+  <DropdownMenu label="Sort" variant="ghost" size="sm">
+    <MenuItem>Newest first</MenuItem>
+    <MenuItem>Oldest first</MenuItem>
+    <MenuItem>Name, A–Z</MenuItem>
+    <MenuItem>Name, Z–A</MenuItem>
+  </DropdownMenu>
+</div>

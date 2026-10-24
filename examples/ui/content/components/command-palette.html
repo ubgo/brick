@@ -1,0 +1,20 @@
+---
+title: CommandPalette
+category: Overlays
+description: "The ⌘K launcher: a search box over grouped links and commands, filtered as you type and driven by the keyboard."
+api:
+  - {name: groups, type: list, desc: "[{label, items: [{label, href, icon, shortcut, keywords, value}]}]. Required."}
+  - {name: label, type: string, default: Search, desc: "The trigger's text and the dialog's name."}
+  - {name: placeholder, type: string, default: "Type a command or search…", desc: "The search box's placeholder."}
+  - {name: empty, type: string, default: "No results.", desc: "Shown when nothing matches."}
+  - {name: hotkey, type: bool, default: "true", desc: "⌘K / Ctrl+K opens it; the first palette mounted owns the key."}
+  - {name: trigger, type: bool, default: "true", desc: "The search-style button that opens it."}
+  - {name: href, type: string, desc: "Makes the trigger a link to this page when JavaScript is off (a sitemap)."}
+---
+<h1>CommandPalette</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Links, grouped"><CommandPaletteBasic /><brick:prop name="code"><Source src="~/demos/CommandPaletteBasic.html" /></brick:prop></Example>
+<Example title="Commands for client code"><CommandPaletteCommands /><brick:prop name="code"><Source src="~/demos/CommandPaletteCommands.html" /></brick:prop></Example>
+<p style="margin: -.5rem 0 1.25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">An item without <code>href</code> is a command: choosing it emits <code>brick.emit("command", {value, label})</code>, which this demo turns into a theme switch.</p>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

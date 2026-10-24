@@ -1,0 +1,29 @@
+---
+state:
+  page: 1
+  away: false
+  views: 0
+brick:
+  log: debug
+---
+<brick:script>
+def advance(state, props):
+    return dict(state, page = state["page"] + 1)
+
+def went_away(state, props):
+    return dict(state, away = True)
+
+def came_back(state, props):
+    return dict(state, away = False)
+
+def viewed(state, props):
+    return dict(state, views = state["views"] + 1)
+</brick:script>
+<aside class="panel" brick:focus.window="came_back" brick:blur.window="went_away">
+  <p id="offline-banner" brick:offline>You are offline. Changes wait until you are back.</p>
+  <p id="online-note" brick:offline.remove>Connected</p>
+  <p id="page" brick:keydown.norepeat.window.n="advance">Page {{ .State.page }}</p>
+  <p id="presence">{{ if .State.away }}Away{{ else }}Here{{ end }}</p>
+  <div id="ad" brick:intersect.dwell.2000ms="viewed">Sponsored</div>
+  <p id="views">Views: {{ .State.views }}</p>
+</aside>

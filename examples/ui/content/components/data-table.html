@@ -1,0 +1,27 @@
+---
+title: DataTable
+category: Data display
+description: "A table with sorting, filtering, pagination and row selection in the browser — and the plain full table without JavaScript."
+api:
+  - {name: columns, type: "list of {key, label, align, width, sortable}", desc: "Table's columns; sortable: false turns sorting off for one."}
+  - {name: rows, type: list of maps, desc: "Every row. The browser pages through them."}
+  - {name: pageSize, type: int, default: "10", desc: "Rows per page at first."}
+  - {name: pageSizes, type: list of int, default: "[10, 25, 50]", desc: "The rows-per-page choices."}
+  - {name: search, type: bool, default: "true", desc: "Shows the filter box; it matches any cell's text."}
+  - {name: placeholder, type: string, default: Search…, desc: "The filter box's placeholder."}
+  - {name: selectable, type: bool, desc: "A checkbox per row (name=\"selected\", value = the rowKey field) and a select-all."}
+  - {name: rowKey, type: string, default: id, desc: "The row field a checkbox submits."}
+  - {name: label, type: string, desc: "The table region's accessible name."}
+  - {name: empty, type: string, default: No results., desc: "Shown when nothing matches."}
+  - {name: "striped, compact, sticky, height", type: "bool, string", desc: "As on Table."}
+  - {name: "cell, cell_<key>, empty (blocks)", type: scoped slots, desc: "As on Table."}
+  - {name: "toolbar (block)", type: markup, desc: "Actions at the right of the toolbar."}
+---
+<h1>DataTable</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="64 contacts from the database — sort, filter, page, select" block><DataTableContacts /><brick:prop name="code"><Source src="~/demos/DataTableContacts.html" /></brick:prop></Example>
+<Example title="Compact and striped" block><DataTableCompact /><brick:prop name="code"><Source src="~/demos/DataTableCompact.html" /></brick:prop></Example>
+<h2>How it works</h2>
+<Prose><p>The server renders every row, so without JavaScript this is the complete table and a surrounding <code>&lt;form&gt;</code> submits the ticked rows. The client module sorts by each cell's raw value (numbers as numbers, text in natural order), filters on the row's text, and shows one page at a time. Selection changes fire a <code>bk-select</code> DOM event with <code>{keys}</code>. For tables too large to send whole, page on the server with <a href="/components/table/">Table</a> and <a href="/components/pagination/">Pagination</a>.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

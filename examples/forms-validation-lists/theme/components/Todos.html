@@ -1,0 +1,50 @@
+---
+state:
+  slug: ""
+  todos: [{title: "", tags: []}, {title: "x", tags: [ab, good]}, {title: "Fine", tags: []}]
+brick:
+  rules:
+    slug: [required, slug]
+    todos: [{min: 1}]
+    todos.*.title: [required, {min: 2}]
+    todos.*.tags.*: [{min: 3}]
+  messages:
+    todos.*.title.required: "Each todo needs a title."
+---
+<brick:script>
+def add_todo(state, props):
+    return dict(state, todos = state["todos"] + [{"title": "", "tags": []}])
+
+def save(state, props):
+    errors = brick.validate()
+    if errors:
+        return [state, errors]
+    brick.untouch()
+    return state
+</brick:script>
+<brick:client>
+// Read the errors the last render left on the component, with no request.
+// has() asks if there are any, first() is the message of the first path in
+// path order, all() is the whole path-to-message map.
+document.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-first-error]");
+  if (!button) return;
+  const errors = brick.errors(button);
+  button.textContent = errors.has() ? "First: " + errors.first() : "No errors";
+});
+</brick:client>
+<form brick:submit="save" novalidate>
+  {{ with .Form.slug }}<label for="{{ .ID }}">List address</label>
+  <input id="{{ .ID }}" brick:model.lazy="{{ .Name }}" value="{{ .Value }}"{{ if .Invalid }} aria-invalid="true"{{ end }}>
+  {{ with .Error }}<p class="error">{{ . }}</p>{{ end }}{{ end }}
+  <ol>
+  {{ range .Form.todos.Items }}{{ with .Fields.title }}
+    <li><input id="{{ .ID }}" brick:model.lazy="{{ .Name }}" value="{{ .Value }}">{{ with .Error }} <span class="error">{{ . }}</span>{{ end }}</li>
+  {{ end }}{{ end }}
+  </ol>
+  {{ range $k, $v := .Errors }}<p class="all">{{ $k }}={{ $v }}</p>
+  {{ end }}
+  <button type="button" brick:click="add_todo">Add todo</button>
+  <button type="button" data-first-error>Show first error</button>
+  <button>Save</button>
+</form>

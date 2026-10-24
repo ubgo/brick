@@ -1,0 +1,125 @@
+---
+order: 3
+title: Patterns & gotchas
+category: Getting started
+description: The short list of rules this kit and its demo apps learned the hard way — each with the smallest example that shows it.
+---
+<brick:style>
+.docp-rules { display: grid; gap: 1rem; }
+@media (min-width: 900px) { .docp-rules { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.docp-rule .bk-card__body { display: grid; gap: .75rem; }
+.docp-rule .bk-code-block { margin: 0; margin-top: auto; }
+.docp-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: .45rem; border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); font-size: var(--bk-text-xs); font-weight: 700; vertical-align: .1em; }
+</brick:style>
+<h1>Patterns &amp; gotchas</h1>
+<p class="lead">{{ .Params.description }}</p>
+
+<div class="docp-rules">
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">1</span>Mounts must be idempotent</Heading></brick:prop>
+    <Text size="sm" tone="muted">A client module's mount runs again whenever an action's patch replaces its element. Set up from the markup you are given, never assume "first time", and return a cleanup for every listener you add outside the element.</Text>
+    <CodeBlock lang="js" :copy="false" wrap>
+    brick.mount("Chat", (el) => {
+      const onKey = (e) => { … };
+      document.addEventListener("keydown", onKey);
+      return () => document.removeEventListener("keydown", onKey);
+    })
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">2</span>Dialog open state belongs to the server</Heading></brick:prop>
+    <Text size="sm" tone="muted">A dialog an action opens must be closed through an action too, or the next re-render (a search, a poll) opens it again. closeAction reports every close — Escape, ×, Cancel, the backdrop.</Text>
+    <CodeBlock lang="html" :copy="false" wrap>
+    <Dialog :open=".State.form.open" closeAction="contacts.close_form">…</Dialog>
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">3</span>Give every flash toast a new id</Heading></brick:prop>
+    <Text size="sm" tone="muted">The Toaster shows an id once per page. Count flashes in state and put the count in the id; clear the text in every other action.</Text>
+    <CodeBlock lang="html" :copy="false" wrap>
+    {{ with .State.flash }}<Toast :title="." id="{{ print `cal-flash-` $.State.flashes }}" />{{ end }}
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">4</span>Action arguments are JSON</Heading></brick:prop>
+    <Text size="sm" tone="muted">brick:click arguments are parsed as JSON, so a string needs double quotes — write the attribute in single quotes. Numbers need nothing. A call brick cannot parse is an error when the file is read.</Text>
+    <CodeBlock lang="html" :copy="false" wrap>
+    <button brick:click='cms.filter_status("draft")'>Drafts</button>
+    <button brick:click="chat.open_channel(3)">#design</button>
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">5</span>Starlark's % has no width flags</Heading></brick:prop>
+    <Text size="sm" tone="muted">"%02d" fails at run time with "unknown conversion %0" — inside an action, where the page only sees an action error. Pad by hand.</Text>
+    <CodeBlock lang="python" :copy="false" wrap>
+    def _pad(n):
+        return ("0" + str(n))[-2:]     # 9 -> "09"
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">6</span>A display rule beats [hidden]</Heading></brick:prop>
+    <Text size="sm" tone="muted">hidden is only display: none in the browser's stylesheet, so any class that sets display wins over it. Theme guards every kit class; a class of your own needs its own line.</Text>
+    <CodeBlock lang="css" :copy="false" wrap>
+    [class*="bk-"][hidden]:not([hidden=until-found]) { display: none !important; }  /* Theme */
+    .auth-form__loading[hidden] { display: none; }                                  /* yours */
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">7</span>Conditional children and .Children</Heading></brick:prop>
+    <Text size="sm" tone="muted">A tag inside {{ "{{ if }}" }} is listed in its parent's .Children even when the condition is false. That only matters for components that read .Children (Tabs, AvatarGroup); brick warns only for those. When it does matter, move the condition into a small component of its own.</Text>
+    <CodeBlock lang="html" :copy="false" wrap>
+    <CalDelete :id="$d.id" />     {{/* renders nothing for id 0 */}}
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">8</span>Per-request values live in islands</Heading></brick:prop>
+    <Text size="sm" tone="muted">A page renders once and may be cached; only an island (a stateful component, or brick: {island: true}) renders per request. The query string, the user, the time — read them there, through inject.</Text>
+    <CodeBlock lang="yaml" :copy="false" wrap>
+    inject:
+      query: {default: {}}      # .Ctx.query.mode in the template
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">9</span>Component output is trimmed</Heading></brick:prop>
+    <Text size="sm" tone="muted">brick trims whitespace at the edges of a component's output, so an inline component sits in running text with no stray spaces and needs no {{ "{{- -}}" }} markers.</Text>
+    <CodeBlock lang="html" :copy="false" wrap>
+    Run <Code>task ui:test</Code>, then reload.
+    → Run <code class="bk-code">task ui:test</code>, then reload.
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">10</span>+ becomes &amp;#43; in text</Heading></brick:prop>
+    <Text size="sm" tone="muted">html/template escapes + in text. The page shows "+2 more"; a test that searches the raw HTML must look for "2 more" or "&amp;#43;2 more".</Text>
+    <CodeBlock lang="go" :copy="false" wrap>
+    mustContain(t, "Sep 30", cell, "2 more</button>")
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">11</span>Quote YAML flow values with punctuation</Heading></brick:prop>
+    <Text size="sm" tone="muted">Inside {…} a comma ends the value, and ? or : can start a key. A question or a sentence with a comma must be quoted, or the frontmatter fails to parse.</Text>
+    <CodeBlock lang="yaml" :copy="false" wrap>
+    # breaks: the comma and the ? end the value
+    - {q: Do I need Go?, a: Only to host it}
+    # works
+    - {q: "Do I need Go?", a: "Only to host it."}
+    </CodeBlock>
+  </Card>
+
+  <Card variant="outline" class="docp-rule">
+    <brick:prop name="header"><Heading :level="2" size="md"><span class="docp-n">12</span>Listen on the form, not on document</Heading></brick:prop>
+    <Text size="sm" tone="muted">The runtime handles brick:submit with a listener on document, so register yours on the form or the component: those run before it, while the fields are still there to read or clear. Chat clears its composer this way.</Text>
+    <CodeBlock lang="js" :copy="false" wrap>
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter") form.requestSubmit(); });
+    </CodeBlock>
+  </Card>
+</div>

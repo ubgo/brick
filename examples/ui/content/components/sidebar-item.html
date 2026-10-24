@@ -1,0 +1,18 @@
+---
+title: Sidebar item
+category: Navigation
+description: "One entry of a Sidebar: a link, a button, or a folder of nested items."
+api:
+  - {name: label, type: "string", desc: "The text. Required."}
+  - {name: href, type: "string", desc: "Makes it a link; without it, a button."}
+  - {name: icon, type: "string", desc: "An icon before the label."}
+  - {name: badge, type: "string", desc: "A count after the label."}
+  - {name: active, type: "bool", desc: "Active regardless of the Sidebar’s current."}
+  - {name: open, type: "bool", desc: "A parent’s starting state (it also opens when current is inside its href)."}
+---
+<h1>Sidebar item</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>Used inside a <a href="/components/sidebar/">Sidebar</a> or a <a href="/components/sidebar-group/">SidebarGroup</a>.</p>
+<Example title="Links, a button, a badge and nesting"><SidebarItemStates /><brick:prop name="code"><Source src="~/demos/SidebarItemStates.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

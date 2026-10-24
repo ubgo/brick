@@ -1,0 +1,44 @@
+---
+props:
+  as: {type: string, default: p, oneof: [p, span, div, small, strong]}
+  size: {type: string, default: base, oneof: [xs, sm, base, lg, xl]}
+  tone: {type: string, default: default, oneof: [default, muted, primary, danger, success, warning, info]}
+  weight: {type: string, default: normal, oneof: [normal, medium, semibold, bold]}
+  align: {type: string, default: start, oneof: [start, center, end]}
+  truncate: {type: bool, default: false}
+---
+{{/*
+Text: body copy with a size, a tone and a weight from the kit's scale, so
+secondary text, errors and captions look the same everywhere.
+
+  <Text>Your changes are saved automatically.</Text>
+  <Text tone="muted" size="sm">Last edited 3 minutes ago</Text>
+  <Text as="span" tone="danger" weight="medium">Payment failed</Text>
+  <Text truncate>a-very-long-file-name-that-would-wrap.tar.gz</Text>
+
+as picks the element (p by default). truncate cuts one line with an
+ellipsis; give the parent a width for it to take effect.
+*/}}
+<brick:style>
+.bk-text { margin: 0; font-size: var(--bk-text-base); line-height: 1.6; color: var(--bk-fg); }
+.bk-text--xs { font-size: var(--bk-text-xs); line-height: 1.5; }
+.bk-text--sm { font-size: var(--bk-text-sm); line-height: 1.55; }
+.bk-text--lg { font-size: var(--bk-text-lg); }
+.bk-text--xl { font-size: var(--bk-text-xl); line-height: 1.55; }
+.bk-text--muted { color: var(--bk-muted-fg); }
+.bk-text--primary { color: var(--bk-primary-text); }
+.bk-text--danger { color: var(--bk-danger-text); }
+.bk-text--success { color: var(--bk-success-text); }
+.bk-text--warning { color: var(--bk-warning-text); }
+.bk-text--info { color: var(--bk-info-text); }
+.bk-text--medium { font-weight: 500; }
+.bk-text--semibold { font-weight: 600; }
+.bk-text--bold { font-weight: 700; }
+.bk-text--center { text-align: center; }
+.bk-text--end { text-align: end; }
+.bk-text--truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</brick:style>
+{{- $p := .Props -}}
+{{ $cls := cx "bk-text" (cond (ne $p.size "base") (print "bk-text--" $p.size) "") (cond (ne $p.tone "default") (print "bk-text--" $p.tone) "") (cond (ne $p.weight "normal") (print "bk-text--" $p.weight) "") (cond (ne $p.align "start") (print "bk-text--" $p.align) "") (cond $p.truncate "bk-text--truncate" "") .Attrs.class -}}
+{{ if eq $p.as "span" }}<span class="{{ $cls }}" {{ attrs `class` }}>{{ children }}</span>{{ else if eq $p.as "div" }}<div class="{{ $cls }}" {{ attrs `class` }}>{{ children }}</div>{{ else if eq $p.as "small" }}<small class="{{ $cls }}" {{ attrs `class` }}>{{ children }}</small>{{ else if eq $p.as "strong" }}<strong class="{{ $cls }}" {{ attrs `class` }}>{{ children }}</strong>{{ else }}<p class="{{ $cls }}" {{ attrs `class` }}>{{ children }}</p>{{ end }}
+{{- /* no trailing newline: this renders inline, inside running text */ -}}

@@ -1,0 +1,42 @@
+---
+props:
+  notch: {type: string, default: island, oneof: [island, notch, none]}
+  time: {type: string, default: "9:41"}
+  label: {type: string, default: ""}
+---
+{{/*
+PhoneMockup: a phone frame with a status bar and a dynamic island (or a
+notch), the children as the screen. The screen scrolls, so a whole mobile
+page fits in it.
+
+  <PhoneMockup><img src="/app.png" alt="The app"></PhoneMockup>
+  <PhoneMockup notch="notch" style="width: 16rem"><Dock :fixed="false" :items="…" /></PhoneMockup>
+
+Width is 18rem and the height follows a 9:19.5 screen; set width to
+resize. A <figure>; label becomes its caption for screen readers. Put
+content that should sit at the bottom (a Dock) last and give the screen's
+first child flex: 1.
+*/}}
+<brick:style>
+.bk-phone { --bk-phone-bezel: var(--bk-neutral); position: relative; width: 18rem; aspect-ratio: 9 / 19.5; margin: 0; padding: .6rem; border-radius: 2.75rem; background: var(--bk-phone-bezel); box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--bk-phone-bezel), var(--bk-bg) 25%), var(--bk-shadow-lg); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme=light]) .bk-phone { --bk-phone-bezel: var(--bk-muted); } }
+:root[data-theme=dark] .bk-phone { --bk-phone-bezel: var(--bk-muted); }
+.bk-phone__screen { display: flex; flex-direction: column; height: 100%; overflow: hidden; border-radius: 2.2rem; background: var(--bk-bg); color: var(--bk-fg); }
+.bk-phone__status { position: relative; display: flex; align-items: center; justify-content: space-between; flex: none; height: 2.6rem; padding: .35rem 7% 0 9%; font-size: .75rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bk-phone__island { position: absolute; top: .55rem; left: 50%; width: 34%; height: 1.6rem; border-radius: 1rem; background: var(--bk-phone-bezel); transform: translateX(-50%); }
+.bk-phone--notch .bk-phone__island { top: 0; width: 44%; height: 1.6rem; border-radius: 0 0 1rem 1rem; }
+.bk-phone__sys { display: flex; align-items: center; gap: .3rem; }
+.bk-phone__bars { display: flex; align-items: flex-end; gap: 1.5px; height: .6rem; }
+.bk-phone__bars > i { width: 3px; border-radius: 1px; background: currentColor; }
+.bk-phone__bars > i:nth-child(1) { height: 35%; } .bk-phone__bars > i:nth-child(2) { height: 55%; } .bk-phone__bars > i:nth-child(3) { height: 78%; } .bk-phone__bars > i:nth-child(4) { height: 100%; }
+.bk-phone__battery { position: relative; width: 1.35rem; height: .65rem; padding: 1.5px; border: 1.5px solid color-mix(in oklab, currentColor 45%, transparent); border-radius: 3px; }
+.bk-phone__battery::before { content: ""; display: block; width: 80%; height: 100%; border-radius: 1px; background: currentColor; }
+.bk-phone__content { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; }
+</brick:style>
+<figure class="{{ cx `bk-phone` (cond (eq .Props.notch `notch`) `bk-phone--notch` ``) .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-phone__screen">
+    <div class="bk-phone__status" aria-hidden="true"><span>{{ .Props.time }}</span>{{ if ne .Props.notch "none" }}<i class="bk-phone__island"></i>{{ end }}<span class="bk-phone__sys"><span class="bk-phone__bars"><i></i><i></i><i></i><i></i></span><span class="bk-phone__battery"></span></span></div>
+    <div class="bk-phone__content">{{ children }}</div>
+  </div>
+  {{ with .Props.label }}<figcaption class="bk-sr-only">{{ . }}</figcaption>{{ end }}
+</figure>

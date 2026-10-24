@@ -1,0 +1,45 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  tone: {type: string, default: neutral, oneof: [neutral, primary, success, warning, danger, info]}
+  variant: {type: string, default: soft, oneof: [soft, solid, outline]}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  dot: {type: bool, default: false}
+  icon: {type: string, default: ""}
+  pill: {type: bool, default: false}
+---
+{{/*
+Badge: a short status or count beside other content. tone is the colour,
+variant how strongly it is applied.
+
+  <Badge>Draft</Badge>
+  <Badge tone="success" dot>Active</Badge>
+  <Badge tone="danger" variant="solid">3</Badge>
+  <Badge tone="info" variant="outline" icon="zap">New</Badge>
+  <Badge tone="primary" pill size="sm">Beta</Badge>
+
+A badge is text, not a control: put it inside a link or button to make it
+clickable. The dot and icon are decorative, so the text must carry the
+meaning ("Active", not just a green dot).
+*/}}
+<brick:style>
+.bk-badge { --bk-badge-c: var(--bk-neutral); --bk-badge-fg: var(--bk-neutral-fg); --bk-badge-text: var(--bk-fg); display: inline-flex; align-items: center; gap: .3rem; height: 1.25rem; padding: 0 .45rem; border: 1px solid transparent; border-radius: var(--bk-radius-sm); font: 500 var(--bk-text-xs)/1 var(--bk-font); white-space: nowrap; vertical-align: middle; font-variant-numeric: tabular-nums; }
+.bk-badge--primary { --bk-badge-c: var(--bk-primary); --bk-badge-fg: var(--bk-primary-fg); --bk-badge-text: var(--bk-primary-text); }
+.bk-badge--success { --bk-badge-c: var(--bk-success); --bk-badge-fg: var(--bk-success-fg); --bk-badge-text: var(--bk-success-text); }
+.bk-badge--warning { --bk-badge-c: var(--bk-warning); --bk-badge-fg: var(--bk-warning-fg); --bk-badge-text: var(--bk-warning-text); }
+.bk-badge--danger { --bk-badge-c: var(--bk-danger); --bk-badge-fg: var(--bk-danger-fg); --bk-badge-text: var(--bk-danger-text); }
+.bk-badge--info { --bk-badge-c: var(--bk-info); --bk-badge-fg: var(--bk-info-fg); --bk-badge-text: var(--bk-info-text); }
+.bk-badge--soft { background: color-mix(in oklab, var(--bk-badge-c) 12%, transparent); color: var(--bk-badge-text); }
+.bk-badge--soft.bk-badge--neutral { background: var(--bk-muted); color: var(--bk-fg); }
+.bk-badge--solid { background: var(--bk-badge-c); color: var(--bk-badge-fg); }
+.bk-badge--outline { border-color: color-mix(in oklab, var(--bk-badge-c) 35%, transparent); color: var(--bk-badge-text); }
+.bk-badge--outline.bk-badge--neutral { border-color: var(--bk-border); color: var(--bk-fg); }
+.bk-badge--sm { height: 1.05rem; padding: 0 .35rem; font-size: .6875rem; }
+.bk-badge--lg { height: 1.5rem; padding: 0 .6rem; font-size: var(--bk-text-sm); }
+.bk-badge--pill { border-radius: var(--bk-radius-full); }
+.bk-badge__dot { width: .4rem; height: .4rem; border-radius: var(--bk-radius-full); background: var(--bk-badge-c); }
+.bk-badge--solid .bk-badge__dot { background: currentColor; }
+.bk-badge .bk-icon { flex: none; }
+</brick:style>
+<span class="{{ cx `bk-badge` (print `bk-badge--` .Props.tone) (print `bk-badge--` .Props.variant) (cond (ne .Props.size `md`) (print `bk-badge--` .Props.size) ``) (cond .Props.pill `bk-badge--pill` ``) .Attrs.class }}" {{ attrs `class` }}>{{ if .Props.dot }}<span class="bk-badge__dot" aria-hidden="true"></span>{{ end }}{{ with .Props.icon }}<Icon :name="." :size="12" />{{ end }}{{ children }}</span>

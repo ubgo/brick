@@ -1,0 +1,5 @@
+<div style="display: flex; flex-wrap: wrap; gap: 2rem; padding-top: 5rem">
+  <HoverCard side="top" :delay="200"><brick:prop name="trigger"><Button variant="outline">Top, start</Button></brick:prop><p style="width: 13rem">Opens above after 200 ms.</p></HoverCard>
+  <HoverCard side="top" align="center" :delay="200"><brick:prop name="trigger"><Button variant="outline">Top, center</Button></brick:prop><p style="width: 13rem">Centred over the trigger.</p></HoverCard>
+  <HoverCard align="end" :delay="0" :closeDelay="400"><brick:prop name="trigger"><Button variant="outline">Bottom, end</Button></brick:prop><p style="width: 13rem">No delay, and a slow close.</p></HoverCard>
+</div>

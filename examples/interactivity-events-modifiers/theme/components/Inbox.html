@@ -1,0 +1,61 @@
+---
+state:
+  q: ""
+  log: []
+  seen: 0
+---
+<brick:script>
+def _note(state, text):
+    return dict(state, log = state["log"] + [text])
+
+def search(state, props, q):
+    return _note(dict(state, q = q), "search(%s)" % q)
+
+def validate(state, props, q):
+    return _note(state, "validate(%s)" % q)
+
+def send(state, props):
+    return _note(state, "send")
+
+def send_all(state, props):
+    return _note(state, "send_all")
+
+def clear(state, props):
+    return _note(state, "clear")
+
+def close(state, props):
+    return _note(state, "close")
+
+def choose(state, props, plan):
+    return _note(state, "choose(%s)" % plan)
+
+def at(state, props, d):
+    return _note(state, "at(x=%d shift=%s count=%d)" % (d["x"], d["shift"], d["count"]))
+
+def rename(state, props, id, name):
+    return _note(state, "rename(%d, %s)" % (id, name))
+
+def welcome(state, props):
+    return _note(state, "welcome")
+
+def more(state, props):
+    return _note(dict(state, seen = state["seen"] + 1), "more")
+
+def tick(state, props):
+    return _note(state, "tick")
+</brick:script>
+<section class="inbox" brick:poll.10s="tick">
+  <div id="menu" brick:click.outside="close">
+    <input id="q" brick:input.debounce.300ms="search" brick:blur="validate" value="{{ .State.q }}">
+    <textarea id="msg" brick:keydown.enter="send" brick:keydown.ctrl.enter="send_all" brick:keyup.escape="clear"></textarea>
+  </div>
+  <select id="plan" brick:change="choose">
+    <option value="free">Free</option>
+    <option value="pro">Pro</option>
+  </select>
+  <div id="chart" brick:click.details="at">chart</div>
+  <button id="rename" brick:click="rename(3)" brick:confirm.prompt="New name?">Rename</button>
+  <button id="hello" brick:click.once="welcome">Say hello once</button>
+  <div id="sentinel" brick:intersect.once="more">Loading more…</div>
+  <ol id="log">{{ range .State.log }}<li>{{ . }}</li>{{ end }}</ol>
+</section>

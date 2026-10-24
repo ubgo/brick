@@ -1,0 +1,6 @@
+---
+layout: none
+use:
+  prices: ~/data/pricing.yaml
+---
+<ul>{{ range .Data.prices.plans }}<li>{{ .name }}</li>{{ end }}</ul>

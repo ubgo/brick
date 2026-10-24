@@ -1,0 +1,28 @@
+---
+title: Task board
+layout: app
+description: A kanban board over the tasks table — drag cards between columns, or use each card's menu; add, edit, delete and filter tasks, or see them as a table.
+---
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/tasks/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Task board`)" />
+    <div class="tasks-top"><ThemeToggle /></div>
+  </brick:prop>
+  <PageHeader title="Task board" description="Drag a card to another column or place, or use its menu to move it with the keyboard." />
+  <TaskBoard />
+</AppShell>
+<brick:style>
+.tasks-top { display: flex; align-items: center; gap: .35rem; margin-left: auto; }
+.bk-appshell__main > .bk-page-header { margin-bottom: 1rem; }
+</brick:style>
+
+<AppSource app="Task board">
+  <Tabs label="Task board files" size="sm">
+    <Tab title="tasks.html"><CodeView file="content/apps/tasks.html"><Source src="~/content/apps/tasks.html" /></CodeView></Tab>
+    <Tab title="TaskBoard.html"><CodeView file="apps/tasks/TaskBoard.html"><Source src="~/apps/tasks/TaskBoard.html" /></CodeView></Tab>
+    <Tab title="tasks.star"><CodeView file="apps/tasks/tasks.star"><Source src="~/apps/tasks/tasks.star" /></CodeView></Tab>
+    <Tab title="db_tasks.go"><CodeView file="demodb/db_tasks.go"><Source src="~/demodb/db_tasks.go" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

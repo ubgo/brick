@@ -1,0 +1,22 @@
+---
+state:
+  body: ""
+---
+<brick:script>
+MAX = 80
+
+def post(state, props):
+    # Store the note, then publish: every board listening to demo:notes,
+    # in this window or any other, refreshes once this action succeeded.
+    body = state["body"].strip()
+    if not body:
+        return [state, {"body": "Write a note first."}]
+    db.exec("insert into push_notes (body) values (?)", body[:MAX])
+    brick.publish("demo:notes")
+    return dict(state, body = "")
+</brick:script>
+<div style="display: flex; gap: .5rem; align-items: flex-start">
+  <Input id="rp-body" brick:model.defer="body" brick:keydown.enter="post" placeholder="Post a note to every open board" maxlength="80" />
+  <Button id="rp-post" brick:click="post">Post</Button>
+  {{ with .Errors.body }}<span id="rp-error" style="color: var(--bk-danger); font-size: var(--bk-text-sm)">{{ . }}</span>{{ end }}
+</div>

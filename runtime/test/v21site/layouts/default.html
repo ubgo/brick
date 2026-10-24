@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ .Title }} · {{ .Site.title }}</title>
+</head>
+<body>
+{{/* The CSS and JavaScript of the components this page uses. */}}
+{{ assets }}
+<main>
+  {{ children }}
+</main>
+</body>
+</html>

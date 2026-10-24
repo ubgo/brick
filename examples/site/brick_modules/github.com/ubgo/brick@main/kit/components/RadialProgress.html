@@ -1,0 +1,41 @@
+---
+props:
+  value: {type: float, default: 0}
+  max: {type: float, default: 100}
+  size: {type: int, default: 48}
+  thickness: {type: int, default: 4}
+  tone: {type: string, default: primary, oneof: [primary, success, warning, danger, info, neutral]}
+  label: {type: string, default: ""}
+  showValue: {type: bool, default: true}
+---
+{{/*
+RadialProgress: progress as a ring with the value in its centre — a
+score, a goal, a quota on a dashboard card.
+
+  <RadialProgress :value="72" />
+  <RadialProgress :value="9" :max="12" :size="72" :thickness="6" tone="success" label="Tasks done" />
+  <RadialProgress :value="95" tone="danger" :showValue="false" />
+
+size is the diameter in pixels; thickness is the ring's stroke on a 36-unit
+viewBox, so it scales with size. Children replace the centre text (an
+icon, "9/12"). Like Progress it is role="progressbar" with the value in
+aria-valuenow; label is its accessible name.
+*/}}
+<brick:style>
+.bk-radial { --bk-radial-c: var(--bk-primary); position: relative; display: inline-grid; place-items: center; flex: none; vertical-align: middle; color: var(--bk-fg); }
+.bk-radial--success { --bk-radial-c: var(--bk-success); }
+.bk-radial--warning { --bk-radial-c: var(--bk-warning); }
+.bk-radial--danger { --bk-radial-c: var(--bk-danger); }
+.bk-radial--info { --bk-radial-c: var(--bk-info); }
+.bk-radial--neutral { --bk-radial-c: var(--bk-fg); }
+.bk-radial__svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+.bk-radial__track { stroke: color-mix(in oklab, var(--bk-radial-c) 14%, var(--bk-muted)); }
+.bk-radial__bar { stroke: var(--bk-radial-c); transition: stroke-dasharray .4s ease; }
+.bk-radial__value { position: relative; font-size: calc(var(--bk-radial-size) * .24); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1; }
+@media (prefers-reduced-motion: reduce) { .bk-radial__bar { transition: none; } }
+</brick:style>
+{{ $pct := min 100.0 (max 0.0 (div (mul .Props.value 100.0) (cond (gt .Props.max 0.0) .Props.max 100.0))) }}
+<div class="{{ cx `bk-radial` (cond (ne .Props.tone `primary`) (print `bk-radial--` .Props.tone) ``) .Attrs.class }}" style="width: {{ .Props.size }}px; height: {{ .Props.size }}px; --bk-radial-size: {{ .Props.size }}px{{ with .Attrs.style }}; {{ . }}{{ end }}" role="progressbar" aria-label="{{ or .Props.label `Progress` }}" aria-valuemin="0" aria-valuemax="{{ .Props.max }}" aria-valuenow="{{ .Props.value }}" aria-valuetext="{{ printf `%.0f` $pct }}%" {{ attrs `class` `style` }}>
+  <svg class="bk-radial__svg" viewBox="0 0 36 36" fill="none" aria-hidden="true"><circle class="bk-radial__track" cx="18" cy="18" r="{{ sub 18 (div .Props.thickness 2.0) }}" stroke-width="{{ .Props.thickness }}"/><circle class="bk-radial__bar" cx="18" cy="18" r="{{ sub 18 (div .Props.thickness 2.0) }}" stroke-width="{{ .Props.thickness }}" pathLength="100" stroke-dasharray="{{ printf `%.2f` $pct }} 100" stroke-linecap="round"/></svg>
+  {{ if hasNode "children" }}<span class="bk-radial__value">{{ children }}</span>{{ else if .Props.showValue }}<span class="bk-radial__value">{{ printf `%.0f` $pct }}%</span>{{ end }}
+</div>

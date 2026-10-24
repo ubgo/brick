@@ -1,0 +1,14 @@
+<brick:client>
+brick.mount("SortableTags", (el) => {
+  const out = el.querySelector("output");
+  const on = (e) => { out.textContent = `bk-sort: ${e.detail.id} moved ${e.detail.from} → ${e.detail.to}; order ${e.detail.order.join(", ")}`; };
+  el.addEventListener("bk-sort", on);
+  return () => el.removeEventListener("bk-sort", on);
+})
+</brick:client>
+<div style="display: grid; gap: .6rem">
+  <Sortable direction="horizontal" label="Columns">
+    {{ range list "Name" "E-mail" "Company" "Role" "Status" }}<li data-id="{{ . }}" style="padding: .3rem .7rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-full); background: var(--bk-surface); font-size: var(--bk-text-sm)">{{ . }}</li>{{ end }}
+  </Sortable>
+  <output style="color: var(--bk-muted-fg); font-size: var(--bk-text-xs)">Drag a chip, or focus one and press Space, then ←/→.</output>
+</div>

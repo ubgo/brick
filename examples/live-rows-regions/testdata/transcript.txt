@@ -1,0 +1,27 @@
+GET /
+  feed: <ul brick:ref="feed" brick:ignore><li>Item 1</li><li>Item 2</li></ul>
+POST Chat.send("Hello")
+  effect {"kind":"rows","ref":"log","op":"insert","at":"top","limit":3,"rows":[{"key":"1","html":"\u003cli class=\"msg\"\u003eHello\u003c/li\u003e"}]}
+POST Chat.send("How are you?")
+  effect {"kind":"rows","ref":"log","op":"insert","at":"top","limit":3,"rows":[{"key":"2","html":"\u003cli class=\"msg\"\u003eHow are you?\u003c/li\u003e"}]}
+POST Chat.send("Still there?")
+  effect {"kind":"rows","ref":"log","op":"insert","at":"top","limit":3,"rows":[{"key":"3","html":"\u003cli class=\"msg\"\u003eStill there?\u003c/li\u003e"}]}
+POST Chat.send("Bye")
+  effect {"kind":"rows","ref":"log","op":"insert","at":"top","limit":3,"rows":[{"key":"4","html":"\u003cli class=\"msg\"\u003eBye\u003c/li\u003e"}]}
+POST Chat.remove(2)
+  effect {"kind":"rows","ref":"log","op":"delete","keys":["2"]}
+POST Chat.clear()
+  effect {"kind":"rows","ref":"log","op":"reset","at":"bottom"}
+POST Chat.think()  (Accept: application/vnd.brick.stream+ndjson)
+  chunk {"stream":{"ref":"answer","text":"Rows"}}
+  chunk {"stream":{"ref":"answer","text":" stay"}}
+  chunk {"stream":{"ref":"answer","text":" out"}}
+  chunk {"stream":{"ref":"answer","text":" of"}}
+  chunk {"stream":{"ref":"answer","text":" state."}}
+  html: <p brick:ref="answer">Rows stay out of state.</p>
+POST Feed.more()
+  effect {"kind":"region","ref":"feed","op":"append"}
+  html: <ul brick:ref="feed" brick:ignore><li>Item 3</li><li>Item 4</li></ul>
+POST Login.sign_in()
+  effect {"kind":"flash","message":"Signing you in…","level":"info"}
+  effect {"kind":"submit","ref":"login"}

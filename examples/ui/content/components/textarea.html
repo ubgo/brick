@@ -1,0 +1,22 @@
+---
+title: Textarea
+category: Forms
+description: "Multi-line text that can grow with its content and count characters."
+api:
+  - {name: value, type: "string", desc: "The text."}
+  - {name: rows, type: "int", default: "3", desc: "Visible rows."}
+  - {name: maxlength, type: "int", desc: "Maximum characters (0: none)."}
+  - {name: counter, type: "bool", desc: "Shows used / maxlength."}
+  - {name: autosize, type: "bool", desc: "Grows with the content (JavaScript)."}
+  - {name: resize, type: "vertical | none", default: "vertical", desc: "Whether the user can resize it."}
+  - {name: invalid, type: "bool", desc: "Red border and aria-invalid."}
+  - {name: required, type: "bool", desc: "The required attribute."}
+  - {name: disabled, type: "bool", desc: "Disables it."}
+  - {name: readonly, type: "bool", desc: "Read-only."}
+---
+<h1>Textarea</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="In a field" block><TextareaBasic /><brick:prop name="code"><Source src="~/demos/TextareaBasic.html" /></brick:prop></Example>
+<Example title="Counter and autosize" block><TextareaCounter /><brick:prop name="code"><Source src="~/demos/TextareaCounter.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

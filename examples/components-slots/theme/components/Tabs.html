@@ -1,0 +1,8 @@
+<div class="tabs">
+  <div role="tablist">
+    {{- range .Children }}
+    <button role="tab">{{ .Props.title }}</button>
+    {{- end }}
+  </div>
+  <div class="panel">{{ with .Children }}{{ child (index . 0) }}{{ end }}</div>
+</div>

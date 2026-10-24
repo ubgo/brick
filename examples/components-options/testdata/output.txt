@@ -1,0 +1,89 @@
+== content/index.html
+<h1 class="title">Options</h1>
+<aside class="note">From the second root.</aside>
+<pre>
+  keeps
+    its indentation
+</pre>
+<pre>loses
+  the common indent</pre>
+<p>brand #0f766e, accent #b45309</p>
+
+== content/hyphen.html
+<h3 class="title">Only x- here</h3>
+
+== content/hyphen-bad.html
+error: content/hyphen-bad.html:4:1: <Heading>: this file accepts only the hyphenated tag form
+
+== content/widget.html
+<my-element size="2">kept as written</my-element>
+
+== content/typo.html
+error: content/typo.html:1:1: unknown component <Crad> — no file in use: or the roots (components, shared) defines it
+
+== content/typo-ok.html
+<Crad>a typo</Crad>
+
+== content/spin.html
+error: content/spin.html: s.spin: Traceback (most recent call last):
+  lib/spin.star:3:5: in spin
+Error: Starlark computation cancelled: too many steps
+
+== ComponentDocs("Card")
+{
+  "name": "Card",
+  "path": "components/Card.html",
+  "props": [
+    {
+      "name": "title",
+      "type": "string",
+      "required": true,
+      "doc": "The card's heading.",
+      "examples": [
+        "Welcome",
+        "Release notes"
+      ]
+    },
+    {
+      "name": "tone",
+      "type": "string",
+      "default": "calm",
+      "hasDefault": true,
+      "oneof": [
+        "calm",
+        "loud"
+      ],
+      "doc": "How strongly the card is drawn."
+    }
+  ],
+  "slots": [
+    {
+      "name": "children",
+      "doc": "The card's body."
+    },
+    {
+      "name": "footer",
+      "doc": "Optional links under the body.",
+      "examples": [
+        "\u003ca href=\"/more\"\u003eMore\u003c/a\u003e"
+      ]
+    }
+  ]
+}
+
+== broken/unbalanced.html:4:1: warning: </main> closes <section> (line 2), which is still open [html-balance]
+
+== content/loc.html
+<aside data-brick-loc="shared/Note.html:1" class="note">located</aside>
+
+== hooks
+compiled 9 files, rendered 4 pages
+
+== InheritAssets
+before: []
+after:  [c/Badge.716b9a90.css]
+
+== WithStats
+page render: 2 components, 2 islands
+after Fill:  4 components, top [{Badge 2}]
+

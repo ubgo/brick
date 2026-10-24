@@ -1,0 +1,71 @@
+---
+inject:
+  bkField: {default: {}}
+props:
+  min: {type: float, default: 0}
+  max: {type: float, default: 100}
+  step: {type: float, default: 1}
+  value: {type: float, default: 50}
+  prefix: {type: string, default: ""}
+  unit: {type: string, default: ""}
+  showValue: {type: bool, default: true}
+  marks: {type: list, default: []}
+  disabled: {type: bool, default: false}
+---
+{{/*
+Slider: a native range input with a filled track, a live value readout and
+optional marks under the track.
+
+  <Slider name="volume" :value="70" />
+  <Slider name="price" :min="0" :max="500" :step="10" :value="120" prefix="$" />
+  <Slider name="zoom" :min="50" :max="200" :value="100" unit="%" :marks="list 50 100 150 200" />
+  <Slider name="disk" :max="500" :value="120" unit=" GB" />
+
+The value is a real <input type="range">, so it submits, binds and answers
+the arrow keys natively. prefix goes before the number and unit after it
+("$120", "120 GB"), in the readout and the marks alike. The readout is an <output> tied to it; the client
+module keeps the readout and the track fill in step while dragging
+(without JavaScript both show the rendered value). The caller's class goes
+on the wrapper, every other attribute on the <input>.
+*/}}
+<brick:client>
+brick.mount("Slider", (el) => {
+  const input = el.querySelector(".bk-slider__control");
+  const out = el.querySelector(".bk-slider__value");
+  const unit = el.getAttribute("data-unit") || "";
+  const prefix = el.getAttribute("data-prefix") || "";
+  const update = () => {
+    // 0 and 100 are a native range input's own defaults for min and max.
+    const min = Number(input.min || 0), max = Number(input.max || 100);
+    const p = max > min ? ((Number(input.value) - min) * 100) / (max - min) : 0;
+    el.style.setProperty("--bk-slider-p", p + "%");
+    if (out) out.value = out.textContent = prefix + input.value + unit;
+  };
+  input.addEventListener("input", update);
+  update();
+  return () => input.removeEventListener("input", update);
+})
+</brick:client>
+<brick:style>
+.bk-slider { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: .75rem; width: 100%; }
+.bk-slider__control { appearance: none; width: 100%; height: 1.5rem; margin: 0; background: transparent; cursor: pointer; }
+.bk-slider__control:focus-visible { outline: none; }
+.bk-slider__control::-webkit-slider-runnable-track { height: .375rem; border-radius: var(--bk-radius-full); background: linear-gradient(to right, var(--bk-primary) var(--bk-slider-p), var(--bk-muted) var(--bk-slider-p)); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--bk-border) 60%, transparent); }
+.bk-slider__control::-moz-range-track { height: .375rem; border-radius: var(--bk-radius-full); background: var(--bk-muted); }
+.bk-slider__control::-moz-range-progress { height: .375rem; border-radius: var(--bk-radius-full); background: var(--bk-primary); }
+.bk-slider__control::-webkit-slider-thumb { appearance: none; width: 1rem; height: 1rem; margin-top: -.3125rem; border: 2px solid var(--bk-primary); border-radius: var(--bk-radius-full); background: var(--bk-surface); box-shadow: var(--bk-shadow); transition: box-shadow var(--bk-duration), transform var(--bk-duration); }
+.bk-slider__control::-moz-range-thumb { width: .75rem; height: .75rem; border: 2px solid var(--bk-primary); border-radius: var(--bk-radius-full); background: var(--bk-surface); box-shadow: var(--bk-shadow); }
+.bk-slider__control:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--bk-ring); }
+.bk-slider__control:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px var(--bk-ring); }
+.bk-slider__control:active::-webkit-slider-thumb { transform: scale(1.1); }
+.bk-slider__control:disabled { opacity: .5; cursor: not-allowed; }
+.bk-slider__value { min-width: 3.75rem; padding: .1rem .4rem; border-radius: var(--bk-radius-sm); background: var(--bk-muted); color: var(--bk-fg); font: 500 var(--bk-text-xs)/1.5 var(--bk-font); font-variant-numeric: tabular-nums; text-align: center; }
+.bk-slider__marks { position: relative; grid-column: 1; height: 1.1rem; margin: .1rem 0 0; padding: 0; list-style: none; }
+.bk-slider__mark { position: absolute; top: 0; left: calc(.5rem + (100% - 1rem) * var(--bk-mark-p)); transform: translateX(-50%); font-size: var(--bk-text-xs); color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bk-slider__mark::before { content: ""; display: block; width: 1px; height: .25rem; margin: 0 auto .1rem; background: var(--bk-border); }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $min := .Props.min }}{{ $span := sub .Props.max .Props.min }}
+{{ $p := cond $span (div (mul (sub .Props.value $min) 100) $span) 0 }}
+{{ $unit := .Props.unit }}{{ $pre := .Props.prefix }}
+<div class="{{ cx `bk-slider` .Attrs.class }}" style="--bk-slider-p: {{ $p }}%"{{ with $unit }} data-unit="{{ . }}"{{ end }}{{ with $pre }} data-prefix="{{ . }}"{{ end }}><input type="range" class="bk-slider__control"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }} min="{{ .Props.min }}" max="{{ .Props.max }}" step="{{ .Props.step }}" value="{{ .Props.value }}"{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` `id` }}>{{ if .Props.showValue }}<output class="bk-slider__value"{{ with coalesce .Attrs.id (index $f "id") }} for="{{ . }}"{{ end }}>{{ $pre }}{{ .Props.value }}{{ $unit }}</output>{{ end }}{{ with .Props.marks }}<ul class="bk-slider__marks" aria-hidden="true">{{ range . }}<li class="bk-slider__mark" style="--bk-mark-p: {{ div (sub . $min) $span }}">{{ $pre }}{{ . }}{{ $unit }}</li>{{ end }}</ul>{{ end }}</div>

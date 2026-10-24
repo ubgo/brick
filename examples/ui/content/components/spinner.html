@@ -1,0 +1,16 @@
+---
+title: Spinner
+category: Feedback
+description: "An indeterminate loading ring in five sizes that takes the colour of its text, with an accessible label."
+api:
+  - {name: size, type: "xs | sm | md | lg | xl", default: md, desc: "The diameter."}
+  - {name: tone, type: "current | primary | muted | success | warning | danger | info", default: current, desc: "current follows the text colour."}
+  - {name: label, type: string, default: Loading, desc: "The accessible name (role=status)."}
+---
+<h1>Spinner</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Sizes"><SpinnerSizes /><brick:prop name="code"><Source src="~/demos/SpinnerSizes.html" /></brick:prop></Example>
+<Example title="Tones"><SpinnerTones /><brick:prop name="code"><Source src="~/demos/SpinnerTones.html" /></brick:prop></Example>
+<Example title="In context"><SpinnerInline /><brick:prop name="code"><Source src="~/demos/SpinnerInline.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

@@ -1,0 +1,17 @@
+---
+title: Terminal mockup
+category: Mockups
+description: "A dark terminal: lines starting with $ are commands after a prompt, the rest is output — optionally typed out in CSS."
+api:
+  - {name: title, type: "string", desc: "The window title."}
+  - {name: prompt, type: "string", default: "$", desc: "The prompt drawn before commands."}
+  - {name: typing, type: "bool", desc: "Type commands out and reveal output after them (CSS only)."}
+  - {name: speed, type: "int", default: "45", desc: "Milliseconds per typed character."}
+---
+<h1>Terminal mockup</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>The body is raw text: nothing in it is interpreted, so &lt;, {{"{{"}} {{"}}"}} and quotes show as written.</p>
+<Example title="Commands and output" block><TerminalMockupBasic /><brick:prop name="code"><Source src="~/demos/TerminalMockupBasic.html" /></brick:prop></Example>
+<Example title="Typing" block><TerminalMockupTyping /><brick:prop name="code"><Source src="~/demos/TerminalMockupTyping.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

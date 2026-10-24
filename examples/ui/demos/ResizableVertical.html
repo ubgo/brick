@@ -1,0 +1,8 @@
+<Resizable direction="vertical" grip style="height: 20rem">
+  <ResizablePanel :size="65" :min="30" label="Query">
+    <div style="padding: .75rem; font: var(--bk-text-xs)/1.7 var(--bk-mono)">select name, email from contacts<br>where status = 'active'<br>order by created desc;</div>
+  </ResizablePanel>
+  <ResizablePanel :size="35" :min="20" label="Results">
+    <div style="padding: .75rem; font-size: var(--bk-text-sm); color: var(--bk-muted-fg)">33 rows · 4 ms</div>
+  </ResizablePanel>
+</Resizable>

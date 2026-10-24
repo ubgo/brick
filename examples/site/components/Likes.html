@@ -1,0 +1,9 @@
+---
+state:
+  likes: 0
+---
+<brick:script>
+def like(state, props):
+    return dict(state, likes = state["likes"] + 1)
+</brick:script>
+<div class="likes"><button brick:click="like">♥ {{ .State.likes }}</button></div>

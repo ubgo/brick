@@ -1,0 +1,25 @@
+---
+props:
+  align: {type: string, default: end, oneof: [start, end, between]}
+  divider: {type: bool, default: true}
+---
+{{/*
+FormActions: the row of buttons that ends a form — right-aligned by
+default, above a divider.
+
+  <FormActions><Button variant="ghost">Cancel</Button><Button type="submit">Save</Button></FormActions>
+  <FormActions align="between"><Button variant="danger">Delete</Button><Button type="submit">Save</Button></FormActions>
+  <FormActions align="start" :divider="false"><Button type="submit">Continue</Button></FormActions>
+
+Put the primary action last: with align="end" it sits in the corner the
+eye reaches last, and it is the last stop of the tab order. On narrow
+screens the buttons stretch to full width, stacked with the primary on top.
+*/}}
+<brick:style>
+.bk-form-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .5rem; }
+.bk-form-actions--divider { margin-top: .25rem; padding-top: 1rem; border-top: 1px solid var(--bk-border); }
+.bk-form-actions--start { justify-content: flex-start; }
+.bk-form-actions--between { justify-content: space-between; }
+@media (max-width: 480px) { .bk-form-actions { flex-direction: column-reverse; align-items: stretch; } .bk-form-actions > * { width: 100%; } }
+</brick:style>
+<div class="{{ cx `bk-form-actions` (cond (ne .Props.align `end`) (print `bk-form-actions--` .Props.align) ``) (cond .Props.divider `bk-form-actions--divider` ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</div>

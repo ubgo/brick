@@ -1,0 +1,49 @@
+== content/index.html
+<!doctype html>
+<html><body>
+<div data-brick-s="f2d1f4eb" class="grid"><article data-brick-s="5093e86a" class="card"><h3 class="title">Scoped</h3>Only this title is crimson.</article></div>
+<span data-brick-s="a7055d23" class="badge">new</span>
+<details data-brick="b9a47377c" data-brick-type="Accordion" data-brick-props="{&#34;open&#34;:false}" class="accordion" open><summary>More</summary>Shown without JavaScript.</details>
+<button data-brick="bf35f94d6" data-brick-type="Opener" data-brick-props="{}" data-brick-mount="idle" class="opener" data-target="help">Help</button>
+<dialog data-brick="b33f53269" data-brick-type="Modal" data-brick-props="{}" id="help">Help text.</dialog>
+<brick-assets><script type="module" src="/_brick/c/runtime.0b4d3d08.js" integrity="sha384-1ojXDjndJ49gLs9LzFJ7HhqO9T6yLwLO3U8Y+zouOx6APv8CGhC1ifU41Z4HS9sK" nonce="r4nd0m"></script><script type="module" src="/_brick/c/Accordion.74b03d84.js" integrity="sha384-33wTT/AOjxrVSfXo3vkHCtpI+8KPOIMtAfZkkAI050ZQKv5hx/zmaJ6Jd8bo/Tx5" nonce="r4nd0m"></script><link rel="stylesheet" href="/_brick/c/Badge.556dd832.css" integrity="sha384-OAvP8Lt5XYxXEHuenmbELbQsadvenOdtaPb0psdDqZ1joTC6ufS5ldzaJF3rMXiA" nonce="r4nd0m"><link rel="stylesheet" href="/_brick/c/Card.5fb74083.css" integrity="sha384-KfR3uvGlnAMXFgLQpnQWN29p4vStT9KPfSFHEN78NM2SfMoCPLmHyNdF7n1AlyFZ" nonce="r4nd0m"><link rel="stylesheet" href="/_brick/c/Grid.b65e54ca.css" integrity="sha384-PgSzR9dz71C9EzvAhjKVVkF53Rms1BlFG8362zInXdQ0VsT1RchY86TqPcuahg/f" nonce="r4nd0m"><script type="module" src="/_brick/c/Modal.7604cf59.js" integrity="sha384-ROvYV8zhf2JHSOCvsmxa+ULz8EoUPUlqIIIiUciY1eACFMI8PcG9BghQnaxVYRxS" nonce="r4nd0m"></script><script type="module" src="/_brick/c/Opener.59907819.js" integrity="sha384-/q1TaB6EL65Cu5ZJWfG+ntdFVJlmPkntdEoBozZ1X3hszW7P1uvm7Gce4F0Jyz+/" nonce="r4nd0m"></script></brick-assets>
+</body></html>
+
+== c/Accordion.74b03d84.js
+
+brick.mount("Accordion", (el, props) => {
+  const toggle = () => el.toggleAttribute("open")
+  if (!props.open) el.removeAttribute("open")
+  el.addEventListener("toggle", toggle)
+  return () => el.removeEventListener("toggle", toggle)
+})
+
+
+== c/Badge.556dd832.css
+@scope ([data-brick-s="a7055d23"]) to ([data-brick-s]) { :scope { padding: 0 .25rem; border-radius: 4px } }
+
+== c/Card.5fb74083.css
+@scope ([data-brick-s="5093e86a"]) to ([data-brick-s]) { .title { color: crimson } }
+
+== c/Grid.b65e54ca.css
+@scope ([data-brick-s="f2d1f4eb"]) to ([data-brick-s] > *) { :scope { display: grid } .card { margin-block: 1rem } }
+
+== c/Modal.7604cf59.js
+
+export function openModal(id) {
+  document.getElementById(id)?.showModal()
+}
+
+
+== c/Opener.59907819.js
+
+import { openModal } from "./Modal.7604cf59.js"
+brick.mount("Opener", (el) => {
+  const click = () => openModal(el.dataset.target)
+  el.addEventListener("click", click)
+  return () => el.removeEventListener("click", click)
+})
+
+
+== c/runtime.0b4d3d08.js (the runtime, not shown)
+

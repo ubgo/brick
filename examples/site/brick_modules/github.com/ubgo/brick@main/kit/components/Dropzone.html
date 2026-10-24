@@ -1,0 +1,187 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  title: {type: string, default: Drop files here or}
+  browse: {type: string, default: browse}
+  hint: {type: string, default: ""}
+  invalid: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+  removeLabel: {type: string, default: Remove}
+---
+{{/*
+Dropzone: a large drop area over a real <input type="file">, with a list
+of the chosen files (name and size; an image shows a thumbnail before it
+is sent).
+
+  <Dropzone name="attachments" multiple />
+  <Dropzone name="avatar" accept="image/png,image/jpeg" hint="PNG or JPG, up to 2 MB" />
+
+The file input covers the whole area (transparent), so clicking opens the
+picker and dropping files onto it fills it natively — it works with
+JavaScript off and submits with the form (enctype="multipart/form-data").
+The client module highlights the area while dragging and lists the chosen
+files from the <template> row; a remove button drops one file where the
+browser supports DataTransfer. Every attribute but class (name, accept,
+multiple …) reaches the <input>.
+Inside a stateful component, brick:upload sends each chosen or dropped file
+to an upload field as it arrives, and the field's state shows the result:
+  <Dropzone brick:upload="photos" accept="image/*" multiple />
+The list then shows only the files still uploading (images with their
+thumbnail) and drops each one when its upload ends; the result is the
+component's to show (the runtime clears the input after sending).
+*/}}
+<brick:client>
+// KB and MB are the binary units the file sizes are shown in (1 KB = 1024 B).
+const KB = 1024, MB = KB * KB;
+// IMAGE matches the types that get a thumbnail: the browser shows them from
+// a blob: URL before anything is sent.
+const IMAGE = /^image\//;
+
+brick.mount("Dropzone", (el) => {
+  const input = el.querySelector(".bk-dropzone__input");
+  const listOf = () => el.querySelector(".bk-dropzone__list");
+  const tpl = el.querySelector(".bk-dropzone__tpl");
+  // Removing one file means building a new FileList through DataTransfer;
+  // where that constructor is missing the remove buttons stay hidden.
+  const canEdit = typeof DataTransfer === "function";
+  // With brick:upload the runtime sends the files at once and clears the
+  // input, and the component's state shows the result; the list then holds
+  // only the files still uploading.
+  const field = (input.getAttribute("brick:upload") || "").trim();
+  const live = input.hasAttribute("brick:upload");
+  const size = (n) => n < KB ? n + " B" : n < MB ? (n / KB).toFixed(1) + " KB" : (n / MB).toFixed(1) + " MB";
+  // urls holds the blob: URL of each file shown with a thumbnail. A URL is
+  // revoked as soon as its file leaves the list (removed, replaced,
+  // uploaded or refused) and all of them on unmount, so choosing image
+  // after image does not keep every one in memory.
+  const urls = new Map();
+  const revoke = (f) => { const u = urls.get(f); if (u) { URL.revokeObjectURL(u); urls.delete(f); } };
+  const row = (f) => {
+    const r = tpl.content.firstElementChild.cloneNode(true);
+    r.querySelector(".bk-dropzone__name").textContent = f.name;
+    r.querySelector(".bk-dropzone__size").textContent = size(f.size);
+    if (IMAGE.test(f.type)) {
+      let u = urls.get(f);
+      if (!u) { u = URL.createObjectURL(f); urls.set(f, u); }
+      const kind = r.querySelector(".bk-dropzone__kind");
+      const icon = [...kind.childNodes];
+      const img = document.createElement("img");
+      img.className = "bk-dropzone__thumb";
+      img.alt = "";
+      // A type the browser cannot decode (HEIC on most) keeps the file icon.
+      img.onerror = () => kind.replaceChildren(...icon);
+      img.src = u;
+      kind.replaceChildren(img);
+    }
+    return r;
+  };
+  const show = (n) => {
+    const list = listOf();
+    list.hidden = n === 0;
+    el.classList.toggle("bk-dropzone--filled", n > 0);
+  };
+  const render = () => {
+    if (live) return;
+    const files = [...(input.files || [])];
+    listOf().replaceChildren(...files.map((f, i) => {
+      const r = row(f);
+      const rm = r.querySelector(".bk-dropzone__remove");
+      rm.hidden = !canEdit;
+      rm.dataset.index = String(i);
+      return r;
+    }));
+    [...urls.keys()].forEach((f) => { if (!files.includes(f)) revoke(f); });
+    show(files.length);
+  };
+  // pending is the live mode's rows of files still uploading, file -> row.
+  const pending = new Map();
+  const sync = () => {
+    const list = listOf();
+    pending.forEach((r) => { if (r.parentNode !== list) list.append(r); });
+    show(pending.size);
+  };
+  // This listener is on the input, so it runs before the runtime's
+  // document listener sends the files and clears the input.
+  const chosen = () => {
+    [...(input.files || [])].forEach((f) => {
+      const r = row(f);
+      r.classList.add("bk-dropzone__file--uploading");
+      r.querySelector(".bk-dropzone__remove").hidden = true;
+      pending.set(f, r);
+    });
+    sync();
+  };
+  // settle drops a file's row when its upload ends either way; the
+  // runtime names the file by field, name and size.
+  const settle = (d) => {
+    if (!d || d.field !== field) return;
+    for (const [f, r] of pending) {
+      if (f.name === d.name && f.size === d.size) { r.remove(); pending.delete(f); revoke(f); break; }
+    }
+    sync();
+  };
+  const remove = (e) => {
+    const rm = e.target.closest(".bk-dropzone__remove");
+    if (!rm || !canEdit || live) return;
+    const dt = new DataTransfer();
+    [...input.files].forEach((f, i) => { if (String(i) !== rm.dataset.index) dt.items.add(f); });
+    input.files = dt.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  const over = (on) => () => el.classList.toggle("bk-dropzone--over", on);
+  const on = over(true), off = over(false);
+  const offs = [];
+  if (live) {
+    input.addEventListener("change", chosen);
+    offs.push(() => input.removeEventListener("change", chosen));
+    offs.push(brick.on("upload-done", settle), brick.on("upload-error", settle));
+    // The component's re-render after each upload morphs the list back to
+    // its empty server markup; the rows of files still uploading go back in.
+    if (typeof brick.hook === "function") offs.push(brick.hook("morphed", sync));
+  } else {
+    input.addEventListener("change", render);
+    offs.push(() => input.removeEventListener("change", render));
+  }
+  input.addEventListener("dragenter", on);
+  input.addEventListener("dragleave", off);
+  input.addEventListener("drop", off);
+  el.addEventListener("click", remove);
+  render();
+  return () => {
+    offs.forEach((f) => f());
+    input.removeEventListener("dragenter", on); input.removeEventListener("dragleave", off); input.removeEventListener("drop", off); el.removeEventListener("click", remove);
+    [...urls.keys()].forEach(revoke);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-dropzone { display: flex; flex-direction: column; gap: .5rem; width: 100%; }
+.bk-dropzone__area { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .35rem; min-height: 8.5rem; padding: 1.25rem; border: 1.5px dashed var(--bk-input); border-radius: var(--bk-radius-lg); background: var(--bk-surface-2); color: var(--bk-muted-fg); font: var(--bk-text-sm)/1.4 var(--bk-font); text-align: center; transition: border-color var(--bk-duration), background var(--bk-duration); }
+.bk-dropzone__area:hover, .bk-dropzone--over .bk-dropzone__area { border-color: var(--bk-primary); background: color-mix(in oklab, var(--bk-primary) 5%, var(--bk-surface)); }
+.bk-dropzone__area:has(.bk-dropzone__input:focus-visible) { border-color: var(--bk-primary); box-shadow: 0 0 0 3px var(--bk-ring); }
+.bk-dropzone__input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.bk-dropzone__input:disabled { cursor: not-allowed; }
+.bk-dropzone__icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; margin-bottom: .25rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-full); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-sm); }
+.bk-dropzone__title { color: var(--bk-fg); font-weight: 500; }
+.bk-dropzone__browse { color: var(--bk-primary-text); text-decoration: underline; text-underline-offset: 2px; }
+.bk-dropzone__hint { font-size: var(--bk-text-xs); }
+.bk-dropzone--invalid .bk-dropzone__area { border-color: var(--bk-danger); }
+.bk-dropzone--disabled .bk-dropzone__area { opacity: .55; }
+.bk-dropzone__list { display: flex; flex-direction: column; gap: .35rem; margin: 0; padding: 0; list-style: none; }
+.bk-dropzone__file { display: flex; align-items: center; gap: .6rem; padding: .45rem .6rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); font-size: var(--bk-text-sm); }
+.bk-dropzone__file .bk-icon { flex: none; color: var(--bk-muted-fg); }
+.bk-dropzone__kind { display: grid; place-items: center; flex: none; min-width: 1rem; }
+.bk-dropzone__thumb { display: block; width: 2.5rem; height: 2.5rem; object-fit: cover; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-surface-2); }
+.bk-dropzone__file--uploading { opacity: .7; }
+.bk-dropzone__name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.bk-dropzone__size { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-variant-numeric: tabular-nums; }
+.bk-dropzone__remove { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-dropzone__remove:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-dropzone__remove[hidden] { display: none; }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $invalid := or .Props.invalid (index $f "invalid") }}
+<div class="{{ cx `bk-dropzone` (cond $invalid `bk-dropzone--invalid` ``) (cond .Props.disabled `bk-dropzone--disabled` ``) .Attrs.class }}"><label class="bk-dropzone__area"><input type="file" class="bk-dropzone__input"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if index $f "required" }} required{{ end }}{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` `id` }}><span class="bk-dropzone__icon"><Icon name="upload" :size="18" /></span><span class="bk-dropzone__title">{{ .Props.title }} <span class="bk-dropzone__browse">{{ .Props.browse }}</span></span>{{ with .Props.hint }}<span class="bk-dropzone__hint">{{ . }}</span>{{ end }}</label><ul class="bk-dropzone__list" aria-live="polite" hidden></ul><template class="bk-dropzone__tpl"><li class="bk-dropzone__file"><span class="bk-dropzone__kind"><Icon name="file" :size="16" /></span><span class="bk-dropzone__name"></span><span class="bk-dropzone__size"></span><button type="button" class="bk-dropzone__remove" aria-label="{{ .Props.removeLabel }}"><Icon name="x" :size="13" /></button></li></template></div>

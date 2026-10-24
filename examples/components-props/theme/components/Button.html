@@ -1,0 +1,5 @@
+---
+props:
+  block: bool
+---
+<button class="{{ cx `btn` (cond .Props.block `btn--block` ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</button>

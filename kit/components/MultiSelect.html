@@ -1,0 +1,178 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  options: {type: list, required: true}
+  value: {type: list, default: []}
+  placeholder: {type: string, default: Select…}
+  empty: {type: string, default: No results}
+  label: {type: string, default: ""}
+  selectAll: {type: bool, default: true}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+MultiSelect: pick several values from a list — chips in the field, type
+to filter, a check beside each chosen option.
+
+  <MultiSelect name="tags" :options="list `Design` `Go` `HTML` `CSS`" :value="list `Go`" />
+  <MultiSelect name="members" label="Members" :options=".Params.people" placeholder="Add people" />
+
+options items are strings or maps {value, label}. The values live in a
+native <select multiple> (name= and every attribute but class land on it),
+which is the whole component without JavaScript and submits name=a&name=b
+as a multiple select does. The client module hides it and shows chips
+(from the <template>), a filter input with role="combobox" and a
+role="listbox" with aria-multiselectable: typing filters, ArrowDown/Up
+move, Enter or a click toggles an option, Backspace in the empty filter
+removes the last chip, Escape closes, and "Select all" / "Clear" act on
+the options shown. Every change sets the select's options and fires input
+and change on it, so forms and brick:model read it as usual.
+*/}}
+<brick:client>
+import { place as placePanel } from "brick:Popover";
+// LIST_GAP is the space between the field and its option list; FLIP_ROOM
+// the margin the list needs below the field before it opens upward instead.
+const LIST_GAP = 4, FLIP_ROOM = 8;
+
+brick.mount("MultiSelect", (el) => {
+  const select = el.querySelector(".bk-multiselect__native");
+  const ui = el.querySelector(".bk-multiselect__ui");
+  const box = el.querySelector(".bk-multiselect__box");
+  const chips = el.querySelector(".bk-multiselect__chips");
+  const input = el.querySelector(".bk-multiselect__input");
+  const list = el.querySelector(".bk-multiselect__list");
+  const empty = el.querySelector(".bk-multiselect__empty");
+  const tpl = el.querySelector(".bk-multiselect__tpl");
+  const opts = [...list.querySelectorAll("[role=option]")];
+  const native = (v) => [...select.options].find((o) => o.value === v);
+  let active = -1;
+  // With the Popover API the list goes to the top layer (so no overflow:
+  // hidden ancestor clips it) and is placed by hand; without it, it stays
+  // in flow under the field.
+  const layer = typeof list.showPopover === "function";
+  if (layer) list.setAttribute("popover", "manual");
+  const place = () => placePanel(box, list, { gap: LIST_GAP, edge: FLIP_ROOM, clamp: "none", width: "match" });
+  const chosen = () => opts.filter((o) => native(o.dataset.value).selected);
+  const visible = () => opts.filter((o) => !o.hidden);
+  const render = () => {
+    chips.replaceChildren(...chosen().map((o) => {
+      const chip = tpl.content.firstElementChild.cloneNode(true);
+      chip.querySelector(".bk-multiselect__chip-text").textContent = o.dataset.label;
+      const x = chip.querySelector("button");
+      x.dataset.value = o.dataset.value;
+      x.setAttribute("aria-label", "Remove " + o.dataset.label);
+      return chip;
+    }));
+    opts.forEach((o) => o.setAttribute("aria-selected", String(native(o.dataset.value).selected)));
+    input.placeholder = chosen().length ? "" : select.dataset.placeholder;
+  };
+  const fire = () => {
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    render();
+    if (layer && !list.hidden) place();
+  };
+  const set = (os, on) => { os.forEach((o) => { native(o.dataset.value).selected = on; }); fire(); };
+  const setActive = (o) => {
+    opts.forEach((x) => x.classList.toggle("bk-multiselect__option--active", x === o));
+    active = o ? opts.indexOf(o) : -1;
+    if (o) { input.setAttribute("aria-activedescendant", o.id); o.scrollIntoView && o.scrollIntoView({ block: "nearest" }); }
+    else input.removeAttribute("aria-activedescendant");
+  };
+  const open = () => {
+    if (!list.hidden || input.disabled) return;
+    list.hidden = false;
+    if (layer) { list.showPopover(); place(); }
+    input.setAttribute("aria-expanded", "true");
+    setActive(visible()[0] || null);
+  };
+  const close = () => {
+    if (list.hidden) return;
+    if (layer && list.matches(":popover-open")) list.hidePopover();
+    list.hidden = true;
+    input.setAttribute("aria-expanded", "false");
+    setActive(null);
+  };
+  const filter = () => {
+    const q = input.value.trim().toLowerCase();
+    opts.forEach((o) => { o.hidden = q !== "" && !o.dataset.label.toLowerCase().includes(q); });
+    empty.hidden = visible().length > 0;
+    setActive(visible()[0] || null);
+  };
+  const move = (d) => {
+    const v = visible();
+    if (!v.length) return;
+    setActive(v[(v.indexOf(opts[active]) + d + v.length) % v.length]);
+  };
+  const onKey = (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); if (list.hidden) open(); else move(e.key === "ArrowDown" ? 1 : -1); }
+    else if (e.key === "Enter") { if (!list.hidden && active >= 0) { e.preventDefault(); const o = opts[active]; set([o], !native(o.dataset.value).selected); } }
+    else if (e.key === "Escape") { if (!list.hidden) { e.preventDefault(); close(); } }
+    else if (e.key === "Backspace" && input.value === "") { const c = chosen(); if (c.length) { e.preventDefault(); set([c[c.length - 1]], false); } }
+  };
+  const onDown = (e) => {
+    const o = e.target.closest("[role=option]");
+    if (o) { e.preventDefault(); set([o], !native(o.dataset.value).selected); input.focus(); return; }
+    const b = e.target.closest("[data-bk-all]");
+    if (b) { e.preventDefault(); set(visible(), b.dataset.bkAll === "on"); input.focus(); }
+  };
+  const onChip = (e) => {
+    const x = e.target.closest(".bk-multiselect__chip button");
+    if (!x) return;
+    e.preventDefault();
+    set(opts.filter((o) => o.dataset.value === x.dataset.value), false);
+    input.focus();
+  };
+  const onBox = (e) => { if (e.target === box || e.target === chips) { input.focus(); open(); } };
+  const onInput = () => { open(); filter(); };
+  const onOut = (e) => { if (!el.contains(e.relatedTarget)) { close(); input.value = ""; filter(); } };
+  select.hidden = true;
+  ui.hidden = false;
+  if (select.id) { input.id = select.id; select.removeAttribute("id"); }
+  ["aria-describedby", "aria-invalid", "aria-required"].forEach((a) => { if (select.hasAttribute(a)) input.setAttribute(a, select.getAttribute(a)); });
+  input.disabled = select.disabled;
+  render();
+  input.addEventListener("keydown", onKey);
+  input.addEventListener("input", onInput);
+  input.addEventListener("click", open);
+  list.addEventListener("mousedown", onDown);
+  chips.addEventListener("click", onChip);
+  box.addEventListener("mousedown", onBox);
+  el.addEventListener("focusout", onOut);
+  return () => { close(); input.removeEventListener("keydown", onKey); input.removeEventListener("input", onInput); input.removeEventListener("click", open); list.removeEventListener("mousedown", onDown); chips.removeEventListener("click", onChip); box.removeEventListener("mousedown", onBox); el.removeEventListener("focusout", onOut); };
+})
+</brick:client>
+<brick:style>
+.bk-multiselect { position: relative; width: 100%; }
+.bk-multiselect__native { width: 100%; padding: .25rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm)/1.5 var(--bk-font); }
+.bk-multiselect__native[hidden], .bk-multiselect__ui[hidden] { display: none; }
+.bk-multiselect__box { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; min-height: var(--bk-h-md); padding: .2rem .35rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); cursor: text; transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-multiselect__box:focus-within { border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-multiselect--invalid .bk-multiselect__box, .bk-multiselect--invalid .bk-multiselect__native { border-color: var(--bk-danger); }
+.bk-multiselect__chips { display: contents; }
+.bk-multiselect__chip { display: inline-flex; align-items: center; gap: .15rem; height: 1.4rem; padding: 0 .15rem 0 .5rem; border-radius: var(--bk-radius-sm); background: var(--bk-muted); color: var(--bk-fg); font-size: var(--bk-text-xs); font-weight: 500; }
+.bk-multiselect__chip button { display: grid; place-items: center; width: 1.1rem; height: 1.1rem; padding: 0; border: 0; border-radius: 3px; background: none; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-multiselect__chip button:hover { background: color-mix(in oklab, var(--bk-fg) 10%, transparent); color: var(--bk-fg); }
+.bk-multiselect__input { flex: 1 0 5rem; min-width: 5rem; height: 1.5rem; margin: 0 0 0 .2rem; padding: 0; border: 0; outline: 0; background: none; color: var(--bk-fg); font: var(--bk-text-sm)/1.25 var(--bk-font); }
+.bk-multiselect__input::placeholder { color: var(--bk-muted-fg); }
+.bk-multiselect__list { position: absolute; z-index: var(--bk-z-dropdown); top: calc(100% + .3rem); left: 0; right: 0; max-height: 16rem; margin: 0; padding: .25rem; overflow-y: auto; list-style: none; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); animation: bk-pop-in var(--bk-duration); }
+.bk-multiselect__list[hidden] { display: none; }
+.bk-multiselect__list > ul { margin: 0; padding: 0; list-style: none; }
+.bk-multiselect__list[popover] { position: fixed; inset: auto; margin: 0; }
+.bk-multiselect__bulk { display: flex; justify-content: space-between; gap: .5rem; padding: .15rem .25rem .35rem; margin-bottom: .2rem; border-bottom: 1px solid var(--bk-border); }
+.bk-multiselect__bulk button { padding: .15rem .3rem; border: 0; border-radius: var(--bk-radius-sm); background: none; color: var(--bk-primary-text); font: 500 var(--bk-text-xs) var(--bk-font); cursor: pointer; }
+.bk-multiselect__bulk button:hover { background: var(--bk-accent); }
+.bk-multiselect__option { display: flex; align-items: center; gap: .5rem; padding: .35rem .5rem; border-radius: var(--bk-radius-sm); font-size: var(--bk-text-sm); cursor: pointer; }
+.bk-multiselect__option[hidden] { display: none; }
+.bk-multiselect__check { display: grid; place-items: center; flex: none; width: 1rem; height: 1rem; border: 1px solid var(--bk-input); border-radius: 4px; color: transparent; }
+.bk-multiselect__option[aria-selected=true] .bk-multiselect__check { border-color: var(--bk-primary); background: var(--bk-primary); color: var(--bk-primary-fg); }
+.bk-multiselect__option--active { background: var(--bk-accent); }
+.bk-multiselect__empty { padding: .6rem .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); text-align: center; }
+.bk-multiselect__empty[hidden] { display: none; }
+</brick:style>
+{{ $f := .Ctx.bkField }}{{ $invalid := or .Props.invalid (index $f "invalid") }}{{ $lid := print "bk-ms" .ID }}{{ $sel := .Props.value }}
+<div class="{{ cx `bk-multiselect` (cond $invalid `bk-multiselect--invalid` ``) .Attrs.class }}"><select multiple class="bk-multiselect__native" data-placeholder="{{ .Props.placeholder }}" size="{{ min 6 (len .Props.options) }}"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if or .Props.required (index $f "required") }} required{{ end }}{{ if .Props.disabled }} disabled{{ end }}{{ with .Props.label }} aria-label="{{ . }}"{{ end }} {{ attrs `class` `id` }}>{{ range .Props.options }}{{ $v := . }}{{ $l := . }}{{ if ne (printf "%T" .) "string" }}{{ $v = index . "value" }}{{ $l = default $v (index . "label") }}{{ end }}{{ $on := false }}{{ range $sel }}{{ if eq (print .) (print $v) }}{{ $on = true }}{{ end }}{{ end }}<option value="{{ $v }}"{{ if $on }} selected{{ end }}>{{ $l }}</option>{{ end }}</select><div class="bk-multiselect__ui" hidden><div class="bk-multiselect__box"><span class="bk-multiselect__chips"></span><input type="text" class="bk-multiselect__input" role="combobox" aria-expanded="false" aria-controls="{{ $lid }}" aria-autocomplete="list" autocomplete="off" placeholder="{{ .Props.placeholder }}"{{ with .Props.label }} aria-label="{{ . }}"{{ end }}></div><div class="bk-multiselect__list" hidden><div class="bk-multiselect__bulk"{{ if not .Props.selectAll }} hidden{{ end }}><button type="button" tabindex="-1" data-bk-all="on">Select all</button><button type="button" tabindex="-1" data-bk-all="off">Clear</button></div><ul id="{{ $lid }}" role="listbox" aria-multiselectable="true"{{ with .Props.label }} aria-label="{{ . }}"{{ end }}>{{ range $i, $o := .Props.options }}{{ $v := $o }}{{ $l := $o }}{{ if ne (printf "%T" $o) "string" }}{{ $v = index $o "value" }}{{ $l = default $v (index $o "label") }}{{ end }}<li class="bk-multiselect__option" role="option" id="{{ $lid }}-{{ $i }}" data-value="{{ $v }}" data-label="{{ $l }}" aria-selected="false"><span class="bk-multiselect__check" aria-hidden="true"><Icon name="check" :size="11" stroke="3" /></span>{{ $l }}</li>{{ end }}</ul><p class="bk-multiselect__empty" hidden>{{ .Props.empty }}</p></div><template class="bk-multiselect__tpl"><span class="bk-multiselect__chip"><span class="bk-multiselect__chip-text"></span><button type="button" tabindex="-1"><Icon name="x" :size="11" /></button></span></template></div></div>

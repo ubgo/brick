@@ -1,0 +1,43 @@
+---
+state:
+  name: Ada Lovelace
+  email: ada@example.com
+  draft: {name: "", email: ""}
+  open: false
+  saves: 0
+---
+<brick:script>
+def edit(state, props):
+    return dict(state, open = True, draft = {"name": state["name"], "email": state["email"]})
+
+def cancel(state, props):
+    return dict(state, open = False)
+
+def save(state, props, fields):
+    name = fields.get("name", "").strip()
+    email = fields.get("email", "").strip()
+    errors = {}
+    if len(name) < 2:
+        errors["name"] = "Enter at least two letters."
+    at = email.find("@")
+    if at < 1 or "." not in email[at:]:
+        errors["email"] = "Enter an e-mail address like ada@example.com."
+    if errors:
+        return [dict(state, open = True, draft = {"name": name, "email": email}), errors]
+    return dict(state, name = name, email = email, open = False, saves = state["saves"] + 1)
+</brick:script>
+<div style="display: flex; align-items: center; gap: 1rem">
+  <div style="line-height: 1.4"><b>{{ .State.name }}</b><br><span style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">{{ .State.email }}</span></div>
+  <Button variant="outline" icon="pencil" brick:click="edit">Edit profile</Button>
+  <Dialog id="demo-profile" title="Edit profile" description="Checked on the server: try saving an empty name." :open=".State.open" :dismissible="false">
+    <form id="demo-profile-form" brick:submit="save" novalidate style="display: grid; gap: .9rem">
+      <Field label="Name" :error=".Errors.name" required><Input name="name" value="{{ .State.draft.name }}" autocomplete="name" /></Field>
+      <Field label="E-mail" :error=".Errors.email" required><Input type="email" name="email" value="{{ .State.draft.email }}" icon="mail" autocomplete="email" /></Field>
+    </form>
+    <brick:prop name="footer">
+      <Button variant="ghost" brick:click="cancel" data-bk-close>Cancel</Button>
+      <Button type="submit" form="demo-profile-form">Save</Button>
+    </brick:prop>
+  </Dialog>
+  {{ if .State.saves }}<Toast variant="success" id="{{ print `profile-saved-` .State.saves }}" title="Profile saved" :description="print .State.name ` · ` .State.email" />{{ end }}
+</div>

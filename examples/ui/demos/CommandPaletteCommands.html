@@ -1,0 +1,23 @@
+---
+use:
+  commands: ~/data/demo-commands.yaml
+---
+<brick:client>
+brick.mount("CommandPaletteCommands", (el) => {
+  const out = el.querySelector("output");
+  return brick.on("command", ({ value, label }) => {
+    if (value === "theme") {
+      const root = document.documentElement;
+      const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+      root.dataset.theme = dark ? "light" : "dark";
+    } else if (value === "copy-link" && navigator.clipboard) {
+      navigator.clipboard.writeText(location.href);
+    }
+    out.textContent = "Last command: " + label;
+  });
+})
+</brick:client>
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem">
+  <CommandPalette :groups=".Data.commands.groups" :hotkey="false" label="Run a command" placeholder="Try “dark” or “copy”…" />
+  <output style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Last command: none</output>
+</div>

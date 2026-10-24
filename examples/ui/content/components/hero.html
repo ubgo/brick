@@ -1,0 +1,21 @@
+---
+title: Hero
+category: Layout
+description: The opening block of a landing page — a headline, a subtitle, calls to action and, split, a picture beside them.
+api:
+  - {name: title, type: string, desc: The headline — the page's h1. Required.}
+  - {name: subtitle, type: string, desc: The line under it.}
+  - {name: eyebrow, type: string, desc: A small pill above the title.}
+  - {name: layout, type: "centered | split", default: centered, desc: "split puts media beside the text from 900px."}
+  - {name: size, type: "sm | md | lg", default: md, desc: Vertical padding and title size.}
+  - {name: backdrop, type: bool, default: "true", desc: A faint glow in the accent colour.}
+  - {name: actions, type: block, desc: The calls to action.}
+  - {name: media, type: block, desc: A picture or product shot.}
+  - {name: eyebrowSlot, type: block, desc: "Replaces the eyebrow pill — a link, a badge."}
+---
+<h1>Hero</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Centred" block><HeroCentered /><brick:prop name="code"><Source src="~/demos/HeroCentered.html" /></brick:prop></Example>
+<Example title="Split, with media" block><HeroSplit /><brick:prop name="code"><Source src="~/demos/HeroSplit.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

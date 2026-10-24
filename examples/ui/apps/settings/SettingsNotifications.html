@@ -1,0 +1,59 @@
+---
+state:
+  comments: true
+  mentions: true
+  updates: false
+  pushMentions: true
+  pushReminders: false
+  digest: weekly
+  saves: 0
+  saved: false
+---
+{{/*
+SettingsNotifications: the Notifications section — e-mail and push switches
+grouped in Fieldsets and a digest frequency. A switch that is off is absent
+from the submitted fields, so save reads each one as "on" or missing. The
+one cross-field rule: a digest needs at least one e-mail notification.
+*/}}
+<brick:script>
+DIGESTS = ["never", "daily", "weekly"]
+
+def save(state, props, fields):
+    on = lambda k: fields.get(k, "") == "on"
+    digest = fields.get("digest", "")
+    new = dict(state, comments = on("comments"), mentions = on("mentions"), updates = on("updates"), pushMentions = on("pushMentions"), pushReminders = on("pushReminders"), digest = digest, saved = False)
+    errors = {}
+    if digest not in DIGESTS:
+        errors["digest"] = "Choose how often to get a digest."
+    elif digest != "never" and not (new["comments"] or new["mentions"] or new["updates"]):
+        errors["digest"] = "Turn on at least one e-mail notification to receive a digest."
+    if errors:
+        return [new, errors]
+    return dict(new, saved = True, saves = state["saves"] + 1)
+</brick:script>
+<form brick:submit="save" novalidate class="settings-form">
+  <Card :level="2" title="Notifications" description="Choose what we tell you about, and where." padding="lg">
+    <div class="settings-sections">
+      <Fieldset legend="E-mail" description="Sent to ada@example.com.">
+        <div class="settings-switches">
+          <div class="settings-switch"><label class="settings-switch__text" for="notify-comments"><b>Comments</b><small>Someone replies to your post or comment.</small></label><Switch id="notify-comments" name="comments" :checked=".State.comments" /></div>
+          <div class="settings-switch"><label class="settings-switch__text" for="notify-mentions"><b>Mentions</b><small>Someone @mentions you anywhere.</small></label><Switch id="notify-mentions" name="mentions" :checked=".State.mentions" /></div>
+          <div class="settings-switch"><label class="settings-switch__text" for="notify-updates"><b>Product updates</b><small>New features, at most once a month.</small></label><Switch id="notify-updates" name="updates" :checked=".State.updates" /></div>
+          <div class="settings-switch"><label class="settings-switch__text" for="notify-security"><b>Security alerts</b><small>New sign-ins and password changes. Always on.</small></label><Switch id="notify-security" name="security" checked disabled /></div>
+        </div>
+      </Fieldset>
+      <Fieldset legend="Push" description="On devices where you are signed in.">
+        <div class="settings-switches">
+          <div class="settings-switch"><label class="settings-switch__text" for="notify-pushMentions"><b>Mentions and replies</b><small>A ping the moment it happens.</small></label><Switch id="notify-pushMentions" name="pushMentions" :checked=".State.pushMentions" /></div>
+          <div class="settings-switch"><label class="settings-switch__text" for="notify-pushReminders"><b>Task reminders</b><small>An hour before a task is due.</small></label><Switch id="notify-pushReminders" name="pushReminders" :checked=".State.pushReminders" /></div>
+        </div>
+      </Fieldset>
+      <Field label="Digest" hint="A summary of everything you missed." :error=".Errors.digest">
+        <RadioGroup name="digest" variant="card" :columns="3" :value=".State.digest" :options="list (dict `value` `never` `label` `Never` `description` `No summary e-mails`) (dict `value` `daily` `label` `Daily` `description` `Every morning at 8:00`) (dict `value` `weekly` `label` `Weekly` `description` `Mondays at 8:00`)" />
+      </Field>
+    </div>
+    <brick:prop name="footer"><span brick:loading hidden><span class="settings-busy"><Icon name="loader" :size="14" class="bk-btn__spin" />Saving…</span></span></brick:prop>
+    <brick:prop name="actions"><Button type="submit">Save preferences</Button></brick:prop>
+  </Card>
+  {{ if .State.saved }}<Toast variant="success" title="Notification preferences saved" id="settings-notify-{{ .State.saves }}" />{{ end }}
+</form>

@@ -1,0 +1,43 @@
+---
+use:
+  Radio: ~/components/Radio.html
+inject:
+  bkField: {default: {}}
+props:
+  name: {type: string, required: true}
+  options: {type: list, default: []}
+  value: {type: string, default: ""}
+  orientation: {type: string, default: vertical, oneof: [vertical, horizontal]}
+  variant: {type: string, default: default, oneof: [default, card]}
+  columns: {type: int, default: 0}
+  label: {type: string, default: ""}
+  disabled: {type: bool, default: false}
+---
+{{/*
+RadioGroup: a set of radios sharing one name, from a list, as a native
+radiogroup (arrow keys move and select; one tab stop).
+
+  <RadioGroup name="plan" :options="list `Free` `Pro` `Team`" value="Pro" />
+  <RadioGroup name="plan" variant="card" :columns="3" :options=".Params.plans" />
+  <RadioGroup name="ship" orientation="horizontal" label="Shipping"><Radio name="ship" value="x" label="Express" /></RadioGroup>
+
+options items are strings or maps {value, label, description, disabled}.
+Inside a <Field> the group is named by the Field's label (aria-labelledby)
+and described by its hint and error; alone, label= is the accessible
+name. The group resets the Field context for its radios, so no radio
+takes the Field's id. Extra <Radio> children render after the options.
+*/}}
+<brick:style>
+.bk-radio-group { display: flex; flex-direction: column; gap: .6rem; margin: 0; padding: 0; border: 0; min-width: 0; }
+.bk-radio-group--horizontal { flex-direction: row; flex-wrap: wrap; column-gap: 1.25rem; }
+.bk-radio-group--card { gap: .5rem; }
+.bk-radio-group--grid { display: grid; grid-template-columns: repeat(var(--bk-cols), minmax(0, 1fr)); }
+@media (max-width: 640px) { .bk-radio-group--grid { grid-template-columns: 1fr; } }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $sel := .Props.value }}
+{{ $card := .Props.variant }}
+{{ $name := .Props.name }}
+{{ $dis := .Props.disabled }}
+{{ provide "bkField" (dict) }}
+<div role="radiogroup" class="{{ cx `bk-radio-group` (print `bk-radio-group--` .Props.orientation) (cond (eq .Props.variant `card`) `bk-radio-group--card` ``) (cond .Props.columns `bk-radio-group--grid` ``) .Attrs.class }}"{{ with .Props.columns }} style="--bk-cols: {{ . }}"{{ end }}{{ if .Props.label }} aria-label="{{ .Props.label }}"{{ else }}{{ with index $f "labelledby" }} aria-labelledby="{{ . }}"{{ end }}{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if index $f "invalid" }} aria-invalid="true"{{ end }}{{ if index $f "required" }} aria-required="true"{{ end }} {{ attrs `class` }}>{{ range .Props.options }}{{ if has . "value" }}<Radio :name="$name" value="{{ .value }}" :label="default .value .label" :description="default `` .description" :checked="eq (print .value) $sel" :variant="$card" :disabled="or $dis .disabled" />{{ else }}<Radio :name="$name" value="{{ . }}" :label="print ." :checked="eq (print .) $sel" :variant="$card" :disabled="$dis" />{{ end }}{{ end }}{{ children }}</div>

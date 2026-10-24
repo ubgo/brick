@@ -1,0 +1,16 @@
+<!doctype html>
+<html><body>
+<h1>Posts</h1>
+<ul>
+{{ range .Props.posts }}
+  <li id="post-{{ .id }}">{{ .title }}
+    <a id="edit-{{ .id }}" href="/posts/{{ .id }}" brick:method="patch">Publish</a>
+    <a id="delete-{{ .id }}" href="/posts/{{ .id }}" brick:method="delete" brick:confirm="Delete {{ .title }}?" brick:disable-with="Deleting…">Delete</a>
+  </li>
+{{ end }}
+</ul>
+<p><LinkButton id="create" href="/posts" brick:method="post">New post</LinkButton></p>
+<p><a id="plain" href="/posts/1">A plain link (GET)</a></p>
+<p id="log">{{ .Props.log }}</p>
+{{ assets }}
+</body></html>

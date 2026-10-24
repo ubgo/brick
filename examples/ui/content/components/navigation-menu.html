@@ -1,0 +1,15 @@
+---
+title: NavigationMenu
+category: Navigation
+description: "A site header's top-level links where some open a mega-menu panel of links with icons and descriptions — details without JavaScript, hover intent and keys with it."
+api:
+  - {name: items, type: list, desc: "[{label, href} | {label, description, columns, links: [{label, href, icon, description}]}]. Required."}
+  - {name: current, type: string, desc: "The current URL; its link (and the panel holding it) get aria-current."}
+  - {name: label, type: string, default: Main, desc: "The nav landmark's name."}
+---
+<h1>NavigationMenu</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A site header" block><NavigationMenuSite /><brick:prop name="code"><Source src="~/demos/NavigationMenuSite.html" /></brick:prop></Example>
+<p style="margin: -.5rem 0 1.25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Rest the pointer on Product or Resources, or Tab to one and press ↓. Without JavaScript each panel is a native details, and opening one closes the others.</p>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

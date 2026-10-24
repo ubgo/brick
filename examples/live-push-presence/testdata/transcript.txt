@@ -1,0 +1,26 @@
+Ada: GET /orders/
+  <ul class="orders"><li>#1 pending <button brick:click="ship(1)">Ship</button></li><li>#2 pending <button brick:click="ship(2)">Ship</button></li></ul>
+Ada: GET /_brick/events?l=<listen token>  (open)
+Bob: POST Orders.ship(1)
+  effects: 0
+Ada: ← event: refresh  data: orders
+Ada: POST Orders.$refresh()
+  <ul class="orders"><li>#1 shipped</li><li>#2 pending <button brick:click="ship(2)">Ship</button></li></ul>
+webhook: POST /webhook/shipped/2 → 204
+Ada: ← event: refresh  data: orders
+Ada: POST Orders.$refresh()
+  <ul class="orders"><li>#1 shipped</li><li>#2 shipped</li></ul>
+signed out: GET /_brick/events → events: 403
+Ada: GET /room/
+  <div class="room"><p>0 here</p><ul></ul></div>
+Ada: ← event: refresh  data: brick:presence:room:lobby
+Ada: POST Room.$refresh()
+  <div class="room"><p>1 here</p><ul><li>Ada</li></ul></div>
+Bob: GET /room/ and its stream
+Ada: ← event: refresh  data: brick:presence:room:lobby
+Ada: POST Room.$refresh()
+  <div class="room"><p>2 here</p><ul><li>Ada</li><li>Bob</li></ul></div>
+Bob closes the tab
+Ada: ← event: refresh  data: brick:presence:room:lobby
+Ada: POST Room.$refresh()
+  <div class="room"><p>1 here</p><ul><li>Ada</li></ul></div>

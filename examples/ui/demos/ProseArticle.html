@@ -1,0 +1,34 @@
+<Prose>
+  <h1>Rendering on the server, again</h1>
+  <p>For a decade the default answer to "how should this page render?" was <em>in the browser</em>. The pendulum is swinging back — not because client rendering failed, but because most pages never needed it. <a href="#">Read the original proposal</a>.</p>
+  <h2>What changes</h2>
+  <p>A component is a file. It renders to HTML on the server, ships its CSS once, and adds JavaScript only where the page needs behaviour:</p>
+  <ul>
+    <li><strong>No build step.</strong> Save the file, reload the page.</li>
+    <li><strong>No hydration.</strong> Client code enhances markup that is already there.</li>
+    <li>Progressive by default — every component works with JavaScript off.
+      <ul><li>A dialog is a native <code>&lt;dialog&gt;</code>.</li><li>A dropdown is a <code>&lt;details&gt;</code>.</li></ul>
+    </li>
+  </ul>
+  <blockquote>The fastest JavaScript is the JavaScript you never send.</blockquote>
+  <h3>A component</h3>
+  <pre><code>&lt;Card title="Team" description="Invite people to your workspace."&gt;
+  &lt;Button icon="plus"&gt;Invite&lt;/Button&gt;
+&lt;/Card&gt;</code></pre>
+  <h3>Numbers</h3>
+  <table>
+    <thead><tr><th>Page</th><th>JS shipped</th><th>Time to interactive</th></tr></thead>
+    <tbody>
+      <tr><td>Marketing home</td><td>3 KB</td><td>0.4 s</td></tr>
+      <tr><td>Dashboard</td><td>11 KB</td><td>0.7 s</td></tr>
+      <tr><td>Settings</td><td>4 KB</td><td>0.5 s</td></tr>
+    </tbody>
+  </table>
+  <ol>
+    <li>Write the page as HTML.</li>
+    <li>Pull repeated markup into components.</li>
+    <li>Add <kbd>⌘</kbd> <kbd>S</kbd> and watch it reload.</li>
+  </ol>
+  <hr>
+  <p>Questions or corrections? <mark>We read every message.</mark></p>
+</Prose>

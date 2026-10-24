@@ -1,0 +1,46 @@
+---
+props:
+  count: {type: int, default: 0}
+  max: {type: int, default: 99}
+  text: {type: string, default: ""}
+  dot: {type: bool, default: false}
+  tone: {type: string, default: danger, oneof: [danger, primary, success, warning, info, neutral]}
+  position: {type: string, default: top-end, oneof: [top-end, top-start, bottom-end, bottom-start]}
+  label: {type: string, default: ""}
+  ping: {type: bool, default: false}
+---
+{{/*
+Indicator: a small badge or dot pinned to the corner of its children — an
+unread count on a bell, an online dot on an avatar, "New" on a card.
+
+  <Indicator :count="3" label="3 unread notifications"><Button variant="outline" icon="bell" square label="Notifications" /></Indicator>
+  <Indicator dot tone="success" position="bottom-end" label="Online"><img class="avatar" src="/ada.jpg" alt="Ada"></Indicator>
+  <Indicator text="New" tone="primary"><Card title="Reports" /></Indicator>
+
+A count over max shows as "99+"; a count of 0 with no text or dot shows
+nothing, so an empty inbox needs no condition in the page. The badge is
+hidden from screen readers; label says the same thing in words.
+*/}}
+<brick:style>
+.bk-indicator { position: relative; display: inline-flex; vertical-align: middle; }
+.bk-indicator__badge { position: absolute; z-index: 1; top: 0; right: 0; transform: translate(40%, -40%); display: inline-grid; place-items: center; min-width: 1.15rem; height: 1.15rem; padding: 0 .3rem; border-radius: var(--bk-radius-full); box-shadow: 0 0 0 2px var(--bk-bg); font: 600 .6875rem/1 var(--bk-font); font-variant-numeric: tabular-nums; white-space: nowrap; pointer-events: none; }
+.bk-indicator__badge--dot { min-width: 0; width: .625rem; height: .625rem; padding: 0; transform: translate(25%, -25%); }
+.bk-indicator--top-start .bk-indicator__badge { right: auto; left: 0; transform: translate(-40%, -40%); }
+.bk-indicator--bottom-end .bk-indicator__badge { top: auto; bottom: 0; transform: translate(40%, 40%); }
+.bk-indicator--bottom-start .bk-indicator__badge { top: auto; right: auto; bottom: 0; left: 0; transform: translate(-40%, 40%); }
+.bk-indicator--top-start .bk-indicator__badge--dot { transform: translate(-25%, -25%); }
+.bk-indicator--bottom-end .bk-indicator__badge--dot { transform: translate(25%, 25%); }
+.bk-indicator--bottom-start .bk-indicator__badge--dot { transform: translate(-25%, 25%); }
+.bk-indicator__badge--danger { background: var(--bk-danger); color: var(--bk-danger-fg); }
+.bk-indicator__badge--primary { background: var(--bk-primary); color: var(--bk-primary-fg); }
+.bk-indicator__badge--success { background: var(--bk-success); color: var(--bk-success-fg); }
+.bk-indicator__badge--warning { background: var(--bk-warning); color: var(--bk-warning-fg); }
+.bk-indicator__badge--info { background: var(--bk-info); color: var(--bk-info-fg); }
+.bk-indicator__badge--neutral { background: var(--bk-neutral); color: var(--bk-neutral-fg); }
+.bk-indicator__badge--ping::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: inherit; animation: bk-indicator-ping 1.4s cubic-bezier(0, 0, .2, 1) infinite; z-index: -1; }
+@keyframes bk-indicator-ping { 75%, 100% { transform: scale(2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bk-indicator__badge--ping::after { animation: none; } }
+</brick:style>
+{{ $p := .Props }}
+{{ $show := or $p.dot $p.text (gt $p.count 0) }}
+<span class="{{ cx `bk-indicator` (cond (ne $p.position `top-end`) (print `bk-indicator--` $p.position) ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}{{ if $show }}<span class="{{ cx `bk-indicator__badge` (print `bk-indicator__badge--` $p.tone) (cond $p.dot `bk-indicator__badge--dot` ``) (cond $p.ping `bk-indicator__badge--ping` ``) }}" aria-hidden="true">{{ if not $p.dot }}{{ if $p.text }}{{ $p.text }}{{ else if gt $p.count $p.max }}{{ $p.max }}+{{ else }}{{ $p.count }}{{ end }}{{ end }}</span>{{ with $p.label }}<span class="bk-sr-only">{{ . }}</span>{{ end }}{{ end }}</span>

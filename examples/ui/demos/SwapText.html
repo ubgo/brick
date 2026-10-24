@@ -1,0 +1,12 @@
+<brick:style>
+.follow-swap { height: var(--bk-h-md); padding: 0 .9rem; border-radius: var(--bk-radius-full); border: 1px solid var(--bk-input); background: var(--bk-surface); font-weight: 500; font-size: var(--bk-text-sm); }
+.follow-swap .bk-swap__on { color: var(--bk-success); }
+</brick:style>
+<Swap label="Follow Ada" name="follow" effect="fade" class="follow-swap">
+  <brick:prop name="off"><Icon name="plus" :size="14" />&nbsp;Follow</brick:prop>
+  <brick:prop name="on"><Icon name="check" :size="14" />&nbsp;Following</brick:prop>
+</Swap>
+<Swap label="Show details" effect="rotate">
+  <brick:prop name="off"><Icon name="chevron-down" :size="18" /></brick:prop>
+  <brick:prop name="on"><Icon name="chevron-up" :size="18" /></brick:prop>
+</Swap>

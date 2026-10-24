@@ -1,0 +1,73 @@
+---
+props:
+  data: {type: list, default: []}
+  y: {type: string, default: value}
+  variant: {type: string, default: line, oneof: [line, area, bar]}
+  tone: {type: string, default: "1"}
+  width: {type: int, default: 96}
+  height: {type: int, default: 28}
+  dot: {type: bool, default: true}
+  label: {type: string, default: Trend}
+---
+{{/*
+Sparkline: a word-sized trend with no axes — beside a number in a stat
+card, a table cell or a sentence.
+
+  <Sparkline :data="list 4 6 5 9 12 11 15" />
+  <Sparkline :data=".Params.weekly" y="orders" variant="bar" tone="success" label="Orders this week" />
+  <Sparkline :data="$visits" variant="area" :width="160" :height="40" />
+
+data is a list of numbers, or of maps read at the key y. Lines and areas
+span the data's own minimum to maximum, so small changes show; bars start
+at zero, so their heights compare. dot marks the latest value. The
+accessible name is label plus the first, last, lowest and highest values,
+since a sparkline has no table. tone is 1–6 or a token name, as in the
+charts; width and height are px, and the line stays 1.5px at any size.
+*/}}
+<brick:style>
+/* bk-chart base: the same in every chart component (kit_nav_test.go checks) */
+.bk-chart { --bk-chart-bg: var(--bk-surface); --bk-chart-grid: color-mix(in oklab, var(--bk-border) 70%, transparent); --bk-chart-gutter: 2.75rem; position: relative; margin: 0; min-width: 0; color: var(--bk-muted-fg); font-size: .6875rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.bk-chart [data-tone="1"] { --bk-c: var(--bk-chart-1); }
+.bk-chart [data-tone="2"] { --bk-c: var(--bk-chart-2); }
+.bk-chart [data-tone="3"] { --bk-c: var(--bk-chart-3); }
+.bk-chart [data-tone="4"] { --bk-c: var(--bk-chart-4); }
+.bk-chart [data-tone="5"] { --bk-c: var(--bk-chart-5); }
+.bk-chart [data-tone="6"] { --bk-c: var(--bk-chart-6); }
+.bk-chart [data-tone=primary] { --bk-c: var(--bk-primary); }
+.bk-chart [data-tone=success] { --bk-c: var(--bk-success); }
+.bk-chart [data-tone=warning] { --bk-c: var(--bk-warning); }
+.bk-chart [data-tone=danger] { --bk-c: var(--bk-danger); }
+.bk-chart [data-tone=info] { --bk-c: var(--bk-info); }
+.bk-chart [data-tone=neutral] { --bk-c: color-mix(in oklab, var(--bk-muted-fg) 70%, transparent); }
+.bk-chart__plot { position: relative; }
+.bk-chart__plot:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 4px; border-radius: var(--bk-radius-sm); }
+.bk-chart__gl { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--bk-chart-grid); }
+.bk-chart__gl:first-child { border-top-color: var(--bk-border); }
+.bk-chart__gl > span { position: absolute; right: calc(100% + .5rem); top: 0; transform: translateY(-50%); white-space: nowrap; }
+.bk-chart__xaxis { display: flex; margin: .45rem 0 0 var(--bk-chart-gutter); }
+.bk-chart__xaxis > span { display: flex; flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
+.bk-chart__xaxis > .bk-chart__skip { visibility: hidden; }
+@container (max-width: 520px) { .bk-chart__xaxis > .bk-chart__x2 { visibility: hidden; } }
+@container (max-width: 300px) { .bk-chart__xaxis > .bk-chart__x4 { visibility: hidden; } }
+.bk-chart__tip { position: absolute; z-index: var(--bk-z-tooltip); min-width: 8rem; padding: .4rem .55rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); pointer-events: none; font-size: var(--bk-text-xs); }
+.bk-chart__tip-head { margin-bottom: .2rem; color: var(--bk-muted-fg); font-weight: 500; }
+.bk-chart__tip-row { display: flex; align-items: center; gap: .45rem; line-height: 1.5; }
+.bk-chart__tip-row > i { flex: none; width: .7rem; height: 2px; border-radius: 1px; background: var(--bk-c, var(--bk-muted-fg)); }
+.bk-chart__tip-row > b { font-weight: 600; }
+.bk-chart__tip-row > span { color: var(--bk-muted-fg); }
+.bk-chart__empty { display: grid; place-items: center; min-height: 8rem; border: 1px dashed var(--bk-border); border-radius: var(--bk-radius); font-size: var(--bk-text-sm); }
+.bk-chart .bk-chart-legend { margin-top: .75rem; }
+/* end bk-chart base */
+.bk-sparkline { display: inline-block; position: relative; vertical-align: middle; width: var(--bk-spark-w); height: var(--bk-spark-h); }
+.bk-sparkline__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.bk-sparkline__line { fill: none; stroke: var(--bk-c); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.bk-sparkline__area { fill: color-mix(in oklab, var(--bk-c) 14%, transparent); stroke: none; }
+.bk-sparkline__dot { position: absolute; width: 5px; height: 5px; border: 1.5px solid var(--bk-chart-bg); border-radius: 50%; background: var(--bk-c); box-sizing: content-box; transform: translate(-50%, 50%); }
+.bk-sparkline__bars { position: absolute; inset: 0; display: flex; align-items: flex-end; gap: 1px; }
+.bk-sparkline__bars > i { flex: 1 1 0; min-height: 1px; border-radius: 1px 1px 0 0; background: color-mix(in oklab, var(--bk-c) 55%, transparent); }
+.bk-sparkline__bars > i:last-child { background: var(--bk-c); }
+</brick:style>
+{{ $min := 0.0 }}{{ $max := 0.0 }}{{ $n := len .Props.data }}{{ $first := 0.0 }}{{ $last := 0.0 }}
+{{ range $i, $d := .Props.data }}{{ $v := $d }}{{ if hasPrefix "map[" (printf "%T" $d) }}{{ $v = index $d $.Props.y }}{{ end }}{{ $f := mul 1.0 (default 0 $v) }}{{ if eq $i 0 }}{{ $min = $f }}{{ $max = $f }}{{ $first = $f }}{{ end }}{{ $min = min $min $f }}{{ $max = max $max $f }}{{ $last = $f }}{{ end }}
+{{ $span := cond (gt $max $min) (sub $max $min) 1.0 }}{{ $top := cond (gt $max 0.0) $max 1.0 }}{{ $den := mul 1.0 (max 1 (sub $n 1)) }}
+<span class="{{ cx `bk-chart` `bk-sparkline` .Attrs.class }}" style="--bk-spark-w: {{ .Props.width }}px; --bk-spark-h: {{ .Props.height }}px" role="img" aria-label="{{ .Props.label }}{{ if $n }}: {{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $first 2)))) }} to {{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $last 2)))) }}, low {{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $min 2)))) }}, high {{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $max 2)))) }}{{ end }}" {{ attrs `class` }}>{{ if $n }}{{ if eq .Props.variant "bar" }}<span class="bk-sparkline__bars" data-tone="{{ .Props.tone }}">{{ range $d := .Props.data }}{{ $v := $d }}{{ if hasPrefix "map[" (printf "%T" $d) }}{{ $v = index $d $.Props.y }}{{ end }}<i style="height: {{ printf `%.2f` (mul 100.0 (div (max 0.0 (mul 1.0 (default 0 $v))) $top)) }}%"></i>{{ end }}</span>{{ else }}{{ $d := "" }}{{ $lx := 50.0 }}{{ $ly := 50.0 }}{{ range $i, $e := .Props.data }}{{ $v := $e }}{{ if hasPrefix "map[" (printf "%T" $e) }}{{ $v = index $e $.Props.y }}{{ end }}{{ $px := cond (gt $n 1) (mul 100.0 (div (mul 1.0 $i) $den)) 50.0 }}{{ $py := sub 92.0 (mul 84.0 (div (sub (mul 1.0 (default 0 $v)) $min) $span)) }}{{ $d = print $d (cond (eq $i 0) "M" " L") (printf "%.2f %.2f" $px $py) }}{{ $lx = $px }}{{ $ly = $py }}{{ end }}<svg class="bk-sparkline__svg" data-tone="{{ .Props.tone }}" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ if eq .Props.variant "area" }}<path class="bk-sparkline__area" d="{{ $d }} L{{ printf `%.2f` $lx }} 100 L{{ cond (gt $n 1) `0` `50` }} 100 Z"/>{{ end }}<path class="bk-sparkline__line" d="{{ $d }}" vector-effect="non-scaling-stroke"/></svg>{{ if .Props.dot }}<i class="bk-sparkline__dot" data-tone="{{ .Props.tone }}" style="left: {{ printf `%.2f` $lx }}%; bottom: {{ printf `%.2f` (sub 100.0 $ly) }}%"></i>{{ end }}{{ end }}{{ end }}</span>

@@ -1,0 +1,19 @@
+---
+title: Icon
+category: Foundations
+description: Inline SVG icons adapted from Lucide. They take the colour of the text around them and are hidden from screen readers unless labelled.
+api:
+  - {name: name, type: string, desc: "The icon, a key of kit/data/icons.yaml. Required."}
+  - {name: size, type: int, default: "16", desc: Width and height in pixels.}
+  - {name: stroke, type: string, default: "2", desc: The stroke width.}
+  - {name: label, type: string, desc: "Makes the icon an image with this accessible name; without it the icon is decorative (aria-hidden)."}
+---
+<h1>Icon</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Every icon — type to filter, press / to search" block><IconGallery /><brick:prop name="code"><Source src="~/demos/IconGallery.html" /></brick:prop></Example>
+<Example title="Sizes, stroke and colour"><IconSizes /><brick:prop name="code"><Source src="~/demos/IconSizes.html" /></brick:prop></Example>
+<Example title="Accessible names"><IconLabel /><brick:prop name="code"><Source src="~/demos/IconLabel.html" /></brick:prop></Example>
+<h2>Adding an icon</h2>
+<Prose><p>Icons live in <code>kit/data/icons.yaml</code>, one line each: the name, then the <code>d</code> of every stroked path on a 24×24 grid. Copy the paths from <a href="https://lucide.dev">Lucide</a>, write circles and rectangles as paths, and keep the file alphabetical. The kit's lint test fails on any icon name a kit file uses that is not in the set.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

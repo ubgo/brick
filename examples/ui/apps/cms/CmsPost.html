@@ -1,0 +1,47 @@
+---
+use:
+  cms: ~/apps/cms/cms.star
+brick:
+  island: true
+inject:
+  query: {default: {}}
+load: cms.public_post
+props:
+  post: {type: map, default: {}}
+  slug: {type: string, default: ""}
+  more: {type: list, default: []}
+---
+{{/*
+CmsPost: one public post, chosen by the ?slug= in the URL. An island that
+injects the request's query (examples/ui/main.go provides it), so every
+post has its own shareable address while the page around it stays cached.
+Only live posts show: a draft's slug gives "not found". The body was
+sanitized when it was stored and is sanitized again here.
+*/}}
+<brick:style>
+.cms-article { max-width: 44rem; margin: 0 auto; }
+.cms-article__back { margin-bottom: 1rem; }
+.cms-article__meta { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 1.25rem 0 0; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.cms-article__who { color: var(--bk-fg); font-weight: 600; }
+.cms-article__lead { margin-top: 1rem; color: var(--bk-muted-fg); font-size: var(--bk-text-lg); line-height: 1.6; }
+.cms-article__tags { display: flex; flex-wrap: wrap; gap: .35rem; margin: 2rem 0 0; }
+.cms-article__more { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--bk-border); }
+.cms-article__more h2 { margin-bottom: 1rem; font-size: var(--bk-text-lg); }
+</brick:style>
+<div class="{{ cx `cms-article` .Attrs.class }}" {{ attrs `class` }}>
+  <div class="cms-article__back"><Button variant="ghost" size="sm" icon="arrow-left" href="/apps/cms/blog/">All posts</Button></div>
+  {{ with .Props.post }}
+  <article>
+    <CmsCover :tone=".cover" :title=".title" size="lg" />
+    <h1 class="bk-sr-only">{{ .title }}</h1>
+    <div class="cms-article__meta"><Avatar :name=".author" size="sm" /><span class="cms-article__who">{{ .author }}</span> · <time datetime="{{ .published }}">{{ dateFormat "Monday, 2 January 2006" (slice .published 0 10) }}</time></div>
+    {{ with .excerpt }}<p class="cms-article__lead">{{ . }}</p>{{ end }}
+    <Prose size="lg" style="margin-top: 1.5rem">{{ sanitize .body_html }}</Prose>
+    <div class="cms-article__tags">{{ range .taglist }}<Tag size="sm">{{ . }}</Tag>{{ end }}</div>
+  </article>
+  {{ with $.Props.more }}<section class="cms-article__more"><h2>More posts</h2><CmsBlogList :posts="." /></section>{{ end }}
+  {{ else }}
+  <h1 class="bk-sr-only">{{ cond .Props.slug (print `No post at “` .Props.slug `”`) `Which post?` }}</h1>
+  <EmptyState icon="file" :title="cond .Props.slug (print `No post at “` .Props.slug `”`) `Which post?`" description="It may be a draft, scheduled for later, or deleted." bordered><Button href="/apps/cms/blog/" icon="arrow-left" variant="outline">All posts</Button></EmptyState>
+  {{ end }}
+</div>

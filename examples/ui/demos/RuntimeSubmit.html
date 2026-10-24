@@ -1,0 +1,33 @@
+---
+inject:
+  query: {default: {}}
+state:
+  name: ""
+---
+<brick:script>
+# brick:submit sends the form's named fields as the action's third
+# argument. The action checks the name like any action; only a valid form
+# is handed to the browser, which posts it natively to /demo/sign-in (a
+# plain Go handler in examples/ui/main.go). That handler sets a cookie and
+# answers 303, which only a top-level form post can turn into a signed-in
+# page.
+def sign_in(state, props, form):
+    name = str(form.get("name", "")).strip()
+    if not name:
+        return [state, {"name": "Enter a name to sign in."}]
+    brick.submit("classic")
+    return dict(state, name = name)
+</brick:script>
+{{/* The wrapper div holds the signed-in note next to the form. The form
+could also be the root: since v10 the runtime finds a brick:ref on the
+component's root element itself. */}}
+<div style="display: grid; gap: .5rem; width: 100%; max-width: 24rem">
+  {{ with index .Ctx.query "signed" }}<p id="rsub-signed" style="margin: 0">Signed in as <b>{{ . }}</b>: the classic POST set a cookie and redirected here.</p>{{ end }}
+  <form id="rsub-form" brick:ref="classic" brick:submit="sign_in" method="post" action="/demo/sign-in" style="display: grid; gap: .5rem">
+    <div style="display: flex; gap: .5rem">
+      <Input id="rsub-name" name="name" value="{{ .State.name }}" placeholder="Your name" />
+      <Button id="rsub-go" type="submit">Sign in</Button>
+    </div>
+    {{ with .Errors.name }}<p id="rsub-error" style="margin: 0; color: var(--bk-danger); font-size: var(--bk-text-sm)">{{ . }}</p>{{ end }}
+  </form>
+</div>

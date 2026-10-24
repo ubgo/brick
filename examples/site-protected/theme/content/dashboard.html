@@ -1,0 +1,6 @@
+---
+title: Dashboard
+brick: {per_request: true}
+---
+<h1>Dashboard</h1>
+<p>{{ with .Ctx.user }}Hello, {{ . }}.{{ else }}Hello, guest.{{ end }}</p>

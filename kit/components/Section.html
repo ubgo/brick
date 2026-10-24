@@ -1,0 +1,56 @@
+---
+props:
+  title: {type: string, default: ""}
+  description: {type: string, default: ""}
+  eyebrow: {type: string, default: ""}
+  align: {type: string, default: start, oneof: [start, center]}
+  spacing: {type: string, default: md, oneof: [none, sm, md, lg]}
+  level: {type: int, default: 2, oneof: [2, 3]}
+---
+{{/*
+Section: a titled region of a page — "Features", "Pricing", a group of
+settings. It gives the content a heading, an optional line of description
+and consistent vertical rhythm.
+
+  <Section title="Features" description="Everything you need, nothing you don't.">…</Section>
+  <Section eyebrow="Pricing" title="Simple plans" align="center" spacing="lg">…</Section>
+  <Section title="Notifications" :level="3" spacing="sm">
+    <brick:prop name="actions"><Button size="sm" variant="ghost">Reset</Button></brick:prop>
+    …
+  </Section>
+
+With a title the <section> is labelled by its heading, so it becomes a
+landmark screen readers can jump to; without one it is plain spacing.
+*/}}
+<brick:style>
+.bk-section { padding-block: var(--bk-space-8); }
+.bk-section--none { padding-block: 0; }
+.bk-section--sm { padding-block: var(--bk-space-4); }
+.bk-section--lg { padding-block: 3rem; }
+@media (min-width: 768px) { .bk-section--lg { padding-block: 4.5rem; } }
+.bk-section__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--bk-space-3); margin-bottom: var(--bk-space-6); }
+.bk-section--sm .bk-section__head { margin-bottom: var(--bk-space-4); }
+.bk-section__text { display: flex; flex-direction: column; gap: .4rem; min-width: 0; max-width: 42rem; }
+.bk-section__eyebrow { color: var(--bk-primary-text); font-size: var(--bk-text-sm); font-weight: 600; }
+.bk-section__title { margin: 0; color: var(--bk-fg); font-size: var(--bk-text-2xl); font-weight: 600; line-height: 1.2; letter-spacing: -.02em; }
+.bk-section--lg .bk-section__title { font-size: clamp(1.6rem, 3.5vw, 2.25rem); letter-spacing: -.03em; }
+h3.bk-section__title { font-size: var(--bk-text-lg); letter-spacing: -.01em; }
+.bk-section__description { margin: 0; color: var(--bk-muted-fg); font-size: var(--bk-text-base); line-height: 1.6; }
+.bk-section--lg .bk-section__description { font-size: var(--bk-text-lg); }
+.bk-section__actions { display: flex; align-items: center; gap: var(--bk-space-2); }
+.bk-section--center .bk-section__head { flex-direction: column; align-items: center; text-align: center; }
+.bk-section--center .bk-section__text { align-items: center; margin-inline: auto; }
+</brick:style>
+{{ $p := .Props }}
+{{ $hid := print $.ID "-title" }}
+<section class="{{ cx `bk-section` (cond (ne $p.spacing `md`) (print `bk-section--` $p.spacing) ``) (cond (eq $p.align `center`) `bk-section--center` ``) .Attrs.class }}"{{ if $p.title }} aria-labelledby="{{ $hid }}"{{ end }} {{ attrs `class` }}>
+  {{ if or $p.title $p.description $p.eyebrow (hasNode "actions") }}<div class="bk-section__head">
+    <div class="bk-section__text">
+      {{ with $p.eyebrow }}<p class="bk-section__eyebrow">{{ . }}</p>{{ end }}
+      {{ if $p.title }}{{ if eq $p.level 3 }}<h3 class="bk-section__title" id="{{ $hid }}">{{ $p.title }}</h3>{{ else }}<h2 class="bk-section__title" id="{{ $hid }}">{{ $p.title }}</h2>{{ end }}{{ end }}
+      {{ with $p.description }}<p class="bk-section__description">{{ . }}</p>{{ end }}
+    </div>
+    {{ if hasNode "actions" }}<div class="bk-section__actions">{{ node "actions" }}</div>{{ end }}
+  </div>{{ end }}
+  {{ children }}
+</section>

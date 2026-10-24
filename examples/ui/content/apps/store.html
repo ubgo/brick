@@ -1,0 +1,28 @@
+---
+title: Store
+layout: app
+description: A shop built only from kit components — filters, sort and search held in one stateful component, a cart drawer over SQLite, and a checkout with validation.
+---
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/store/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Store`)" />
+    <div class="app-top"><ThemeToggle /></div>
+  </brick:prop>
+  <div class="app-page"><StoreCatalog /></div>
+  <Toaster />
+</AppShell>
+<brick:style>
+.app-top { margin-left: auto; display: flex; gap: .5rem; }
+.app-page { max-width: 80rem; margin: 0 auto; padding: .5rem .25rem 3rem; }
+</brick:style>
+
+<AppSource app="Store">
+  <Tabs label="Store files" size="sm">
+    <Tab title="store.html"><CodeView file="content/apps/store.html"><Source src="~/content/apps/store.html" /></CodeView></Tab>
+    <Tab title="StoreCatalog.html"><CodeView file="apps/store/StoreCatalog.html"><Source src="~/apps/store/StoreCatalog.html" /></CodeView></Tab>
+    <Tab title="store.star"><CodeView file="apps/store/store.star"><Source src="~/apps/store/store.star" /></CodeView></Tab>
+    <Tab title="db_store.go"><CodeView file="demodb/db_store.go"><Source src="~/demodb/db_store.go" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

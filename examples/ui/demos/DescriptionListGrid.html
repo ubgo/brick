@@ -1,0 +1,13 @@
+---
+specs:
+  - {term: Region, desc: eu-west-1}
+  - {term: Instance, desc: c7g.large}
+  - {term: vCPU, desc: "2"}
+  - {term: Memory, desc: 4 GiB}
+  - {term: Uptime, desc: 41 days}
+  - {term: Created, desc: "Aug 17, 2026"}
+---
+<div style="display: grid; gap: 2rem; width: 100%">
+  <DescriptionList layout="grid" :items=".Params.specs" />
+  <DescriptionList layout="stacked" :items="slice .Params.specs 0 3" style="max-width: 20rem" />
+</div>

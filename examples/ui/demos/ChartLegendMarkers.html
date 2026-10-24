@@ -1,0 +1,5 @@
+<div style="display: grid; gap: 1rem; width: 100%; max-width: 22rem">
+  <ChartLegend :items="list (dict `label` `Desktop`) (dict `label` `Mobile`) (dict `label` `Tablet`)" />
+  <ChartLegend marker="line" :items="list (dict `label` `p50` `tone` `info`) (dict `label` `p95` `tone` `warning`)" />
+  <ChartLegend marker="dot" direction="column" valueKey="value" percent :items="list (dict `label` `Chrome` `value` 6420) (dict `label` `Safari` `value` 3180) (dict `label` `Firefox` `value` 1240)" />
+</div>

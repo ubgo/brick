@@ -1,0 +1,62 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Input: ~/components/Input.html
+props:
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  shortcut: {type: string, default: ""}
+  clearLabel: {type: string, default: Clear search}
+  disabled: {type: bool, default: false}
+---
+{{/*
+SearchInput: a search field with a magnifier, a clear button and an
+optional keyboard-shortcut hint that focuses it.
+
+  <SearchInput name="q" placeholder="Search contacts" />
+  <SearchInput name="q" placeholder="Search docs" shortcut="⌘K" />
+  <SearchInput name="q" shortcut="/" size="sm" hx-get="/search" hx-trigger="input changed delay:300ms" />
+
+shortcut="⌘K" (or "Ctrl K") focuses the field on Cmd/Ctrl+K; shortcut="/"
+on a bare slash typed outside a text field. The hint hides while the field
+is focused. The clear button (JavaScript only) empties the field, fires
+input and change, and keeps focus; Escape does the same. Every attribute
+but class reaches the <input type="search">.
+*/}}
+<brick:client>
+brick.mount("SearchInput", (el) => {
+  const input = el.querySelector("input");
+  const clear = el.querySelector(".bk-search__clear");
+  const hint = (el.getAttribute("data-shortcut") || "").trim();
+  const letter = hint.length > 1 ? hint.slice(-1).toLowerCase() : "";
+  const sync = () => { clear.hidden = input.value === "" || input.disabled; };
+  const empty = () => {
+    input.value = "";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    sync();
+    input.focus();
+  };
+  const onKey = (e) => { if (e.key === "Escape" && input.value) { e.preventDefault(); empty(); } };
+  const onDoc = (e) => {
+    if (!hint) return;
+    const t = e.target, typing = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+    const hit = hint === "/" ? e.key === "/" && !typing && !e.metaKey && !e.ctrlKey : letter && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === letter;
+    if (hit) { e.preventDefault(); input.focus(); input.select(); }
+  };
+  input.addEventListener("input", sync);
+  input.addEventListener("keydown", onKey);
+  clear.addEventListener("click", empty);
+  document.addEventListener("keydown", onDoc);
+  sync();
+  return () => { input.removeEventListener("input", sync); input.removeEventListener("keydown", onKey); clear.removeEventListener("click", empty); document.removeEventListener("keydown", onDoc); };
+})
+</brick:client>
+<brick:style>
+.bk-search { width: 100%; }
+.bk-search__clear { display: grid; place-items: center; width: 1.4rem; height: 1.4rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-search__clear:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-search__clear[hidden] { display: none; }
+.bk-search__kbd { display: inline-flex; align-items: center; height: 1.25rem; padding: 0 .35rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-surface-2); color: var(--bk-muted-fg); font: 500 var(--bk-text-xs)/1 var(--bk-font); white-space: nowrap; box-shadow: 0 1px 0 var(--bk-border); }
+.bk-search:focus-within .bk-search__kbd, .bk-search__clear:not([hidden]) + .bk-search__kbd { display: none; }
+</brick:style>
+<div class="{{ cx `bk-search` .Attrs.class }}"{{ with .Props.shortcut }} data-shortcut="{{ . }}"{{ end }}><Input type="search" icon="search" :size=".Props.size" :disabled=".Props.disabled" brick:spread="omit .Attrs `class`"><brick:prop name="trailing"><button type="button" class="bk-search__clear" aria-label="{{ .Props.clearLabel }}" hidden><Icon name="x" :size="14" /></button>{{ with .Props.shortcut }}<kbd class="bk-search__kbd" aria-hidden="true">{{ . }}</kbd>{{ end }}</brick:prop></Input></div>

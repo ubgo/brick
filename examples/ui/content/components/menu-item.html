@@ -1,0 +1,18 @@
+---
+title: MenuItem
+category: Overlays
+description: "One entry of a DropdownMenu: a link or a button, with an icon, a shortcut hint, a danger tone and a disabled state."
+api:
+  - {name: href, type: string, desc: "Makes it a link."}
+  - {name: icon, type: string, desc: "An icon before the text."}
+  - {name: shortcut, type: string, desc: "A keyboard hint at the end (display only)."}
+  - {name: type, type: "button | submit", default: button, desc: "A submit item submits the form around it (or form=)."}
+  - {name: danger, type: bool, desc: "Red, for destructive actions."}
+  - {name: disabled, type: bool, desc: "Inert and skipped by the arrow keys; a link loses its href."}
+---
+<h1>MenuItem</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>Menu items live inside a <a href="/components/dropdown-menu/">DropdownMenu</a>, which supplies <code>role="menu"</code> and the keyboard. Attributes you add (<code>brick:click</code> in a stateful component, <code>hx-*</code>, <code>form</code>) land on the item.</p>
+<Example title="Every kind of item"><MenuItemAnatomy /><brick:prop name="code"><Source src="~/demos/MenuItemAnatomy.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

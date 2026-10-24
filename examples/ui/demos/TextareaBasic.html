@@ -1,0 +1,8 @@
+<div style="display: grid; gap: 1rem; width: 100%; max-width: 24rem">
+  <Field label="Bio" hint="A sentence or two about you.">
+    <Textarea name="bio" placeholder="I build tools for…" />
+  </Field>
+  <Field label="Feedback" optional>
+    <Textarea name="feedback" :rows="4" value="The new dashboard is great, but the export button is hard to find." />
+  </Field>
+</div>

@@ -1,0 +1,20 @@
+---
+use:
+  demo: ~/demos/demo_data.star
+load: demo.contacts_page
+props:
+  page: {type: int, default: 2}
+  perPage: {type: int, default: 8}
+columns:
+  - {key: id, label: "#", align: right, width: 3rem}
+  - {key: name, label: Name}
+  - {key: company, label: Company}
+  - {key: role, label: Role}
+  - {key: status, label: Status}
+---
+<div style="display: grid; gap: .75rem; width: 100%">
+  <Table :columns=".Params.columns" :rows=".Props.rows" compact hover>
+    <brick:prop name="cell_status"><Badge :tone="cond (eq .Slot.value `active`) `success` (cond (eq .Slot.value `lead`) `info` `neutral`)">{{ .Slot.value }}</Badge></brick:prop>
+  </Table>
+  <Pagination :page=".Props.page" :total=".Props.total" :perPage=".Props.perPage" href="#page-%d" />
+</div>

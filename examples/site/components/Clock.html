@@ -1,0 +1,8 @@
+---
+use:
+  clock: ~/lib/clock.star
+load: clock.tick
+state:
+  ticks: 0
+---
+<div class="clock" brick:poll="2s"><time>{{ .Props.time }}</time> <small>(refreshes every 2 seconds)</small></div>

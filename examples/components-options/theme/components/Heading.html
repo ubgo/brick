@@ -1,0 +1,5 @@
+---
+props:
+  level: {type: int, default: 2}
+---
+{{ $h := print "h" .Props.level }}{{ tag $h "class" "title" }}{{ children }}{{ endtag $h }}

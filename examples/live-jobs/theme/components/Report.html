@@ -1,0 +1,24 @@
+---
+state: {job: ""}
+props: {month: {type: string}}
+brick: {listen: reports}
+---
+<brick:script>
+def start(state, props):
+    id = brick.start_job("report", {"month": props["month"]}, topic = "reports")
+    return dict(state, job = id)
+
+def cancel(state, props):
+    brick.cancel_job(state["job"])
+    return state
+</brick:script>
+{{ $r := report .State.job }}
+<div class="report">
+  {{ if eq $r.Status "running" }}
+    <p>Building the {{ .Props.month }} report…</p>
+    <button brick:click="cancel">Cancel</button>
+  {{ else }}
+    {{ with $r.Status }}<p>{{ . }}: {{ $r.Detail }}</p>{{ end }}
+    <button brick:click="start">Build report</button>
+  {{ end }}
+</div>

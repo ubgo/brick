@@ -1,0 +1,26 @@
+GET / -> 200 OK
+
+<h1>Recent posts</h1>
+<ul><li><a href="/posts/hello">Hello world</a></li><li><a href="/posts/again">Writing again</a></li></ul>
+<ul><li><a href="/posts/hello">Hello world</a></li></ul>
+<ul><li><a href="/pinned">Pinned</a></li></ul>
+<p>Pro costs $12.</p>
+
+GET /team -> 200 OK
+<ul><li>Grace</li><li>Ada</li><li>Grace</li><li>Linus</li></ul>
+
+GET /posts/hello -> 200 OK
+Cache-Control: public, max-age=300
+<h1>HELLO WORLD!</h1>
+<p>Written by the team · READ ON!</p>
+
+GET /posts/old-hello -> 308 Permanent Redirect
+Location: /posts/hello
+<a href="/posts/hello">Permanent Redirect</a>.
+
+GET /posts/gone -> 410 Gone
+This post was removed.
+
+GET /posts/nope -> 404 Not Found
+404 page not found
+

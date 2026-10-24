@@ -1,0 +1,21 @@
+---
+title: Segmented control
+category: Navigation
+description: "A one-of-N toggle made of native radio buttons: it submits with its form and answers arrow keys with no JavaScript."
+api:
+  - {name: name, type: "string", desc: "The radio group’s form name. Required."}
+  - {name: options, type: "list", desc: "Strings, or maps of value, label, icon, hideLabel and disabled. Required."}
+  - {name: value, type: "string", desc: "The checked option’s value."}
+  - {name: label, type: "string", desc: "The group’s accessible name (a hidden legend)."}
+  - {name: size, type: "sm | md | lg", default: "md", desc: "Height."}
+  - {name: full, type: "bool", desc: "Options share the full width."}
+  - {name: disabled, type: "bool", desc: "Disables every option."}
+---
+<h1>Segmented control</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Strings"><SegmentedControlBasic /><brick:prop name="code"><Source src="~/demos/SegmentedControlBasic.html" /></brick:prop></Example>
+<Example title="Icons, and icon-only options"><SegmentedControlIcons /><brick:prop name="code"><Source src="~/demos/SegmentedControlIcons.html" /></brick:prop></Example>
+<Example title="Sizes, full width and a disabled option" block><SegmentedControlSizes /><brick:prop name="code"><Source src="~/demos/SegmentedControlSizes.html" /></brick:prop></Example>
+<Example title="In a GET form — submits with no JavaScript"><SegmentedControlForm /><brick:prop name="code"><Source src="~/demos/SegmentedControlForm.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

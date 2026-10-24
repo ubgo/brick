@@ -1,0 +1,36 @@
+---
+props:
+  shape: {type: string, default: line, oneof: [line, circle, rect]}
+  lines: {type: int, default: 1}
+  width: {type: string, default: ""}
+  height: {type: string, default: ""}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+---
+{{/*
+Skeleton: a grey placeholder with the shape of content that is still
+loading.
+
+  <Skeleton lines="3" />                       a paragraph; the last line is shorter
+  <Skeleton shape="circle" size="lg" />        an avatar
+  <Skeleton shape="rect" height="8rem" />      an image or a card
+  <Skeleton width="40%" />
+
+Skeletons are decorative (aria-hidden): mark the region that is loading
+with aria-busy="true" so assistive technology knows to wait. The pulse
+stops for people who prefer reduced motion. size sets a line's text height,
+or a circle's diameter (2rem, 2.5rem, 3.5rem); width and height override.
+*/}}
+<brick:style>
+.bk-skeleton { display: flex; flex-direction: column; gap: .55rem; width: 100%; }
+.bk-skeleton__bone { display: block; height: .75rem; border-radius: var(--bk-radius-sm); background: color-mix(in oklab, var(--bk-fg) 9%, transparent); animation: bk-pulse 1.8s ease-in-out infinite; }
+.bk-skeleton__bone:last-child:not(:first-child) { width: 60%; }
+.bk-skeleton--sm .bk-skeleton__bone { height: .6rem; }
+.bk-skeleton--lg .bk-skeleton__bone { height: 1.1rem; }
+.bk-skeleton--circle { width: auto; }
+.bk-skeleton--circle .bk-skeleton__bone { width: 2.5rem; height: 2.5rem; border-radius: var(--bk-radius-full); }
+.bk-skeleton--circle.bk-skeleton--sm .bk-skeleton__bone { width: 2rem; height: 2rem; }
+.bk-skeleton--circle.bk-skeleton--lg .bk-skeleton__bone { width: 3.5rem; height: 3.5rem; }
+.bk-skeleton--rect .bk-skeleton__bone { height: 6rem; border-radius: var(--bk-radius-lg); }
+@media (prefers-reduced-motion: reduce) { .bk-skeleton__bone { animation: none; } }
+</brick:style>
+<span class="{{ cx `bk-skeleton` (cond (ne .Props.shape `line`) (print `bk-skeleton--` .Props.shape) ``) (cond (ne .Props.size `md`) (print `bk-skeleton--` .Props.size) ``) .Attrs.class }}" aria-hidden="true" {{ attrs `class` }}>{{ range max 1 .Props.lines }}<span class="bk-skeleton__bone"{{ if or $.Props.width $.Props.height }} style="{{ with $.Props.width }}width: {{ . }};{{ end }}{{ with $.Props.height }} height: {{ . }}{{ end }}"{{ end }}></span>{{ end }}</span>

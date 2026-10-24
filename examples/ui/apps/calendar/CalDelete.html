@@ -1,0 +1,9 @@
+---
+props:
+  id: {type: int, default: 0}
+  title: {type: string, default: ""}
+---
+{{/* CalDelete: the event dialog's Delete button and its ConfirmDialog, or nothing for a new event (id 0). Its own component so the condition is not inside the Dialog's children. */}}
+{{ if .Props.id }}<ConfirmDialog :id="print `cal-delete-` .Props.id" title="Delete event?" :message="print `“` .Props.title `” will be removed from the calendar.`" confirmLabel="Delete event" :action="print `cal.delete(` .Props.id `)`">
+  <brick:prop name="trigger"><Button variant="ghost" icon="trash" class="cal-delete">Delete</Button></brick:prop>
+</ConfirmDialog>{{ end }}

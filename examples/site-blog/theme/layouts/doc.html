@@ -1,0 +1,9 @@
+<!doctype html>
+<html>
+<head><title>{{ .Title }} · {{ .Site.title }}</title></head>
+<body>
+<nav class="toc">{{ range .Page.Headings }}{{ if .ID }}<a class="h{{ .Level }}" href="#{{ .ID }}">{{ .Text }}</a>{{ else }}<span class="h{{ .Level }}">{{ .Text }}</span>{{ end }}
+{{ end }}</nav>
+<main>{{ children }}</main>
+</body>
+</html>

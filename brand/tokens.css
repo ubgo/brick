@@ -1,0 +1,9 @@
+:root{
+  --brick-tile-a:#6366F1; --brick-tile-b:#3730A3;
+  --brick-accent:#FBBF24; --brick-fg:#FFFFFF;
+  --brick-font-display:'Space Grotesk', 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --brick-font-sans:'Inter', ui-sans-serif, system-ui, sans-serif;
+  --brick-font-mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --brick-radius:16px;
+}
+[data-theme="dark"], .dark{ --brick-bg:#1E1B4B; --brick-fg:#EEF2FF; }

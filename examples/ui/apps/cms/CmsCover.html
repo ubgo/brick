@@ -1,0 +1,28 @@
+---
+props:
+  tone: {type: string, default: primary, oneof: [primary, success, warning, danger, info, neutral]}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  title: {type: string, default: ""}
+---
+{{/*
+CmsCover: a post's cover — a gradient in the post's tone with its title
+set large — shared by the CMS admin list, the editor preview and the
+public blog. Tones are the kit's tokens, so dark mode and accents apply.
+sm is a square swatch (lists), md a card header, lg the article banner.
+*/}}
+<brick:style>
+.cms-cover { --cms-tone: var(--bk-primary); position: relative; display: flex; align-items: flex-end; overflow: hidden; background: radial-gradient(120% 90% at 100% 0%, color-mix(in oklab, var(--cms-tone) 55%, white 0%), transparent 60%), linear-gradient(135deg, color-mix(in oklab, var(--cms-tone) 88%, var(--bk-bg)), color-mix(in oklab, var(--cms-tone) 55%, black)); color: white; }
+.cms-cover::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(115deg, transparent 0 22px, color-mix(in oklab, white 7%, transparent) 22px 23px); }
+.cms-cover--success { --cms-tone: var(--bk-success); }
+.cms-cover--warning { --cms-tone: var(--bk-warning); }
+.cms-cover--danger { --cms-tone: var(--bk-danger); }
+.cms-cover--info { --cms-tone: var(--bk-info); }
+.cms-cover--neutral { --cms-tone: var(--bk-muted-fg); }
+.cms-cover--sm { width: 2.25rem; height: 2.25rem; flex: none; border-radius: var(--bk-radius); }
+.cms-cover--md { aspect-ratio: 16 / 8; padding: 1rem; }
+.cms-cover--lg { min-height: 13rem; padding: 1.75rem; border-radius: var(--bk-radius-lg); }
+.cms-cover__title { position: relative; z-index: 1; margin: 0; font-weight: 700; letter-spacing: -.02em; line-height: 1.15; text-shadow: 0 1px 12px color-mix(in oklab, black 25%, transparent); }
+.cms-cover--md .cms-cover__title { font-size: var(--bk-text-xl); }
+.cms-cover--lg .cms-cover__title { font-size: var(--bk-text-3xl); max-width: 36rem; }
+</brick:style>
+<div class="{{ cx `cms-cover` (print `cms-cover--` .Props.tone) (print `cms-cover--` .Props.size) .Attrs.class }}" {{ attrs `class` }}>{{ if and .Props.title (ne .Props.size `sm`) }}<span class="cms-cover__title">{{ .Props.title }}</span>{{ end }}</div>

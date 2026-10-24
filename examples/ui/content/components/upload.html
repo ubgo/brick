@@ -1,0 +1,17 @@
+---
+title: File uploads
+category: Forms
+description: An upload field in state, a sink the host chooses (here the reference disk sink), progress while the file streams, and the stored file's URL as the preview.
+---
+<h1>File uploads</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Pick or drop a picture — it uploads at once and the preview comes from the server" block><AvatarUpload /><brick:prop name="code"><Source src="~/demos/AvatarUpload.html" /></brick:prop></Example>
+<Example title="With scripts off — the file goes with the form, through the same sink and limits" block><FormNoJSUpload /><brick:prop name="code"><Source src="~/demos/FormNoJSUpload.html" /></brick:prop></Example>
+<h2>How it works</h2>
+<ul>
+  <li><b><code>brick: {uploads:}</code></b> names the state fields that take files, with the accepted types, the size limit and, for a list field, how many files it holds. The field is <code>null</code> for one file or <code>[]</code> for several.</li>
+  <li><b><code>brick:upload="avatar"</code></b> on a file input (here through the kit <code>Dropzone</code>) sends each chosen file as its own request. The server counts the bytes as they stream, sniffs the type from the content, and hands them to the host's <code>UploadSink</code>.</li>
+  <li><b>The ref lands in state.</b> When the sink has stored the file, <code>.State.avatar</code> holds a small dict: <code>id</code>, <code>name</code>, <code>type</code>, <code>size</code> and <code>url</code>. The bytes never enter state, and scripts never touch files.</li>
+  <li><b>Without JavaScript.</b> A file input with <code>brick:upload</code> inside a <code>brick:submit</code> form uploads with scripts off too: the form gets <code>enctype="multipart/form-data"</code>, and the engine streams each file part into the same sink with the same limits before the form's action runs. A refused file stops the post; the page comes back with status 422 and the reason in <code>.Errors.avatar</code>.</li>
+  <li><b>Progress and cancel.</b> <code>&lt;progress brick:upload-progress="avatar"&gt;</code> fills as the file is sent; <code>$cancelUpload("avatar")</code> aborts it; <code>$removeUpload("avatar", id)</code> asks the sink to delete the file and clears the field.</li>
+</ul>

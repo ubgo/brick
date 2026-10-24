@@ -1,0 +1,5 @@
+---
+use:
+  d: ~/data/demo-charts.yaml
+---
+<LineChart :data=".Data.d.latency" x="hour" suffix=" ms" :points="false" :height="180" label="API latency by hour" style="width: 100%" :series="list (dict `key` `p50` `label` `p50` `tone` `info`) (dict `key` `p95` `label` `p95` `tone` `warning`)" />

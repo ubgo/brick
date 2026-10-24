@@ -1,0 +1,25 @@
+---
+props:
+  keys: {type: string, default: ""}
+  size: {type: string, default: md, oneof: [sm, md]}
+---
+{{/*
+Kbd: a keyboard key, or a combination of keys.
+
+  <Kbd>Esc</Kbd>
+  <Kbd keys="⌘ K" />                 two keys: ⌘ then K
+  <Kbd keys="Ctrl Shift P" size="sm" />
+
+keys is split on spaces and each part becomes its own <kbd>, nested in an
+outer <kbd> as HTML specifies for a key combination. With no keys, the
+children are the single key.
+*/}}
+<brick:style>
+.bk-kbd { display: inline-flex; align-items: center; gap: .2rem; font: 500 var(--bk-text-xs)/1 var(--bk-mono); color: var(--bk-muted-fg); vertical-align: middle; }
+.bk-kbd__key, .bk-kbd--single { display: inline-grid; place-items: center; min-width: 1.35rem; height: 1.35rem; padding: 0 .35rem; border: 1px solid var(--bk-border); border-bottom-width: 2px; border-radius: var(--bk-radius-sm); background: var(--bk-surface-2); color: var(--bk-fg); box-shadow: var(--bk-shadow-sm); }
+.bk-kbd__key { font: inherit; }
+.bk-kbd--single { color: var(--bk-fg); }
+.bk-kbd--sm .bk-kbd__key, .bk-kbd--sm.bk-kbd--single { min-width: 1.1rem; height: 1.1rem; padding: 0 .25rem; font-size: .6875rem; }
+</brick:style>
+{{- if .Props.keys }}<kbd class="{{ cx `bk-kbd` (cond (eq .Props.size `sm`) `bk-kbd--sm` ``) .Attrs.class }}" {{ attrs `class` }}>{{ range split " " .Props.keys }}{{ if . }}<kbd class="bk-kbd__key">{{ . }}</kbd>{{ end }}{{ end }}</kbd>{{ else }}<kbd class="{{ cx `bk-kbd` `bk-kbd--single` (cond (eq .Props.size `sm`) `bk-kbd--sm` ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</kbd>{{ end }}
+{{- /* no trailing newline: this renders inline, inside running text */ -}}

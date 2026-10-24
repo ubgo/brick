@@ -1,0 +1,35 @@
+---
+props:
+  start: {type: int, default: 0}
+state:
+  count: 0
+  open: false
+  label: ""
+brick:
+  init: setup
+  updated: tidy
+---
+<brick:script>
+def setup(state, props):
+    return dict(state, count = props["start"])
+
+def bump(state, props, n):
+    return dict(state, count = state["count"] + n)
+
+def tidy(state, props, paths):
+    return dict(state, label = state["label"].strip())
+
+def peek(state, props):
+    brick.skip_render()
+    brick.reply({"count": state["count"], "double": state["count"] * 2})
+    return state
+</brick:script>
+<div class="counter">
+  <output id="count">{{ .State.count }}</output>
+  <button id="plus" brick:click="bump(1)">+1</button>
+  <button id="plus10" brick:click="bump(10)">+10</button>
+  <button id="reset" brick:click='$reset("count")'>Reset</button>
+  <button id="details" brick:click='$toggle("open")'>Details</button>
+  <input id="label" brick:model="label" value="{{ .State.label }}">
+  <p id="panel" brick:show="open" {{ if not .State.open }}hidden{{ end }}>Label: {{ .State.label }}</p>
+</div>

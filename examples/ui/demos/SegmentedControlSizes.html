@@ -1,0 +1,6 @@
+<div style="display: grid; gap: .75rem; justify-items: start; width: 100%; max-width: 24rem">
+  <SegmentedControl name="s1" size="sm" :options="list `1D` `1W` `1M` `1Y`" value="1W" />
+  <SegmentedControl name="s2" :options="list `1D` `1W` `1M` `1Y`" value="1M" />
+  <SegmentedControl name="s3" size="lg" :options="list `1D` `1W` `1M` `1Y`" value="1Y" />
+  <SegmentedControl name="s4" full :options="list `Monthly` `Yearly` (dict `value` `Lifetime` `disabled` true)" value="Monthly" />
+</div>

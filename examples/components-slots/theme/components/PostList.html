@@ -1,0 +1,9 @@
+---
+props:
+  posts: {type: list, required: true}
+---
+<ul>
+  {{- range .Props.posts }}
+  <li>{{ node "item" . }}</li>
+  {{- end }}
+</ul>

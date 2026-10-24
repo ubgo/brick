@@ -1,0 +1,54 @@
+---
+state:
+  q: ""
+  page: 1
+  total: 0
+brick:
+  init: setup
+  updated: tidy
+  query:
+    q: {as: fruit}
+    page: {history: push}
+---
+<brick:script>
+_NAMES = ["Apple", "Apricot", "Avocado", "Banana", "Blackberry", "Blueberry", "Cherry", "Clementine", "Coconut", "Cranberry", "Date", "Dragonfruit", "Elderberry", "Fig", "Grape", "Grapefruit", "Guava", "Kiwi", "Lemon", "Lime", "Lychee", "Mango", "Melon", "Nectarine", "Orange", "Papaya", "Peach", "Pear", "Pineapple", "Plum", "Pomegranate", "Raspberry", "Strawberry", "Tangerine", "Watermelon"]
+_PER = 6
+
+def setup(state, props):
+    # init: runs once per instance, before the URL's values are applied.
+    return dict(state, total=len(_NAMES))
+
+def tidy(state, props, paths):
+    # updated: runs after $set / $reset; a new search starts at page 1.
+    page = state["page"]
+    if "q" in paths:
+        page = 1
+    return dict(state, q=state["q"].strip().lower(), page=max(1, int(page)))
+
+def _matches(q):
+    return [n for n in _NAMES if q in n.lower()]
+
+def rows(q, page):
+    start = (int(page) - 1) * _PER
+    return _matches(q)[start:start + _PER]
+
+def pages(q):
+    return max(1, (len(_matches(q)) + _PER - 1) // _PER)
+
+def found(q):
+    return len(_matches(q))
+</brick:script>
+<section id="rq" style="display: grid; gap: .6rem; width: 100%; max-width: 26rem">
+  <div style="display: flex; align-items: center; gap: .5rem">
+    <Input id="rq-q" brick:model.debounce.300ms="q" value="{{ .State.q }}" placeholder="Filter fruit" autocomplete="off" />
+    <Button id="rq-clear" size="sm" variant="outline" brick:click='$reset("q", "page")'>Clear</Button>
+  </div>
+  <p id="rq-count" style="margin: 0; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">{{ found .State.q }} of {{ .State.total }} · page {{ .State.page }} of {{ pages .State.q }}</p>
+  <ul style="margin: 0; padding: 0; list-style: none; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-md)">
+    {{ range (rows .State.q .State.page) }}<li brick:key="{{ . }}" class="rq-row" style="padding: .4rem .75rem; border-bottom: 1px solid var(--bk-border)">{{ . }}</li>{{ else }}<li class="rq-none" style="padding: .4rem .75rem; color: var(--bk-muted-fg)">No fruit matches.</li>{{ end }}
+  </ul>
+  <div style="display: flex; gap: .5rem">
+    <Button id="rq-prev" size="sm" variant="outline" brick:click='$set("page", {{ sub .State.page 1 }})' :disabled="le .State.page 1">Previous</Button>
+    <Button id="rq-next" size="sm" variant="outline" brick:click='$set("page", {{ add .State.page 1 }})' :disabled="ge .State.page (pages .State.q)">Next</Button>
+  </div>
+</section>

@@ -1,0 +1,55 @@
+---
+order: 5
+title: Live interactivity
+category: Getting started
+description: Infinite scroll with brick:intersect, keyed rows that animate with brick:transition, a like button that answers before the server does with .optimistic, a filter whose state lives in the URL, a slow panel loaded lazily, a reply streamed word by word, and a board that updates live in every open window over server push.
+---
+<h1>Live interactivity</h1>
+<p class="lead">{{ .Params.description }}</p>
+
+<Prose class="bk-prose--wide">
+<p>Each demo is one stateful component with no JavaScript of its own. The feed loads eight more rows whenever the sentinel under the list scrolls into view (<code>brick:intersect.margin.100px="more"</code>); the runtime re-arms the sentinel after every load, and the template's <code>{{ "{{ if }}" }}</code> stops it at the end. Every row carries <code>brick:key</code>, so loading or reversing keeps each row's element, and <code>brick:transition</code> on the root animates the reorder where the browser supports view transitions.</p>
+</Prose>
+<Example title="Infinite scroll, keyed rows and an animated reorder" block><RuntimeFeed /><brick:prop name="code"><Source src="~/demos/RuntimeFeed.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+<p><code>.optimistic</code> works on a literal <code>$set</code> or <code>$toggle</code> only: the browser flips the signal at once, so <code>brick:show</code> changes before the request returns, and puts it back if the action fails. The count is server-rendered and follows the answer.</p>
+</Prose>
+<Example title="A like button that answers at once"><RuntimeLike /><brick:prop name="code"><Source src="~/demos/RuntimeLike.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+<p>A list whose filter and page live in the URL: <code>brick: {query: {q: {as: fruit}, page: {history: push}}}</code>. Open the page with <code>?fruit=berry</code> and the list starts filtered; typing replaces <code>fruit=</code>, paging pushes a history entry, and Back restores the previous page in place, without a page fetch. <code>init:</code> counts the catalogue once when the instance is made, <code>updated:</code> trims the search and sends a new search back to page 1, and Clear is <code>$reset("q", "page")</code>, which puts both fields back to their declared values.</p>
+</Prose>
+<Example title="A filter that lives in the URL" block><RuntimeFilter /><brick:prop name="code"><Source src="~/demos/RuntimeFilter.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+<p>A slow panel that does not hold up the page: <code>brick:lazy="visible"</code> on the call renders a placeholder holding a sealed ticket, and the enclosing boundary's <code>loading</code> block is what shows until the panel scrolls into view. The runtime then redeems the ticket at <code>/_brick/island</code> and swaps the answer in. The panel's loader takes about a second; the page above it never waits for it.</p>
+</Prose>
+<Example title="A slow panel loaded when it scrolls into view" block><RuntimeLazy /><brick:prop name="code"><Source src="~/demos/RuntimeLazy.html" /></brick:prop></Example>
+<p>A slow panel streamed into the page's own response: <code>brick:lazy="stream"</code> sends the page at once with the boundary's <code>loading</code> block, and the panel's HTML follows in the same response when its loader finishes (about a second), with no second request.</p>
+<Example title="A slow panel streamed into the same response" block><RuntimeStreamedPage /><brick:prop name="code"><Source src="~/demos/RuntimeStreamedPage.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+<p>Brickbot streams its reply: the action calls <code>brick.stream("answer", word)</code> for each word, and every chunk is appended to the <code>brick:ref="answer"</code> element as text while the request is still running. When the action returns, its normal render lands and replaces the streamed text.</p>
+</Prose>
+<Example title="Brickbot streams its reply"><RuntimeStream /><brick:prop name="code"><Source src="~/demos/RuntimeStream.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+<p>A live board over server push: the board declares <code>brick: {listen: "demo:notes"}</code>, and posting runs an action that inserts the note and calls <code>brick.publish("demo:notes")</code>. The page holds one <code>EventSource</code> on <code>/_brick/events</code>, opened with the listen token the server sealed into the board's root, so the browser can only hear topics its page was rendered with. When the topic is published, every open board, in this window or any other, runs a quiet <code>$refresh</code> and reads the notes again through its own render: the event carries the topic and nothing else. Open this page in a second window and post a note.</p>
+</Prose>
+<Example title="A board that updates live in every window" block><RuntimePush /><brick:prop name="code"><Source src="~/demos/RuntimePushPost.html" /><Source src="~/demos/RuntimePushBoard.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+<p>Background jobs: Run report answers at once; the job works for a second and a half after the response, then publishes <code>demo:jobs</code>, and this component, which listens to that topic, refreshes and shows the result. The failing button shows the error path: the job's error is recorded and the component shows it.</p>
+</Prose>
+<Example title="Background jobs" block><RuntimeJob /><brick:prop name="code"><Source src="~/demos/RuntimeJob.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+<p>Client commands for the small things that need no server: <code>brick:js.click='toggle("#menu"); toggleAttr("this", "aria-expanded", "true", "false")'</code> opens the menu, <code>brick:js.click.outside</code> on the wrapper and <code>brick:js.keydown.escape.window</code> close it, and the notice's ✕ runs <code>hide("closest .v18-panel")</code>. The list is closed (show, hide, toggle, classes, attributes, focus, dispatch) and every argument is a literal, so this is not a client-side state language: state still changes only in actions. An element with <code>brick:leave="classes"</code> plays those classes before it is hidden or removed.</p>
+</Prose>
+<Example title="A menu and a dismissable notice, with no request"><RuntimeV18Menu /><brick:prop name="code"><Source src="~/demos/RuntimeV18Menu.html" /></brick:prop></Example>
+
+<Prose class="bk-prose--wide">
+<p>Rows that fade out as they are deleted, and a rename that asks first. Each row carries <code>brick:leave="v18-out"</code>, so when the action's morph drops it the runtime adds the class, waits for the transition (at most two seconds, not at all under reduced motion) and only then removes it. Rename is <code>brick:confirm.prompt="New name?"</code> with <code>brick:click="rename(3)"</code>: the visitor's answer arrives as the action's last argument, <code>rename(state, props, id, name)</code>, and Cancel sends nothing. <code>brick.promptWith(fn)</code> swaps the browser's prompt for your own dialog.</p>
+</Prose>
+<Example title="Rows that fade out, and a rename that asks first" block><RuntimeV18Tasks /><brick:prop name="code"><Source src="~/demos/RuntimeV18Tasks.html" /></brick:prop></Example>

@@ -1,0 +1,55 @@
+---
+title: Sign in
+layout: app
+perks:
+  - {icon: zap, text: "Pages render in under 40 ms — no bundle to download."}
+  - {icon: shield, text: "Escaped by default, sandboxed scripts, no secrets in the browser."}
+  - {icon: globe, text: "Works with JavaScript off, on every device."}
+---
+<brick:style>
+.auth { display: grid; min-height: 100vh; }
+@media (min-width: 960px) { .auth { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); } }
+.auth__main { display: flex; flex-direction: column; padding: 1.5rem; }
+@media (min-width: 640px) { .auth__main { padding: 2rem 3rem; } }
+.auth__top { display: flex; align-items: center; justify-content: space-between; }
+.auth__brand { display: flex; align-items: center; gap: .55rem; font-weight: 700; font-size: var(--bk-text-lg); letter-spacing: -.02em; text-decoration: none; color: var(--bk-fg); }
+.auth__mark { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: var(--bk-radius); background: linear-gradient(135deg, var(--bk-primary), color-mix(in oklab, var(--bk-primary), black 30%)); color: var(--bk-primary-fg); }
+.auth__center { flex: 1; display: grid; place-items: center; padding: 2.5rem 0; }
+.auth__card { width: 100%; max-width: 24rem; }
+.auth__foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.auth__side { position: relative; display: none; overflow: hidden; margin: .75rem; padding: 3rem; border-radius: var(--bk-radius-lg); background: linear-gradient(150deg, color-mix(in oklab, var(--bk-primary), black 10%), color-mix(in oklab, var(--bk-primary), black 55%)); color: var(--bk-primary-fg); }
+@media (min-width: 960px) { .auth__side { display: flex; flex-direction: column; justify-content: space-between; } }
+.auth__side::before { content: ""; position: absolute; inset: -20% -30% auto auto; width: 70%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in oklab, var(--bk-primary-fg) 22%, transparent), transparent); }
+.auth__side::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(color-mix(in oklab, var(--bk-primary-fg) 7%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab, var(--bk-primary-fg) 7%, transparent) 1px, transparent 1px); background-size: 32px 32px; mask-image: linear-gradient(to bottom, black, transparent 70%); pointer-events: none; }
+.auth__side > * { position: relative; z-index: 1; }
+.auth__perks { display: grid; gap: .9rem; margin: 0; padding: 0; list-style: none; }
+.auth__perks li { display: flex; align-items: center; gap: .75rem; font-size: var(--bk-text-base); opacity: .92; }
+.auth__perks .bk-icon { flex: none; padding: .35rem; box-sizing: content-box; border-radius: var(--bk-radius); background: color-mix(in oklab, var(--bk-primary-fg) 14%, transparent); }
+.auth__quote { margin: 0; font-size: 1.35rem; font-weight: 500; line-height: 1.5; letter-spacing: -.01em; }
+.auth__who { display: flex; align-items: center; gap: .75rem; margin-top: 1.5rem; }
+.auth__who small { display: block; opacity: .75; }
+</brick:style>
+<div class="auth">
+  <main class="auth__main">
+    <div class="auth__top">
+      <a class="auth__brand" href="/apps/landing/"><span class="auth__mark"><Icon name="layers" :size="16" /></span>Brickyard</a>
+      <ThemeToggle />
+    </div>
+    <div class="auth__center"><div class="auth__card"><AuthSignInForm /></div></div>
+    <div class="auth__foot"><span>© 2026 Brickyard, Inc.</span><span><Link href="#" tone="muted">Privacy</Link> · <Link href="#" tone="muted">Terms</Link> · <Link href="/apps/landing/" tone="muted">Back to site</Link></span></div>
+  </main>
+  <aside class="auth__side" aria-label="Why Brickyard">
+    <ul class="auth__perks">{{ range .Params.perks }}<li><Icon :name=".icon" :size="16" />{{ .text }}</li>{{ end }}</ul>
+    <figure style="margin: 0">
+      <blockquote class="auth__quote">“We moved our whole admin to Brickyard in a weekend. It is the first stack in years where the fast path and the simple path are the same path.”</blockquote>
+      <figcaption class="auth__who"><Avatar name="Maya Chen" size="lg" /><span><b>Maya Chen</b><small>CTO, Northwind</small></span></figcaption>
+    </figure>
+  </aside>
+</div>
+
+<AppSource app="Sign in">
+  <Tabs label="Sign in files" size="sm">
+    <Tab title="auth.html"><CodeView file="content/apps/auth.html"><Source src="~/content/apps/auth.html" /></CodeView></Tab>
+    <Tab title="AuthSignInForm.html"><CodeView file="apps/auth/AuthSignInForm.html"><Source src="~/apps/auth/AuthSignInForm.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

@@ -1,0 +1,18 @@
+<div class="menu" data-on-close='hide("#menu-list")' brick:js.click.outside='hide("#menu-list")' brick:js.keydown.escape.window='hide("#menu-list")'>
+  <button type="button" aria-expanded="false" brick:js.click='toggle("#menu-list"); toggleAttr("this", "aria-expanded", "true", "false")'>Menu</button>
+  <ul id="menu-list" hidden brick:leave="fade-out">
+    <li><a href="/settings">Settings</a></li>
+    <li><button type="button" brick:js.click='addClass("closest .menu", "dimmed"); focus("#search")'>Dim</button></li>
+  </ul>
+</div>
+<brick:client>
+// brick.js runs the same command list a brick:js attribute holds, from
+// code, with the element as "this". The list stays in the markup
+// (data-on-close), so the script never builds a command from data. The
+// "navigated" event fires after a client navigation (Options.Navigation),
+// and brick.on returns the function that stops listening, which a mount
+// callback may return as its cleanup.
+brick.mount("Menu", (menu) =>
+  brick.on("navigated", () => brick.js(menu, menu.getAttribute("data-on-close"))),
+);
+</brick:client>

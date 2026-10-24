@@ -1,0 +1,33 @@
+---
+title: Blog CMS
+layout: app
+description: A blog admin over SQLite — posts list with filters and bulk publishing, a rich-text editor with autosave, scheduling and a sanitized preview, and a public blog it publishes to.
+---
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/cms/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Blog CMS`)" />
+    <div class="cms-top"><Button variant="ghost" size="sm" icon="external-link" href="/apps/cms/blog/">Blog</Button><ThemeToggle /></div>
+  </brick:prop>
+  <CmsApp />
+  <Toaster />
+</AppShell>
+<brick:style>
+.cms-top { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+</brick:style>
+
+<AppSource app="Blog CMS">
+  <Tabs label="Blog CMS files" size="sm">
+    <Tab title="cms.html"><CodeView file="content/apps/cms.html"><Source src="~/content/apps/cms.html" /></CodeView></Tab>
+    <Tab title="CmsApp.html"><CodeView file="apps/cms/CmsApp.html"><Source src="~/apps/cms/CmsApp.html" /></CodeView></Tab>
+    <Tab title="CmsCover.html"><CodeView file="apps/cms/CmsCover.html"><Source src="~/apps/cms/CmsCover.html" /></CodeView></Tab>
+    <Tab title="cms.star"><CodeView file="apps/cms/cms.star"><Source src="~/apps/cms/cms.star" /></CodeView></Tab>
+    <Tab title="db_cms.go"><CodeView file="demodb/db_cms.go"><Source src="~/demodb/db_cms.go" /></CodeView></Tab>
+    <Tab title="index.html"><CodeView file="content/apps/cms/blog/index.html"><Source src="~/content/apps/cms/blog/index.html" /></CodeView></Tab>
+    <Tab title="post.html"><CodeView file="content/apps/cms/blog/post.html"><Source src="~/content/apps/cms/blog/post.html" /></CodeView></Tab>
+    <Tab title="CmsBlogList.html"><CodeView file="apps/cms/CmsBlogList.html"><Source src="~/apps/cms/CmsBlogList.html" /></CodeView></Tab>
+    <Tab title="CmsPost.html"><CodeView file="apps/cms/CmsPost.html"><Source src="~/apps/cms/CmsPost.html" /></CodeView></Tab>
+    <Tab title="CmsBlogHeader.html"><CodeView file="apps/cms/CmsBlogHeader.html"><Source src="~/apps/cms/CmsBlogHeader.html" /></CodeView></Tab>
+    <Tab title="main.go"><CodeView file="main.go"><Source src="~/main.go" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

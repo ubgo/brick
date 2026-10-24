@@ -1,0 +1,6 @@
+---
+use:
+  demo: ~/demos/demo_charts.star
+load: demo.revenue_per_day
+---
+<CalendarHeatmap :data=".Props.data" :weeks="20" tone="primary" unit="dollars of paid revenue" weekStart="monday" label="Paid revenue per day" />

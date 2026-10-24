@@ -1,0 +1,6 @@
+---
+props:
+  title: {type: string, required: true}
+  url: {type: string, required: true}
+---
+<a class="post" href="{{ .Props.url }}">{{ .Props.title }}</a>

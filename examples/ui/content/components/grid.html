@@ -1,0 +1,20 @@
+---
+title: Grid
+category: Layout
+description: Equal columns that respond to the screen — one to twelve, with overrides from 640, 768 and 1024 pixels.
+api:
+  - {name: cols, type: "1 – 12", default: "1", desc: Columns on the smallest screens.}
+  - {name: sm, type: "1 – 12", desc: Columns from 640px.}
+  - {name: md, type: "1 – 12", desc: Columns from 768px.}
+  - {name: lg, type: "1 – 12", desc: Columns from 1024px.}
+  - {name: gap, type: "none | xs | sm | md | lg | xl", default: md, desc: Space between cells.}
+  - {name: align, type: "stretch | start | center | end", default: stretch, desc: Vertical alignment in a row.}
+---
+<h1>Grid</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Columns" block><GridColumns /><brick:prop name="code"><Source src="~/demos/GridColumns.html" /></brick:prop></Example>
+<Example title="Responsive — 1, then 2 from 640px, then 4 from 1024px" block><GridResponsive /><brick:prop name="code"><Source src="~/demos/GridResponsive.html" /></brick:prop></Example>
+<Example title="Spanning cells" block><GridSpan /><brick:prop name="code"><Source src="~/demos/GridSpan.html" /></brick:prop></Example>
+<Prose><p>A child with <code>class="bk-grid__span-2"</code> … <code>bk-grid__span-12</code> spans that many columns, never more than the grid has, so a span stays safe when the grid collapses on a phone. <code>bk-grid__span-full</code> spans the whole row.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

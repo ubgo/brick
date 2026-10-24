@@ -1,0 +1,13 @@
+---
+title: Container
+category: Layout
+description: Centres content and caps its width, with side padding so text never touches the edge of a phone screen.
+api:
+  - {name: size, type: "sm | md | lg | xl | 2xl | full", default: lg, desc: "The maximum width: 40, 48, 64, 80 or 96rem, or none."}
+  - {name: padding, type: bool, default: "true", desc: "Side padding: 1rem, 1.5rem from 768px."}
+---
+<h1>Container</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Widths" block><ContainerSizes /><brick:prop name="code"><Source src="~/demos/ContainerSizes.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

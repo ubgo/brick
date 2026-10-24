@@ -1,0 +1,42 @@
+---
+props:
+  src: {type: string, default: ""}
+  alt: {type: string, default: ""}
+  caption: {type: string, default: ""}
+  ratio: {type: string, default: auto, oneof: [auto, 16/9, 4/3, 3/2, 1/1]}
+  framed: {type: bool, default: false}
+  align: {type: string, default: start, oneof: [start, center]}
+---
+{{/*
+Figure: an image (or any content) with a caption, in a <figure> so the
+caption is tied to what it describes.
+
+  <Figure src="/img/dashboard.png" alt="The dashboard in dark mode" caption="The new dashboard." />
+  <Figure src="/img/team.jpg" alt="" ratio="16/9" framed align="center">
+    <brick:prop name="captionContent">Our team in <a href="/about/">Lisbon</a>, 2026.</brick:prop>
+  </Figure>
+  <Figure caption="Throughput by region"><Chart … /></Figure>
+
+With children, they replace the image. alt describes the image for people
+who cannot see it; write alt="" only when the caption already says
+everything. ratio crops the image to a fixed shape (object-fit: cover).
+captionContent is a caption with markup; caption is plain text.
+*/}}
+<brick:style>
+.bk-figure { display: flex; flex-direction: column; gap: .5rem; margin: 0; }
+.bk-figure__media { overflow: hidden; border-radius: var(--bk-radius-lg); }
+.bk-figure__media > img { display: block; width: 100%; height: auto; }
+.bk-figure--r16-9 .bk-figure__media > img { aspect-ratio: 16 / 9; object-fit: cover; }
+.bk-figure--r4-3 .bk-figure__media > img { aspect-ratio: 4 / 3; object-fit: cover; }
+.bk-figure--r3-2 .bk-figure__media > img { aspect-ratio: 3 / 2; object-fit: cover; }
+.bk-figure--r1-1 .bk-figure__media > img { aspect-ratio: 1; object-fit: cover; }
+.bk-figure--framed .bk-figure__media { padding: .4rem; border: 1px solid var(--bk-border); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); }
+.bk-figure--framed .bk-figure__media > img { border-radius: var(--bk-radius); }
+.bk-figure__caption { color: var(--bk-muted-fg); font-size: var(--bk-text-sm); line-height: 1.5; }
+.bk-figure--center { align-items: center; }
+.bk-figure--center .bk-figure__caption { text-align: center; }
+</brick:style>
+<figure class="{{ cx `bk-figure` (cond (ne .Props.ratio `auto`) (print `bk-figure--r` (replace `/` `-` .Props.ratio)) ``) (cond .Props.framed `bk-figure--framed` ``) (cond (eq .Props.align `center`) `bk-figure--center` ``) .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-figure__media">{{ if hasNode "children" }}{{ children }}{{ else }}<img src="{{ .Props.src }}" alt="{{ .Props.alt }}" loading="lazy">{{ end }}</div>
+  {{- if hasNode "captionContent" }}<figcaption class="bk-figure__caption">{{ node "captionContent" }}</figcaption>{{ else if .Props.caption }}<figcaption class="bk-figure__caption">{{ .Props.caption }}</figcaption>{{ end }}
+</figure>

@@ -1,0 +1,70 @@
+---
+props:
+  title: {type: string, default: ""}
+  description: {type: string, default: ""}
+  variant: {type: string, default: default, oneof: [default, outline, ghost, elevated, muted]}
+  padding: {type: string, default: md, oneof: [none, sm, md, lg]}
+  href: {type: string, default: ""}
+  level: {type: int, default: 3, oneof: [2, 3, 4, 5, 6]}
+---
+{{/*
+Card: a surface that groups one thing — a setting, a product, a metric, a
+post. It has optional parts, each a <brick:prop> block, top to bottom:
+media (edge to edge), header (or the title and description props), the
+children, and a footer with actions on the right.
+
+  <Card title="Team" description="Invite people to your workspace.">…</Card>
+  <Card variant="elevated" href="/posts/brick">
+    <brick:prop name="media"><img src="/cover.jpg" alt=""></brick:prop>
+    <brick:prop name="header"><Heading :level="3" size="md">Why brick</Heading></brick:prop>
+    A short excerpt.
+  </Card>
+  <Card title="Delete project">
+    Everything will be removed.
+    <brick:prop name="actions"><Button variant="danger">Delete</Button></brick:prop>
+  </Card>
+
+href makes the whole card one link with a hover lift. A link card must not
+hold other links or buttons: an <a> cannot contain interactive content. The
+footer block sits left in the footer and actions sit right; either alone
+works.
+
+The title is a heading at level (h3 by default). Headings must not skip a
+level, so a card placed directly under the page's h1 takes :level="2", and
+one inside an h2 section keeps 3.
+*/}}
+<brick:style>
+.bk-card { --bk-card-pad: var(--bk-space-4); display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); overflow: hidden; text-align: start; }
+.bk-card--sm { --bk-card-pad: var(--bk-space-3); }
+.bk-card--lg { --bk-card-pad: var(--bk-space-6); }
+.bk-card--none { --bk-card-pad: 0; }
+.bk-card--default { box-shadow: var(--bk-shadow-sm); }
+.bk-card--outline { background: transparent; }
+.bk-card--ghost { border-color: transparent; background: transparent; }
+.bk-card--muted { border-color: transparent; background: var(--bk-muted); }
+.bk-card--elevated { border-color: color-mix(in oklab, var(--bk-border) 60%, transparent); box-shadow: var(--bk-shadow-lg); }
+.bk-card__media { display: block; }
+.bk-card__media :where(img), .bk-card__media :where(video), .bk-card__media :where(svg) { display: block; width: 100%; height: auto; object-fit: cover; }
+.bk-card__header { display: flex; flex-direction: column; gap: .25rem; padding: var(--bk-card-pad) var(--bk-card-pad) 0; }
+.bk-card__title { margin: 0; font-size: var(--bk-text-lg); font-weight: 600; line-height: 1.35; letter-spacing: -.01em; }
+.bk-card__description { margin: 0; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); line-height: 1.5; }
+.bk-card__body { flex: 1; padding: var(--bk-card-pad); font-size: var(--bk-text-base); }
+.bk-card__header + .bk-card__body { padding-top: var(--bk-space-3); }
+.bk-card--none .bk-card__header + .bk-card__body { padding-top: 0; }
+.bk-card__header:last-child { padding-bottom: var(--bk-card-pad); }
+.bk-card__footer { display: flex; align-items: center; gap: var(--bk-space-2); padding: var(--bk-space-3) var(--bk-card-pad); border-top: 1px solid var(--bk-border); background: var(--bk-surface-2); font-size: var(--bk-text-sm); color: var(--bk-muted-fg); }
+.bk-card--ghost .bk-card__footer, .bk-card--outline .bk-card__footer, .bk-card--muted .bk-card__footer { background: transparent; }
+.bk-card__actions { display: flex; align-items: center; gap: var(--bk-space-2); margin-left: auto; }
+a.bk-card { text-decoration: none; transition: border-color var(--bk-duration), box-shadow var(--bk-duration), transform var(--bk-duration); }
+a.bk-card:hover { border-color: color-mix(in oklab, var(--bk-primary) 40%, var(--bk-border)); box-shadow: var(--bk-shadow-lg); transform: translateY(-2px); }
+a.bk-card:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+a.bk-card:hover .bk-card__title { color: var(--bk-primary-text); }
+</brick:style>
+{{ $p := .Props }}
+{{ $cls := cx "bk-card" (print "bk-card--" $p.variant) (cond (ne $p.padding "md") (print "bk-card--" $p.padding) "") .Attrs.class }}
+{{ if $p.href }}<a href="{{ $p.href }}" class="{{ $cls }}" {{ attrs `class` }}>{{ else }}<div class="{{ $cls }}" {{ attrs `class` }}>{{ end }}
+  {{ if hasNode "media" }}<div class="bk-card__media">{{ node "media" }}</div>{{ end }}
+  {{ if hasNode "header" }}<div class="bk-card__header">{{ node "header" }}</div>{{ else if or $p.title $p.description }}<div class="bk-card__header">{{ with $p.title }}{{ if eq $p.level 2 }}<h2 class="bk-card__title">{{ . }}</h2>{{ else if eq $p.level 4 }}<h4 class="bk-card__title">{{ . }}</h4>{{ else if eq $p.level 5 }}<h5 class="bk-card__title">{{ . }}</h5>{{ else if eq $p.level 6 }}<h6 class="bk-card__title">{{ . }}</h6>{{ else }}<h3 class="bk-card__title">{{ . }}</h3>{{ end }}{{ end }}{{ with $p.description }}<p class="bk-card__description">{{ . }}</p>{{ end }}</div>{{ end }}
+  {{ if hasNode "children" }}<div class="bk-card__body">{{ children }}</div>{{ end }}
+  {{ if or (hasNode "footer") (hasNode "actions") }}<div class="bk-card__footer">{{ if hasNode "footer" }}{{ node "footer" }}{{ end }}{{ if hasNode "actions" }}<div class="bk-card__actions">{{ node "actions" }}</div>{{ end }}</div>{{ end }}
+{{ if $p.href }}</a>{{ else }}</div>{{ end }}

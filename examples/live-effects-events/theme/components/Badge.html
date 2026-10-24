@@ -1,0 +1,31 @@
+---
+state: {archived: 0, last: 0}
+brick:
+  on:
+    message-archived: count
+---
+<brick:script>
+def count(state, props, event):
+    return dict(state, archived = state["archived"] + 1, last = event["id"])
+</brick:script>
+<brick:client>
+// Run once for every Badge on the page, now or inserted later. brick.watch
+// calls the function whenever the "archived" signal of this root changes,
+// whether a click, an optimistic write or a morph changed it, and returns
+// a function that stops watching; returning it as the cleanup runs it
+// when the Badge leaves the page.
+brick.mount("Badge", (badge) =>
+  brick.watch(badge, "archived", (count, was) => {
+    badge.dataset.delta = String(count - was);
+  }),
+);
+
+// brick.find(type) is the first stateful root of that type (or null) and
+// brick.all() every stateful root on the page, in document order.
+brick.on("message-archived", () => {
+  const inbox = brick.find("Inbox");
+  if (inbox) inbox.dataset.touched = "yes";
+  document.documentElement.dataset.statefulRoots = String(brick.all().length);
+});
+</brick:client>
+<p class="badge">{{ .State.archived }} archived{{ if .State.last }}, last #{{ .State.last }}{{ end }}</p>

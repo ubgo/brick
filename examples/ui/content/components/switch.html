@@ -1,0 +1,16 @@
+---
+title: Switch
+category: Forms
+description: "An on/off toggle: a native checkbox with role=switch, so it submits like a checkbox."
+api:
+  - {name: label, type: "string", desc: "The label."}
+  - {name: description, type: "string", desc: "Muted text under the label."}
+  - {name: checked, type: "bool", desc: "On."}
+  - {name: size, type: "sm | md", default: "md", desc: "Size."}
+  - {name: disabled, type: "bool", desc: "Disables it."}
+---
+<h1>Switch</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Settings" block><SwitchBasic /><brick:prop name="code"><Source src="~/demos/SwitchBasic.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

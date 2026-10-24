@@ -1,0 +1,126 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Button: ~/components/Button.html
+props:
+  title: {type: string, default: "Are you sure?"}
+  message: {type: string, default: ""}
+  confirmLabel: {type: string, default: Confirm}
+  cancelLabel: {type: string, default: Cancel}
+  variant: {type: string, default: danger, oneof: [danger, primary]}
+  icon: {type: string, default: ""}
+  action: {type: string, default: ""}
+  form: {type: string, default: ""}
+  open: {type: bool, default: false}
+  closeAction: {type: string, default: ""}
+---
+{{/*
+ConfirmDialog: "Delete contact?" — a small alert dialog that asks before
+something destructive or final. Cancel is focused first, the backdrop
+does not close it, and Escape cancels.
+
+  Inside a stateful component, run an action on confirm:
+  <ConfirmDialog title="Delete contact?" message="Ada Lovelace will be removed." confirmLabel="Delete" :action="print `remove(` .id `)`">
+    <brick:prop name="trigger"><Button variant="ghost" icon="trash" square label="Delete" /></brick:prop>
+  </ConfirmDialog>
+
+  Submit a form on confirm (works with any form, JavaScript or not):
+  <form id="close-account" method="post" action="/account/close">…</form>
+  <ConfirmDialog title="Close your account?" form="close-account" confirmLabel="Close account">…trigger…</ConfirmDialog>
+
+  Full control of the confirm button:
+  <ConfirmDialog title="Publish?" variant="primary">
+    <brick:prop name="confirm"><Button data-bk-close hx-post="/publish">Publish</Button></brick:prop>
+  </ConfirmDialog>
+
+action is a brick:click call (it needs a stateful component around the
+dialog); form is the id of a form the confirm button submits. Either way
+the confirm button also closes the dialog. The message is message, or
+children for markup. It opens like Dialog: a trigger block, open, or
+data-bk-open="<id>" on any element (closeAction works as in Dialog); the caller's attributes, with id and
+class, land on the <dialog role="alertdialog">.
+
+On a page that has a ConfirmDialog, brick:confirm="…" asks through this
+dialog instead of the browser's (brick.confirmWith); data-confirm-label on
+the same element names its confirm button:
+  <Button brick:click="clear" brick:confirm="Clear the form?" data-confirm-label="Clear">Clear</Button>
+*/}}
+<brick:client>
+import { enhance, open } from "brick:Dialog";
+
+brick.mount("ConfirmDialog", (el) => enhance(el.querySelector(":scope > dialog")))
+
+// ask is the kit's confirmer for brick:confirm: the same
+// alert dialog, built for one question and removed when answered. It is
+// registered only where this module loads, on a page with a ConfirmDialog
+// (kit assets are per page, never global); elsewhere brick:confirm keeps
+// the browser's window.confirm. The message is set as text, never HTML. Cancel is
+// focused first and Escape cancels; only the confirm button says yes.
+// data-confirm-label on the asking element names the confirm button.
+function ask(message, el) {
+  return new Promise((resolve) => {
+    const d = document.createElement("dialog");
+    d.className = "bk-confirm bk-confirm--danger";
+    d.setAttribute("role", "alertdialog");
+    d.dataset.dismissible = "false";
+    d.innerHTML = '<div class="bk-confirm__main"><div><h2 class="bk-confirm__title"></h2></div></div>' +
+      '<footer class="bk-confirm__footer"><form method="dialog" class="bk-confirm__cancel">' +
+      '<button type="submit" class="bk-btn bk-btn--outline" value="cancel" autofocus></button>' +
+      '<button type="submit" class="bk-btn bk-btn--danger" value="confirm"></button></form></footer>';
+    const title = d.querySelector("h2");
+    title.id = "bk-confirm-ask-" + Date.now();
+    title.textContent = message;
+    d.setAttribute("aria-labelledby", title.id);
+    const [cancel, ok] = d.querySelectorAll("button");
+    cancel.textContent = "Cancel";
+    ok.textContent = (el && el.getAttribute("data-confirm-label")) || "Confirm";
+    document.body.append(d);
+    const off = enhance(d);
+    d.addEventListener("close", () => {
+      resolve(d.returnValue === "confirm");
+      off();
+      d.remove();
+    }, { once: true });
+    open(d, el);
+  });
+}
+
+if (typeof brick.confirmWith === "function") brick.confirmWith(ask);
+</brick:client>
+<brick:style>
+.bk-confirm-host { display: contents; }
+.bk-confirm { width: min(calc(100vw - 2rem), 26rem); max-width: none; padding: 0; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); opacity: 0; transform: scale(.97); transition: opacity var(--bk-duration) ease, transform var(--bk-duration) ease, overlay var(--bk-duration) allow-discrete, display var(--bk-duration) allow-discrete; }
+.bk-confirm[open] { opacity: 1; transform: none; }
+@starting-style { .bk-confirm[open] { opacity: 0; transform: scale(.97); } }
+.bk-confirm::backdrop { background: var(--bk-backdrop, color-mix(in oklab, black 50%, transparent)); backdrop-filter: blur(2px); opacity: 0; transition: opacity var(--bk-duration) ease, overlay var(--bk-duration) allow-discrete, display var(--bk-duration) allow-discrete; }
+.bk-confirm[open]::backdrop { opacity: 1; }
+@starting-style { .bk-confirm[open]::backdrop { opacity: 0; } }
+.bk-confirm__main { display: flex; gap: .85rem; padding: 1.25rem 1.25rem 1rem; }
+.bk-confirm__icon { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-confirm-c) 12%, transparent); color: var(--bk-confirm-c); }
+.bk-confirm--danger { --bk-confirm-c: var(--bk-danger); }
+.bk-confirm--primary { --bk-confirm-c: var(--bk-primary); }
+.bk-confirm__title { margin: .3rem 0 0; font-size: var(--bk-text-lg); font-weight: 600; line-height: 1.35; }
+.bk-confirm__msg { margin-top: .3rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); line-height: 1.5; }
+.bk-confirm__footer { display: flex; justify-content: flex-end; gap: .5rem; padding: .75rem 1.25rem; border-top: 1px solid var(--bk-border); background: var(--bk-surface-2); border-radius: 0 0 var(--bk-radius-lg) var(--bk-radius-lg); }
+.bk-confirm__cancel { margin: 0; display: contents; }
+</brick:style>
+{{ $id := or .Attrs.id (print .ID `-confirm`) }}
+{{ $confirm := dict "data-bk-close" "" }}
+{{ if .Props.action }}{{ $confirm = dict "data-bk-close" "" "brick:click" .Props.action }}{{ end }}
+{{ if .Props.form }}{{ $confirm = dict "data-bk-close" "" "type" "submit" "form" .Props.form }}{{ end }}
+<div class="bk-confirm-host">
+  {{ if hasNode "trigger" }}<span class="bk-dialog__trigger" data-bk-open="{{ $id }}">{{ node "trigger" }}</span>{{ end }}
+  <dialog id="{{ $id }}" class="{{ cx `bk-confirm` (print `bk-confirm--` .Props.variant) .Attrs.class }}" role="alertdialog" aria-labelledby="{{ $id }}-title" aria-describedby="{{ $id }}-msg" data-dismissible="false"{{ with .Props.closeAction }} data-bk-close-action="{{ . }}"{{ end }}{{ if .Props.open }} open{{ end }} {{ attrs `class` `id` }}>
+    <div class="bk-confirm__main">
+      <span class="bk-confirm__icon" aria-hidden="true"><Icon :name="or .Props.icon (cond (eq .Props.variant `danger`) `alert-triangle` `help-circle`)" :size="18" /></span>
+      <div>
+        <h2 class="bk-confirm__title" id="{{ $id }}-title">{{ .Props.title }}</h2>
+        <div class="bk-confirm__msg" id="{{ $id }}-msg">{{ if hasNode "children" }}{{ children }}{{ else }}{{ .Props.message }}{{ end }}</div>
+      </div>
+    </div>
+    <footer class="bk-confirm__footer">
+      <form method="dialog" class="bk-confirm__cancel"><Button type="submit" variant="outline" value="cancel" autofocus>{{ .Props.cancelLabel }}</Button></form>
+      {{ if hasNode "confirm" }}{{ node "confirm" }}{{ else }}<Button :variant=".Props.variant" brick:spread="$confirm">{{ .Props.confirmLabel }}</Button>{{ end }}
+    </footer>
+  </dialog>
+</div>

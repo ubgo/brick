@@ -1,0 +1,46 @@
+---
+props:
+  variant: {type: string, default: default, oneof: [default, muted, minimal]}
+---
+{{/*
+Footer: the site footer — an optional brand block, link columns, and a
+bottom bar for the copyright line and legal links.
+
+  <Footer>
+    <brick:prop name="brand"><b>Acme</b><p>Tools for small teams.</p></brick:prop>
+    <div><h3>Product</h3><ul><li><a href="/pricing">Pricing</a></li></ul></div>
+    <div><h3>Company</h3><ul><li><a href="/about">About</a></li></ul></div>
+    <brick:prop name="bottom">© 2026 Acme, Inc.</brick:prop>
+  </Footer>
+  <Footer variant="minimal"><brick:prop name="bottom">© 2026 Acme</brick:prop></Footer>
+
+Each child is one column; a column's h3/h4 is its heading and its ul a
+list of links, both styled for you. Columns wrap on narrow screens. The
+root is a <footer>, the page's contentinfo landmark when it is not inside
+<main> or an <article>.
+*/}}
+<brick:style>
+.bk-footer { border-top: 1px solid var(--bk-border); color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.bk-footer--muted { background: var(--bk-surface-2); }
+.bk-footer__inner { max-width: 72rem; margin: 0 auto; padding: 3rem var(--bk-space-6) var(--bk-space-6); }
+.bk-footer--minimal .bk-footer__inner { padding-top: var(--bk-space-6); }
+.bk-footer__top { display: flex; flex-wrap: wrap; gap: var(--bk-space-8) 4rem; margin-bottom: 2.5rem; }
+.bk-footer__brand { flex: 1 1 14rem; max-width: 20rem; display: flex; flex-direction: column; gap: var(--bk-space-2); line-height: 1.6; }
+.bk-footer__brand :where(b), .bk-footer__brand :where(strong) { color: var(--bk-fg); font-size: var(--bk-text-lg); }
+.bk-footer__cols { flex: 3 1 28rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: var(--bk-space-6); }
+.bk-footer__cols :where(h3), .bk-footer__cols :where(h4) { margin: 0 0 .75rem; color: var(--bk-fg); font-size: var(--bk-text-sm); font-weight: 600; letter-spacing: 0; }
+.bk-footer__cols :where(ul) { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .55rem; }
+.bk-footer :where(a) { color: inherit; text-decoration: none; transition: color var(--bk-duration); }
+.bk-footer :where(a:hover) { color: var(--bk-fg); }
+.bk-footer__bottom { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--bk-space-3); padding-top: var(--bk-space-6); border-top: 1px solid var(--bk-border); font-size: var(--bk-text-xs); }
+.bk-footer--minimal .bk-footer__bottom { padding-top: 0; border-top: 0; }
+</brick:style>
+<footer class="{{ cx `bk-footer` (cond (ne .Props.variant `default`) (print `bk-footer--` .Props.variant) ``) .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-footer__inner">
+    {{ if or (hasNode "brand") (hasNode "children") }}<div class="bk-footer__top">
+      {{ if hasNode "brand" }}<div class="bk-footer__brand">{{ node "brand" }}</div>{{ end }}
+      {{ if hasNode "children" }}<div class="bk-footer__cols">{{ children }}</div>{{ end }}
+    </div>{{ end }}
+    {{ if hasNode "bottom" }}<div class="bk-footer__bottom">{{ node "bottom" }}</div>{{ end }}
+  </div>
+</footer>

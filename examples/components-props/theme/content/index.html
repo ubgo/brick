@@ -1,0 +1,9 @@
+---
+title: Latest posts
+posts:
+  - {title: Hello, summary: The first post.}
+  - {title: Again, summary: More words.}
+---
+<h1>{{ .Title }}</h1>
+{{ range $i, $post := .Params.posts }}<Card :post :index="$i" tone="loud" />{{ end }}
+<x-card :post="dict `title` `Spelled with x-` `summary` `Same file.`" />

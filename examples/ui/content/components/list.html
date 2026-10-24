@@ -1,0 +1,18 @@
+---
+title: List
+category: Data display
+description: "Rows of people, files or settings — divided, bordered or plain — built from ListItem."
+api:
+  - {name: variant, type: "divided | bordered | plain", default: divided, desc: "Rules between rows; bordered also draws a card."}
+  - {name: size, type: "sm | md", default: md, desc: "Row height."}
+  - {name: label, type: string, desc: "The list's accessible name."}
+---
+<h1>List</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="People" block><ListPeople /><brick:prop name="code"><Source src="~/demos/ListPeople.html" /></brick:prop></Example>
+<Example title="Links" block><ListLinks /><brick:prop name="code"><Source src="~/demos/ListLinks.html" /></brick:prop></Example>
+<Example title="Actions" block><ListActions /><brick:prop name="code"><Source src="~/demos/ListActions.html" /></brick:prop></Example>
+<Example title="From the database" block><ListDatabase /><brick:prop name="code"><Source src="~/demos/ListDatabase.html" /></brick:prop></Example>
+<Prose><p>Each row is a <a href="/components/list-item/">ListItem</a>.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

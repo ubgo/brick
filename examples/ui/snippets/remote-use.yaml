@@ -1,0 +1,4 @@
+# in a page or component's frontmatter, then run `brick vendor`
+use:
+  Button: github.com/ubgo/brick/kit/components/Button.html@v0.2.0
+  Card: github.com/ubgo/brick/kit/components/Card.html@v0.2.0

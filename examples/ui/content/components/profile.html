@@ -1,0 +1,18 @@
+---
+title: Profile
+category: Foundations
+description: "The signed-in person as a chip — avatar, name, e-mail and a chevron — for account menus."
+api:
+  - {name: name, type: "string", desc: "Required."}
+  - {name: email, type: "string", desc: "A second line."}
+  - {name: src, type: "string", desc: "An avatar image (else initials)."}
+  - {name: href, type: "string", desc: "Makes it a link; otherwise a button."}
+  - {name: chevron, type: "up-down | down | none", default: "up-down", desc: "The affordance."}
+  - {name: status, type: "online | away | busy | offline", desc: "A presence dot."}
+  - {name: compact, type: "bool", desc: "Avatar only."}
+---
+<h1>Profile</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="In a sidebar footer, as a link, compact"><ProfileVariants /><brick:prop name="code"><Source src="~/demos/ProfileVariants.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

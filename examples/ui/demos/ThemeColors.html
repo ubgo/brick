@@ -1,0 +1,30 @@
+---
+tokens:
+  - {name: primary, fg: primary-fg}
+  - {name: neutral, fg: neutral-fg}
+  - {name: danger, fg: danger-fg}
+  - {name: success, fg: success-fg}
+  - {name: warning, fg: warning-fg}
+  - {name: info, fg: info-fg}
+surfaces: [bg, surface, surface-2, muted, accent, border, input, muted-fg, fg]
+---
+<brick:style>
+.theme-colors { display: grid; gap: 1.25rem; width: 100%; }
+.theme-colors__row { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: .75rem; }
+.theme-colors__chip { display: flex; align-items: flex-end; height: 4rem; padding: .5rem .6rem; border-radius: var(--bk-radius); font: 600 var(--bk-text-xs)/1 var(--bk-font); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--bk-fg) 10%, transparent); }
+.theme-colors__name { margin-top: .4rem; font: var(--bk-text-xs)/1.3 var(--bk-mono); color: var(--bk-muted-fg); }
+</brick:style>
+<div class="theme-colors">
+  <div class="theme-colors__row">
+    {{ range .Params.tokens }}<div>
+      <div class="theme-colors__chip" style="background: var(--bk-{{ .name }}); color: var(--bk-{{ .fg }})">Aa</div>
+      <div class="theme-colors__name">--bk-{{ .name }}</div>
+    </div>{{ end }}
+  </div>
+  <div class="theme-colors__row">
+    {{ range .Params.surfaces }}<div>
+      <div class="theme-colors__chip" style="background: var(--bk-{{ . }})"></div>
+      <div class="theme-colors__name">--bk-{{ . }}</div>
+    </div>{{ end }}
+  </div>
+</div>

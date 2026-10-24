@@ -1,0 +1,28 @@
+---
+props:
+  variant: {type: string, default: grid, oneof: [grid, joined]}
+  columns: {type: int, default: 0}
+---
+{{/*
+Stats: a responsive row of <Stat> cards.
+
+  <Stats>
+    <Stat label="Revenue" value="$48,210" delta="+12.5%" />
+    <Stat label="Orders" value="1,204" delta="+3.1%" />
+    <Stat label="Refunds" value="12" delta="-8%" />
+  </Stats>
+  <Stats variant="joined" columns="4">…</Stats>
+
+grid spaces separate cards; joined draws one card with dividers. With
+columns=0 (the default) the row fits as many 12rem-wide cards as there is
+room for; a number fixes the count on wide screens, and it still wraps to
+fewer on narrow ones.
+*/}}
+<brick:style>
+.bk-stats { --bk-stats-min: 12rem; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(min(var(--bk-stats-min), 100%), 1fr)); }
+.bk-stats--cols { grid-template-columns: repeat(auto-fit, minmax(max(var(--bk-stats-min), calc((100% - (var(--bk-stats-cols) - 1) * .75rem) / var(--bk-stats-cols))), 1fr)); }
+.bk-stats--joined { gap: 0; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); overflow: hidden; }
+.bk-stats--joined.bk-stats--cols { grid-template-columns: repeat(auto-fit, minmax(max(var(--bk-stats-min), calc(100% / var(--bk-stats-cols))), 1fr)); }
+.bk-stats--joined > .bk-stat { border: 0; border-radius: 0; box-shadow: none; background: none; box-shadow: -1px 0 0 var(--bk-border), 0 -1px 0 var(--bk-border); }
+</brick:style>
+<div class="{{ cx `bk-stats` (cond (eq .Props.variant `joined`) `bk-stats--joined` ``) (cond .Props.columns `bk-stats--cols` ``) .Attrs.class }}"{{ with .Props.columns }} style="--bk-stats-cols: {{ . }}"{{ end }} {{ attrs `class` }}>{{ children }}</div>

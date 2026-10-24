@@ -1,0 +1,67 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  variant: {type: string, default: neutral, oneof: [neutral, info, success, warning, danger]}
+  title: {type: string, default: ""}
+  description: {type: string, default: ""}
+  duration: {type: int, default: 5000}
+  icon: {type: string, default: ""}
+  label: {type: string, default: Dismiss}
+  inline: {type: bool, default: false}
+---
+{{/*
+Toast: one short notification. Rendered anywhere, it is picked up by the
+page's <Toaster>, which moves it into its corner, announces it, and
+dismisses it after duration milliseconds (0 keeps it until closed).
+
+  <Toast variant="success" title="Saved" />
+  <Toast variant="danger" title="Could not send" description="The server is offline." :duration="0" />
+  <Toast title="Invite sent">We emailed ada@example.com.</Toast>
+
+This is how a server action shows a toast: a stateful component renders
+{{ if .State.saved }}<Toast variant="success" title="Saved" />{{ end }},
+the action's patch inserts it, and the Toaster takes it. Clear the flag in
+the next action, or give each flash a new id (a counter in state): the
+Toaster shows an id once per page, so a later re-render that still
+carries the same toast does not show it again. Code that is not a render calls toast() from
+the Toaster (see Toaster).
+
+Without a Toaster, or without JavaScript, a toast stays where it was
+rendered as a small static notice, and its close button stays hidden.
+inline asks for exactly that on purpose (a preview, a notification list):
+the Toaster leaves an inline toast alone.
+*/}}
+<brick:client>
+brick.mount("Toast", (el) => {
+  if (el.closest(".bk-toaster") || el.classList.contains("bk-toast--inline")) return;
+  brick.emit("toast:element", el);
+})
+</brick:client>
+<brick:style>
+.bk-toast { --bk-toast-c: var(--bk-fg); display: flex; align-items: flex-start; gap: .6rem; width: 100%; max-width: 24rem; padding: .7rem .75rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); font-size: var(--bk-text-sm); line-height: 1.45; pointer-events: auto; }
+.bk-toast--info { --bk-toast-c: var(--bk-info); }
+.bk-toast--success { --bk-toast-c: var(--bk-success); }
+.bk-toast--warning { --bk-toast-c: var(--bk-warning); }
+.bk-toast--danger { --bk-toast-c: var(--bk-danger); }
+.bk-toast__icon { flex: none; margin-top: .1rem; color: var(--bk-toast-c); }
+.bk-toast__body { flex: 1; min-width: 0; }
+.bk-toast__title { font-weight: 600; }
+.bk-toast__desc { color: var(--bk-muted-fg); }
+.bk-toast__title:empty, .bk-toast__desc:empty { display: none; }
+.bk-toast__actions { display: flex; gap: .4rem; margin-top: .45rem; }
+.bk-toast__close { flex: none; display: inline-grid; place-items: center; width: 1.35rem; height: 1.35rem; margin: -.1rem -.2rem 0 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-toast__close[hidden] { display: none; }
+.bk-toast__close:hover { background: var(--bk-accent); color: var(--bk-fg); }
+</brick:style>
+{{ $icons := dict "neutral" "" "info" "info" "success" "check-circle" "warning" "alert-triangle" "danger" "alert-circle" }}
+{{ $icon := or .Props.icon (index $icons .Props.variant) }}
+<div class="{{ cx `bk-toast` (print `bk-toast--` .Props.variant) (cond .Props.inline `bk-toast--inline` ``) .Attrs.class }}" role="{{ cond (eq .Props.variant `danger`) `alert` `status` }}" aria-atomic="true" data-duration="{{ .Props.duration }}" {{ attrs `class` }}>
+  {{ with $icon }}<Icon :name="." class="bk-toast__icon" />{{ end }}
+  <div class="bk-toast__body">
+    <div class="bk-toast__title">{{ .Props.title }}</div>
+    <div class="bk-toast__desc">{{ if hasNode "children" }}{{ children }}{{ else }}{{ .Props.description }}{{ end }}</div>
+    {{ if hasNode "actions" }}<div class="bk-toast__actions">{{ node "actions" }}</div>{{ end }}
+  </div>
+  <button type="button" class="bk-toast__close" aria-label="{{ .Props.label }}" hidden><Icon name="x" :size="14" /></button>
+</div>

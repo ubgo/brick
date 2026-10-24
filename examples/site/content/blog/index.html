@@ -1,0 +1,7 @@
+---
+title: Blog
+---
+<h1>Blog</h1>
+<ul class="posts">
+{{ range .Site.Pages }}{{ if and (eq .Section "blog") (not .Date.IsZero) }}<li><a href="{{ .URL }}">{{ .Title }}</a> · {{ dateFormat "2 January 2006" .Date }}</li>{{ end }}{{ end }}
+</ul>

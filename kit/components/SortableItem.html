@@ -1,0 +1,42 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkSortable: {default: {}}
+props:
+  id: {type: any, required: true}
+  label: {type: string, default: ""}
+  index: {type: int, default: -1}
+---
+{{/*
+SortableItem: one row of a <Sortable>: a drag handle, the content
+(children) and, as the fallback, move up / move down buttons.
+
+  <Sortable action="move">
+    {{ range $i, $t := .State.tasks }}
+      <SortableItem :id="$t.id" :label="$t.title" :index="$i">{{ $t.title }}</SortableItem>
+    {{ end }}
+  </Sortable>
+
+id becomes data-id, what the Sortable reports (a number stays a number).
+label names the row for the handle ("Reorder Write the launch post") and
+for the announcements. With index, and an action on the Sortable, the row
+also carries move up / move down buttons that call action(id, index ∓ 1):
+they show only until the Sortable's script runs, for a page where it
+cannot (or has not yet). In a grouped Sortable they call action(id, list, index ∓ 1),
+the same shape a drop sends.
+*/}}
+<brick:style>
+.bk-sortable__item { display: flex; align-items: center; gap: .5rem; padding: .45rem .6rem .45rem .35rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); list-style: none; transition: box-shadow var(--bk-duration), transform var(--bk-duration), border-color var(--bk-duration); }
+.bk-sortable__body { flex: 1; min-width: 0; }
+.bk-sortable__handle { flex: none; display: inline-grid; place-items: center; width: 1.5rem; height: 1.75rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: grab; touch-action: none; }
+.bk-sortable__handle:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-sortable__handle:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+.bk-sortable__moves { display: inline-flex; gap: .125rem; }
+.bk-sortable__move { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; padding: 0; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-surface); color: var(--bk-muted-fg); cursor: pointer; }
+.bk-sortable__move:hover { color: var(--bk-fg); background: var(--bk-accent); }
+.bk-sortable__move:disabled { opacity: .4; cursor: not-allowed; }
+</brick:style>
+{{ $s := .Ctx.bkSortable }}
+{{ $act := index $s "action" }}{{ $list := index $s "list" }}
+<li class="{{ cx `bk-sortable__item` .Attrs.class }}" data-id="{{ .Props.id }}"{{ with .Props.label }} data-label="{{ . }}"{{ end }} {{ attrs `class` }}><button type="button" class="bk-sortable__handle" aria-label="Reorder {{ or .Props.label .Props.id }}"{{ with index $s "help" }} aria-describedby="{{ . }}"{{ end }}><Icon name="grip-vertical" :size="14" /></button><div class="bk-sortable__body">{{ children }}</div>{{ if and $act (ge .Props.index 0) }}<span class="bk-sortable__moves"><button type="button" class="bk-sortable__move" aria-label="Move {{ or .Props.label .Props.id }} up"{{ if eq .Props.index 0 }} disabled{{ else }} brick:click="{{ $act }}({{ toJSON .Props.id }}, {{ with $list }}{{ toJSON . }}, {{ end }}{{ sub .Props.index 1 }})"{{ end }}><Icon name="arrow-up" :size="12" /></button><button type="button" class="bk-sortable__move" aria-label="Move {{ or .Props.label .Props.id }} down" brick:click="{{ $act }}({{ toJSON .Props.id }}, {{ with $list }}{{ toJSON . }}, {{ end }}{{ add .Props.index 1 }})"><Icon name="arrow-down" :size="12" /></button></span>{{ end }}</li>

@@ -1,0 +1,20 @@
+---
+features:
+  - {icon: zap, title: No build step, text: Save a file and the page reloads. There is nothing to compile.}
+  - {icon: shield, title: Safe by default, text: Every value is escaped by Go's html/template. Scripts are sandboxed.}
+  - {icon: layers, title: Components as files, text: "A file is a tag: Card.html is <Card>. Props are attributes."}
+---
+<brick:style>
+.feature-icon { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; margin-bottom: .75rem; border-radius: var(--bk-radius); background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); }
+</brick:style>
+<Section eyebrow="Why brick" title="Everything you need, nothing you don't" description="Drop in a file to add a page, and build it from components with props, slots and context." align="center" spacing="sm" style="width: 100%">
+  <Grid :md="3">
+    {{ range .Params.features }}
+    <Card variant="ghost" padding="sm">
+      <div class="feature-icon"><Icon :name=".icon" :size="18" /></div>
+      <Heading :level="3" size="md">{{ .title }}</Heading>
+      <Text size="sm" tone="muted" style="margin-top: .35rem">{{ .text }}</Text>
+    </Card>
+    {{ end }}
+  </Grid>
+</Section>

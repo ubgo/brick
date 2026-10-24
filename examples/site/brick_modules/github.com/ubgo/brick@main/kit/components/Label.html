@@ -1,0 +1,28 @@
+---
+props:
+  for: {type: string, default: ""}
+  required: {type: bool, default: false}
+  optional: {type: bool, default: false}
+  size: {type: string, default: md, oneof: [sm, md]}
+---
+{{/*
+Label: the text that names a form control. A native <label>, so clicking it
+focuses (or toggles) the control whose id it names.
+
+  <Label for="email">Email</Label>
+  <Label for="name" required>Full name</Label>
+  <Label for="bio" optional>Bio</Label>
+
+<Field label="…"> renders one for you and wires for= to the control's id;
+use Label on its own only for a control laid out by hand. The required
+star is decorative (aria-hidden): the control's own required attribute is
+what assistive technology announces.
+*/}}
+<brick:style>
+.bk-label { display: inline-flex; align-items: baseline; gap: .25rem; font: 500 var(--bk-text-sm)/1.4 var(--bk-font); color: var(--bk-fg); cursor: default; }
+.bk-label[for] { cursor: pointer; }
+.bk-label--sm { font-size: var(--bk-text-xs); }
+.bk-label__req { color: var(--bk-danger-text); font-weight: 600; }
+.bk-label__opt { color: var(--bk-muted-fg); font-weight: 400; font-size: var(--bk-text-xs); }
+</brick:style>
+<label class="{{ cx `bk-label` (cond (eq .Props.size `sm`) `bk-label--sm` ``) .Attrs.class }}"{{ with .Props.for }} for="{{ . }}"{{ end }} {{ attrs `class` }}>{{ children }}{{ if .Props.required }}<span class="bk-label__req" aria-hidden="true">*</span>{{ else if .Props.optional }}<span class="bk-label__opt">(optional)</span>{{ end }}</label>

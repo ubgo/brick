@@ -1,0 +1,2 @@
+- {type: Quote, text: "Less, but better."}
+- {type: Card, title: A card chosen from data}

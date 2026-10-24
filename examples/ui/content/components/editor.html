@@ -1,0 +1,21 @@
+---
+title: Editor
+category: Forms
+description: "A small rich-text editor over a textarea: bold, italic, links, headings, lists, quotes and code; plain text box without JavaScript."
+api:
+  - {name: value, type: "string", desc: "The HTML to start with."}
+  - {name: placeholder, type: "string", default: "Write something…", desc: "Shown while empty."}
+  - {name: rows, type: "int", default: "6", desc: "Height, in lines."}
+  - {name: label, type: "string", desc: "The accessible name (a Field provides one)."}
+  - {name: tools, type: "list", default: "all", desc: "Which tools, in order: bold, italic, underline, link, heading, bullets, numbers, quote, code."}
+  - {name: invalid, type: "bool", desc: ""}
+  - {name: required, type: "bool", desc: ""}
+  - {name: disabled, type: "bool", desc: ""}
+---
+<h1>Editor</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>The editor cleans its HTML as you type, but that copy came from a browser: treat what arrives as untrusted and show it with <code>{{ `{{ sanitize … }}` }}</code>, as the second example does. The script, the <code>onclick</code> handler and the <code>javascript:</code> link in its starting value never reach the preview.</p>
+<Example title="In a Field" block><EditorBasic /><brick:prop name="code"><Source src="~/demos/EditorBasic.html" /></brick:prop></Example>
+<Example title="Submitted, then sanitized on the server" block><EditorSanitize /><brick:prop name="code"><Source src="~/demos/EditorSanitize.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

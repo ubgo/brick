@@ -1,0 +1,30 @@
+---
+state: {next: 1, answer: ""}
+---
+<brick:script>
+def send(state, props, text):
+    msg = {"id": state["next"], "text": text}
+    brick.rows("log", component = "Msg", items = [msg], at = "top", limit = 3)
+    return dict(state, next = state["next"] + 1)
+
+def remove(state, props, id):
+    brick.rows("log", op = "delete", keys = [str(id)])
+    return state
+
+def clear(state, props):
+    brick.rows("log", op = "reset")
+    return state
+
+def think(state, props):
+    words = ["Rows", " stay", " out", " of", " state."]
+    for w in words:
+        brick.stream("answer", w)
+    return dict(state, answer = "".join(words))
+</brick:script>
+<section class="chat">
+  <ul brick:ref="log" brick:ignore></ul>
+  <p brick:ref="answer">{{ .State.answer }}</p>
+  <button brick:click='send("Hello")'>Send</button>
+  <button brick:click="clear">Clear</button>
+  <button brick:click="think">Think</button>
+</section>

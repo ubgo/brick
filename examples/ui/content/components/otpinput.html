@@ -1,0 +1,18 @@
+---
+title: OTPInput
+category: Forms
+description: "A one-time code as boxes that advance as you type, go back on Backspace and fill on paste."
+api:
+  - {name: length, type: "int", default: "6", desc: "Number of characters."}
+  - {name: value, type: "string", desc: "The code."}
+  - {name: mode, type: "numeric | alphanumeric", default: "numeric", desc: "Allowed characters."}
+  - {name: group, type: "int", desc: "A dash after every group characters."}
+  - {name: label, type: "string", default: "Verification code", desc: "The accessible name."}
+  - {name: invalid, type: "bool", desc: "Red borders."}
+  - {name: disabled, type: "bool", desc: "Disables it."}
+---
+<h1>OTPInput</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Codes" block><OTPInputBasic /><brick:prop name="code"><Source src="~/demos/OTPInputBasic.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

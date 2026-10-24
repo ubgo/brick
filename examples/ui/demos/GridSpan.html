@@ -1,0 +1,10 @@
+<brick:style>
+.grid-panel { padding: .75rem; min-height: 5rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface-2); color: var(--bk-muted-fg); font: 500 var(--bk-text-xs) var(--bk-mono); }
+</brick:style>
+<Grid :cols="3" gap="sm" style="width: 100%">
+  <div class="grid-panel bk-grid__span-full">span-full · header</div>
+  <div class="grid-panel bk-grid__span-2">span-2 · chart</div>
+  <div class="grid-panel">1 · stats</div>
+  <div class="grid-panel">1</div>
+  <div class="grid-panel bk-grid__span-2">span-2 · table</div>
+</Grid>

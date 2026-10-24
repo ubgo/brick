@@ -1,0 +1,14 @@
+---
+state:
+  ticks: 0
+brick:
+  log: false
+---
+<brick:script>
+def tick(state, props):
+    return dict(state, ticks = state["ticks"] + 1)
+
+def explode(state, props):
+    fail("the clock broke")
+</brick:script>
+<p id="ticks" brick:poll.5s="tick">Ticks: {{ .State.ticks }}</p>

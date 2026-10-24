@@ -1,0 +1,22 @@
+<div style="height: 30rem; width: 15rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); overflow: hidden">
+  <Sidebar label="Workspace" current="/apps/tasks/">
+    <brick:prop name="header"><a href="/"><Icon name="zap" :size="18" /> Acme</a></brick:prop>
+    <SidebarGroup title="Workspace">
+      <SidebarItem href="/apps/dashboard/" icon="layout-dashboard" label="Dashboard" />
+      <SidebarItem href="/apps/inbox/" icon="inbox" label="Inbox" badge="4" />
+      <SidebarItem href="/apps/tasks/" icon="kanban" label="Tasks" />
+      <SidebarItem href="/apps/contacts/" icon="users" label="Contacts" />
+    </SidebarGroup>
+    <SidebarGroup title="Projects" collapsible>
+      <SidebarItem label="Website" icon="globe" href="/projects/web/">
+        <SidebarItem href="/projects/web/pages/" label="Pages" />
+        <SidebarItem href="/projects/web/assets/" label="Assets" />
+      </SidebarItem>
+      <SidebarItem href="/projects/mobile/" icon="phone" label="Mobile app" />
+    </SidebarGroup>
+    <brick:prop name="footer">
+      <SidebarItem href="/apps/settings/" icon="settings" label="Settings" />
+      <SidebarItem icon="log-out" label="Sign out" />
+    </brick:prop>
+  </Sidebar>
+</div>

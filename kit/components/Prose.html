@@ -1,0 +1,50 @@
+---
+props:
+  size: {type: string, default: base, oneof: [sm, base, lg]}
+---
+{{/*
+Prose: typography for HTML you did not write element by element — rendered
+markdown, a CMS body, a changelog. Headings, paragraphs, lists, quotes,
+tables, code and rules get the kit's rhythm.
+
+  <Prose>{{ .Content }}</Prose>
+  <Prose size="sm"><h2>Changelog</h2><ul><li>Faster builds</li></ul></Prose>
+
+Styles use :where(), so any class you put on an element inside still wins.
+Width is capped at about 70 characters; add class="bk-prose--wide" to lift it.
+*/}}
+<brick:style>
+.bk-prose { max-width: 70ch; color: var(--bk-fg); font-size: var(--bk-text-base); line-height: 1.75; }
+.bk-prose--wide { max-width: none; }
+.bk-prose--sm { font-size: var(--bk-text-sm); line-height: 1.7; }
+.bk-prose--lg { font-size: var(--bk-text-lg); line-height: 1.75; }
+.bk-prose > :where(:first-child) { margin-top: 0; }
+.bk-prose > :where(:last-child) { margin-bottom: 0; }
+.bk-prose :where(p), .bk-prose :where(ul), .bk-prose :where(ol), .bk-prose :where(blockquote), .bk-prose :where(pre), .bk-prose :where(table), .bk-prose :where(figure), .bk-prose :where(dl) { margin: 0 0 1.1em; }
+.bk-prose :where(h1), .bk-prose :where(h2), .bk-prose :where(h3), .bk-prose :where(h4) { color: var(--bk-fg); font-weight: 600; line-height: 1.3; letter-spacing: -.015em; }
+.bk-prose :where(h1) { font-size: 2em; margin: 0 0 .8em; letter-spacing: -.025em; line-height: 1.15; }
+.bk-prose :where(h2) { font-size: 1.45em; margin: 1.9em 0 .7em; padding-bottom: .3em; border-bottom: 1px solid var(--bk-border); }
+.bk-prose :where(h3) { font-size: 1.2em; margin: 1.6em 0 .5em; }
+.bk-prose :where(h4) { font-size: 1em; margin: 1.4em 0 .4em; }
+.bk-prose :where(a) { color: var(--bk-primary-text); font-weight: 500; text-decoration: underline; text-decoration-color: color-mix(in oklab, var(--bk-primary) 35%, transparent); text-underline-offset: .2em; }
+.bk-prose :where(a:hover) { text-decoration-color: currentColor; }
+.bk-prose :where(strong) { font-weight: 600; }
+.bk-prose :where(ul), .bk-prose :where(ol) { padding-left: 1.5em; }
+.bk-prose :where(li) { margin: .3em 0; padding-left: .2em; }
+.bk-prose :where(ul > li)::marker { color: var(--bk-muted-fg); }
+.bk-prose :where(ol > li)::marker { color: var(--bk-muted-fg); font-weight: 500; }
+.bk-prose :where(li > ul), .bk-prose :where(li > ol) { margin: .3em 0; }
+.bk-prose :where(blockquote) { padding: .1em 0 .1em 1em; border-left: 3px solid var(--bk-primary); color: var(--bk-muted-fg); font-style: italic; }
+.bk-prose :where(hr) { margin: 2.2em 0; border: 0; border-top: 1px solid var(--bk-border); }
+.bk-prose :where(code) { padding: .12em .35em; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-muted); font-size: .86em; }
+.bk-prose :where(pre) { padding: .85em 1em; overflow-x: auto; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface-2); font-size: .86em; line-height: 1.65; }
+.bk-prose :where(pre code) { padding: 0; border: 0; background: none; font-size: inherit; }
+.bk-prose :where(table) { width: 100%; border-collapse: collapse; font-size: .93em; }
+.bk-prose :where(th) { padding: .5em .75em; border-bottom: 1px solid var(--bk-input); text-align: left; font-weight: 600; }
+.bk-prose :where(td) { padding: .5em .75em; border-bottom: 1px solid var(--bk-border); }
+.bk-prose :where(img), .bk-prose :where(video) { max-width: 100%; height: auto; border-radius: var(--bk-radius-lg); }
+.bk-prose :where(figcaption) { margin-top: .5em; color: var(--bk-muted-fg); font-size: .875em; text-align: center; }
+.bk-prose :where(kbd) { padding: .1em .35em; border: 1px solid var(--bk-border); border-bottom-width: 2px; border-radius: var(--bk-radius-sm); font-size: .8em; }
+.bk-prose :where(mark) { padding: 0 .15em; border-radius: var(--bk-radius-sm); background: color-mix(in oklab, var(--bk-warning) 25%, transparent); color: inherit; }
+</brick:style>
+<div class="{{ cx `bk-prose` (cond (ne .Props.size `base`) (print `bk-prose--` .Props.size) ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</div>

@@ -1,0 +1,18 @@
+---
+use:
+  demo: ~/demos/demo_data.star
+load: demo.contacts
+columns:
+  - {key: name, label: Name}
+  - {key: email, label: Email}
+  - {key: company, label: Company}
+  - {key: role, label: Role}
+  - {key: status, label: Status}
+  - {key: created, label: Added, align: right}
+---
+<DataTable :columns=".Params.columns" :rows=".Props.rows" selectable label="Contacts" style="width: 100%">
+  <brick:prop name="cell_name"><div style="display: flex; align-items: center; gap: .55rem"><Avatar :name=".Slot.value" size="xs" /><span style="font-weight: 550">{{ .Slot.value }}</span></div></brick:prop>
+  <brick:prop name="cell_status"><Badge :tone="cond (eq .Slot.value `active`) `success` (cond (eq .Slot.value `lead`) `info` `neutral`)" dot>{{ .Slot.value }}</Badge></brick:prop>
+  <brick:prop name="cell_created">{{ dateFormat "Jan 2, 2006" .Slot.value }}</brick:prop>
+  <brick:prop name="toolbar"><Button size="sm" variant="outline" icon="download">Export</Button><Button size="sm" icon="plus">Add contact</Button></brick:prop>
+</DataTable>

@@ -1,0 +1,15 @@
+---
+props:
+  post:
+    type: map
+    required: true
+    fields:
+      title: {type: string, required: true}
+      summary: string
+  index: {type: int, default: 0}
+  tone: {type: string, default: plain, oneof: [plain, loud]}
+---
+<article class="card card--{{ .Props.tone }}">
+  <h3>#{{ .Props.index }} {{ .Props.post.title }}</h3>
+  <p>{{ .Props.post.summary }}</p>
+</article>

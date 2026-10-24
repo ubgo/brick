@@ -1,0 +1,48 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  label: {type: string, required: true}
+  href: {type: string, default: ""}
+  icon: {type: string, default: ""}
+  badge: {type: string, default: ""}
+  active: {type: bool, default: false}
+  open: {type: bool, default: false}
+inject:
+  bkSidebarCurrent: {default: ""}
+  bkSidebarCollapsed: {default: false}
+---
+{{/*
+SidebarItem: one entry of a <Sidebar>: a link (href), a button (no href),
+or — when it has children — a <details> that folds nested items.
+
+  <SidebarItem href="/inbox/" icon="inbox" label="Inbox" badge="12" />
+  <SidebarItem label="Projects" icon="folder" href="/projects/">
+    <SidebarItem href="/projects/brick/" label="brick" />
+  </SidebarItem>
+  <SidebarItem label="New task" icon="plus" hx-post="/tasks" />
+
+It is active (aria-current="page") when active is set or its href equals
+the Sidebar's current. A parent with children starts open when open is set
+or current is inside its href, so the active child is never folded away.
+*/}}
+<brick:style>
+.bk-sidebar-item { box-sizing: border-box; position: relative; display: flex; align-items: center; gap: .55rem; width: 100%; height: var(--bk-h-sm); padding: 0 .5rem; border: 0; border-radius: var(--bk-radius); background: none; color: color-mix(in oklab, var(--bk-fg) 80%, transparent); font: 500 var(--bk-text-sm)/1 var(--bk-font); text-align: left; text-decoration: none; cursor: pointer; transition: background var(--bk-duration), color var(--bk-duration); }
+.bk-sidebar-item:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-sidebar-item:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.bk-sidebar-item > .bk-icon { flex: none; color: var(--bk-muted-fg); }
+.bk-sidebar-item[aria-current=page] { background: color-mix(in oklab, var(--bk-primary) 11%, transparent); color: var(--bk-primary-text); font-weight: 600; }
+.bk-sidebar-item[aria-current=page] > .bk-icon { color: var(--bk-primary-text); }
+.bk-sidebar-item__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-sidebar-item__badge { display: inline-grid; place-items: center; min-width: 1.15rem; height: 1.15rem; padding: 0 .3rem; border-radius: var(--bk-radius-full); background: var(--bk-muted); color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bk-sidebar-item[aria-current=page] .bk-sidebar-item__badge { background: var(--bk-primary); color: var(--bk-primary-fg); }
+.bk-sidebar-item__sub > summary { list-style: none; }
+.bk-sidebar-item__sub > summary::-webkit-details-marker { display: none; }
+.bk-sidebar-item__chev { flex: none; color: var(--bk-muted-fg); transition: transform var(--bk-duration); }
+.bk-sidebar-item__sub[open] > summary .bk-sidebar-item__chev { transform: rotate(90deg); }
+.bk-sidebar-item__children { display: flex; flex-direction: column; gap: 1px; margin: 1px 0 2px 1.05rem; padding-left: .5rem; border-left: 1px solid var(--bk-border); }
+</brick:style>
+{{ $cur := print .Ctx.bkSidebarCurrent }}
+{{ $active := or .Props.active (and .Props.href (eq .Props.href $cur)) }}
+{{ $tip := cond .Ctx.bkSidebarCollapsed .Props.label "" }}
+{{ if hasNode "children" }}<details class="{{ cx `bk-sidebar-item__sub` .Attrs.class }}"{{ if or .Props.open (and .Props.href (hasPrefix .Props.href $cur)) }} open{{ end }} {{ attrs `class` }}><summary class="bk-sidebar-item"{{ if $active }} aria-current="page"{{ end }}{{ with $tip }} title="{{ . }}"{{ end }}>{{ with .Props.icon }}<Icon :name="." :size="15" />{{ end }}<span class="bk-sidebar-item__label">{{ .Props.label }}</span>{{ with .Props.badge }}<span class="bk-sidebar-item__badge">{{ . }}</span>{{ end }}<Icon name="chevron-right" :size="14" class="bk-sidebar-item__chev" /></summary><div class="bk-sidebar-item__children">{{ children }}</div></details>{{ else if .Props.href }}<a class="{{ cx `bk-sidebar-item` .Attrs.class }}" href="{{ .Props.href }}"{{ if $active }} aria-current="page"{{ end }}{{ with $tip }} title="{{ . }}"{{ end }} {{ attrs `class` }}>{{ with .Props.icon }}<Icon :name="." :size="15" />{{ end }}<span class="bk-sidebar-item__label">{{ .Props.label }}</span>{{ with .Props.badge }}<span class="bk-sidebar-item__badge">{{ . }}</span>{{ end }}</a>{{ else }}<button type="button" class="{{ cx `bk-sidebar-item` .Attrs.class }}"{{ if $active }} aria-current="page"{{ end }}{{ with $tip }} title="{{ . }}"{{ end }} {{ attrs `class` }}>{{ with .Props.icon }}<Icon :name="." :size="15" />{{ end }}<span class="bk-sidebar-item__label">{{ .Props.label }}</span>{{ with .Props.badge }}<span class="bk-sidebar-item__badge">{{ . }}</span>{{ end }}</button>{{ end }}

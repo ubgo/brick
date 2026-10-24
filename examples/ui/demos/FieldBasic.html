@@ -1,0 +1,12 @@
+<div style="display: grid; gap: 1rem; width: 100%; max-width: 24rem">
+  <Field label="Email" hint="We'll send the receipt here." required>
+    <Input type="email" name="email" placeholder="you@company.com" icon="mail" autocomplete="email" />
+  </Field>
+  <Field label="Username" error="That username is taken.">
+    <Input name="username" value="ada" prefix="brick.dev/" />
+  </Field>
+  <Field label="Password">
+    <brick:prop name="aside"><a href="#">Forgot password?</a></brick:prop>
+    <PasswordInput name="password" autocomplete="current-password" />
+  </Field>
+</div>

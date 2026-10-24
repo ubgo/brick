@@ -1,0 +1,5 @@
+cart:
+  add: Ajouter au panier
+  items:
+    one: "{count} article"
+    other: "{count} articles"

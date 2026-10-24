@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>{{ .Title }}</title>
+<style>html[data-navigating] #bar { display: block } [data-current] { font-weight: bold }</style>
+</head>
+<body>
+<div id="bar" hidden>Loading…</div>
+<header>
+  <a href="/" brick:current.exact brick:prefetch>Home</a>
+  <a href="/docs/" brick:current brick:prefetch>Docs</a>
+  <a href="/docs/intro/" brick:prefetch="visible">Intro</a>
+  <a href="/report.csv" brick:nav="off">Download</a>
+</header>
+<aside id="toc" brick:scroll="docs-nav">…a long list of links…</aside>
+<main>{{ children }}</main>
+<audio id="player" brick:persist controls></audio>
+{{ assets }}
+</body>
+</html>

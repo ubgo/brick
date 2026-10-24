@@ -1,0 +1,21 @@
+== content/index.html
+<h1>Latest posts</h1>
+<article class="card card--loud">
+  <h3>#0 Hello</h3>
+  <p>The first post.</p>
+</article><article class="card card--loud">
+  <h3>#1 Again</h3>
+  <p>More words.</p>
+</article>
+<article class="card card--plain">
+  <h3>#0 Spelled with x-</h3>
+  <p>Same file.</p>
+</article>
+
+== content/attrs.html
+<button class="btn wide" id="save" hx-post="/save">Save</button>
+<button class="btn primary" hx-post="/buy" id="buy">Buy</button>
+
+== content/contact.html
+<a href="mailto:ann@example.com">ann@example.com</a> <span>$19.99</span>
+

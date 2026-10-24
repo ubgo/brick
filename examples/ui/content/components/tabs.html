@@ -1,0 +1,28 @@
+---
+title: Tabs
+category: Navigation
+description: "Switch between panels of related content — four looks, icons and counts, and a link mode for tabs that are separate pages."
+api:
+  - {name: label, type: "string", default: "Tabs", desc: "The tab list’s accessible name."}
+  - {name: variant, type: "underline | pills | boxed | segmented", default: "underline", desc: "The look."}
+  - {name: size, type: "sm | md | lg", default: "md", desc: "Tab height."}
+  - {name: selected, type: "int", default: "0", desc: "The tab selected when the page loads (server-side)."}
+  - {name: current, type: "string", desc: "Link mode: the tab whose href equals this URL is current."}
+  - {name: full, type: "bool", desc: "Tabs share the full width."}
+  - {name: Tab title, type: "string", desc: "The tab’s text. Required."}
+  - {name: Tab icon, type: "string", desc: "An icon before the title."}
+  - {name: Tab badge, type: "string", desc: "A count or tag after the title."}
+  - {name: Tab href, type: "string", desc: "Makes the set a nav of links; only the current tab’s body renders."}
+  - {name: Tab prefetch, type: "bool | visible", desc: "Link mode: writes brick:prefetch on the tab's link."}
+  - {name: Tab disabled, type: "bool", desc: "Cannot be selected; the keyboard skips it."}
+---
+<h1>Tabs</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>Without JavaScript every panel shows under its own title; with it one panel shows at a time. Tab bars are built from the <code>&lt;Tab&gt;</code> children written literally inside <code>&lt;Tabs&gt;</code>.</p>
+<Example title="Underline (default): click, or arrow keys, Home and End" block><TabsBasic /><brick:prop name="code"><Source src="~/demos/TabsBasic.html" /></brick:prop></Example>
+<Example title="Pills, boxed and segmented" block><TabsVariants /><brick:prop name="code"><Source src="~/demos/TabsVariants.html" /></brick:prop></Example>
+<Example title="Icons, badges, a disabled tab, selected on the server" block><TabsIcons /><brick:prop name="code"><Source src="~/demos/TabsIcons.html" /></brick:prop></Example>
+<Example title="Full width and sizes" block><TabsFull /><brick:prop name="code"><Source src="~/demos/TabsFull.html" /></brick:prop></Example>
+<Example title="Link mode — each tab is a page, no JavaScript" block><TabsLinks /><brick:prop name="code"><Source src="~/demos/TabsLinks.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

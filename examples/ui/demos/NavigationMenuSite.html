@@ -1,0 +1,9 @@
+---
+use:
+  site: ~/data/demo-navmenu.yaml
+---
+<header style="display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; width: 100%; min-height: 20rem; align-items: flex-start; padding: .5rem .75rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface)">
+  <a href="/" style="display: flex; align-items: center; gap: .45rem; height: 2rem; font-weight: 700; text-decoration: none; color: var(--bk-fg)"><span style="display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: var(--bk-radius); background: var(--bk-primary); color: var(--bk-primary-fg); font-size: var(--bk-text-xs)">b</span>brick</a>
+  <NavigationMenu :items=".Data.site.items" current="/components/navigation-menu/" label="Site" />
+  <div style="display: flex; gap: .4rem; margin-left: auto"><Button variant="ghost" size="sm">Sign in</Button><Button size="sm">Get started</Button></div>
+</header>

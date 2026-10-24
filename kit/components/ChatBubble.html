@@ -1,0 +1,54 @@
+---
+use:
+  Avatar: ~/components/Avatar.html
+props:
+  side: {type: string, default: start, oneof: [start, end]}
+  name: {type: string, default: ""}
+  avatar: {type: string, default: ""}
+  avatarSrc: {type: string, default: ""}
+  time: {type: string, default: ""}
+  datetime: {type: string, default: ""}
+  status: {type: string, default: ""}
+  tone: {type: string, default: "", oneof: ["", neutral, primary, success, warning, danger, info]}
+  indent: {type: bool, default: false}
+---
+{{/*
+ChatBubble: one message in a conversation.
+
+  <ChatBubble name="Maya" avatar="Maya Chen" time="09:41">Did the deploy go out?</ChatBubble>
+  <ChatBubble side="end" time="09:42" status="Read">Yes, ten minutes ago.</ChatBubble>
+  <ChatBubble tone="danger" name="System">The build failed.</ChatBubble>
+
+start is the other person (left, neutral bubble); end is you (right, primary
+bubble). tone overrides the colour. Consecutive bubbles from one sender can
+omit avatar and name and set indent, which keeps the avatar's column empty
+so they line up under the first.
+The name, time and status are text, so a screen reader reads "Maya, 09:41,
+Did the deploy go out?".
+*/}}
+<brick:style>
+.bk-chat { display: flex; align-items: flex-end; gap: .6rem; margin: .15rem 0; }
+.bk-chat--end { flex-direction: row-reverse; }
+.bk-chat__avatar { flex: none; width: 1.75rem; }
+.bk-chat__main { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; max-width: min(36rem, 85%); }
+.bk-chat--end .bk-chat__main { align-items: flex-end; }
+.bk-chat__head, .bk-chat__foot { display: flex; gap: .4rem; align-items: baseline; padding: 0 .3rem; font-size: var(--bk-text-xs); color: var(--bk-muted-fg); }
+.bk-chat__name { font-weight: 600; color: var(--bk-fg); }
+.bk-chat__bubble { --bk-chat-bg: var(--bk-muted); --bk-chat-fg: var(--bk-fg); margin: .15rem 0; padding: .5rem .8rem; border-radius: 1rem 1rem 1rem .3rem; background: var(--bk-chat-bg); color: var(--bk-chat-fg); font-size: var(--bk-text-base); line-height: 1.45; overflow-wrap: anywhere; }
+.bk-chat--end .bk-chat__bubble { --bk-chat-bg: var(--bk-primary); --bk-chat-fg: var(--bk-primary-fg); border-radius: 1rem 1rem .3rem 1rem; }
+.bk-chat .bk-chat__bubble--neutral { --bk-chat-bg: var(--bk-muted); --bk-chat-fg: var(--bk-fg); }
+.bk-chat .bk-chat__bubble--primary { --bk-chat-bg: var(--bk-primary); --bk-chat-fg: var(--bk-primary-fg); }
+.bk-chat .bk-chat__bubble--success { --bk-chat-bg: color-mix(in oklab, var(--bk-success) 14%, var(--bk-surface)); --bk-chat-fg: var(--bk-fg); }
+.bk-chat .bk-chat__bubble--warning { --bk-chat-bg: color-mix(in oklab, var(--bk-warning) 16%, var(--bk-surface)); --bk-chat-fg: var(--bk-fg); }
+.bk-chat .bk-chat__bubble--danger { --bk-chat-bg: color-mix(in oklab, var(--bk-danger) 13%, var(--bk-surface)); --bk-chat-fg: var(--bk-fg); }
+.bk-chat .bk-chat__bubble--info { --bk-chat-bg: color-mix(in oklab, var(--bk-info) 14%, var(--bk-surface)); --bk-chat-fg: var(--bk-fg); }
+.bk-chat__bubble a { color: inherit; }
+</brick:style>
+<div class="{{ cx `bk-chat` (print `bk-chat--` .Props.side) .Attrs.class }}" {{ attrs `class` }}>
+  {{- if or .Props.avatar .Props.avatarSrc }}<div class="bk-chat__avatar"><Avatar :name=".Props.avatar" :src=".Props.avatarSrc" size="sm" /></div>{{ else if .Props.indent }}<div class="bk-chat__avatar" aria-hidden="true"></div>{{ end }}
+  <div class="bk-chat__main">
+    {{- if or .Props.name (and .Props.time (not .Props.status)) }}<div class="bk-chat__head">{{ with .Props.name }}<span class="bk-chat__name">{{ . }}</span>{{ end }}{{ if and .Props.time (not .Props.status) }}<time{{ with .Props.datetime }} datetime="{{ . }}"{{ end }}>{{ .Props.time }}</time>{{ end }}</div>{{ end }}
+    <div class="bk-chat__bubble{{ with .Props.tone }} bk-chat__bubble--{{ . }}{{ end }}">{{ children }}</div>
+    {{- if .Props.status }}<div class="bk-chat__foot">{{ with .Props.time }}<time{{ with $.Props.datetime }} datetime="{{ . }}"{{ end }}>{{ . }}</time> · {{ end }}{{ .Props.status }}</div>{{ end }}
+  </div>
+</div>

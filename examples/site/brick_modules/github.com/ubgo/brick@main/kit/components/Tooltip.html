@@ -1,0 +1,70 @@
+---
+props:
+  text: {type: string, required: true}
+  side: {type: string, default: top, oneof: [top, bottom, left, right]}
+  delay: {type: int, default: 300}
+---
+{{/*
+Tooltip: a short text label that appears when its children are hovered or
+focused with the keyboard — the name of an icon button, a keyboard
+shortcut, a truncated value.
+
+  <Tooltip text="Delete"><Button icon="trash" square label="Delete" variant="ghost" /></Tooltip>
+  <Tooltip text="Copied to your clipboard" side="bottom"><Button>Copy</Button></Tooltip>
+  <Tooltip text="Last synced 2 minutes ago" :delay="0"><Status /></Tooltip>
+
+Pure CSS: it shows on :hover and on keyboard focus (:focus-visible), after
+delay milliseconds, placed on side. Where the browser has CSS anchor
+positioning the tip is fixed to the trigger, so an overflow: hidden
+ancestor cannot clip it and it flips at the viewport's edge; elsewhere it
+is positioned inside the wrapper. The tip is role="tooltip" and the
+wrapper points at it with aria-describedby; the client module moves that
+pointer onto the first focusable child, where a screen reader reads it,
+or makes the wrapper focusable when there is none, and lets Escape hide
+the tip (WCAG 1.4.13). A tooltip is never the only way to reach
+information: it holds plain text, and anything interactive belongs in a
+Popover or HoverCard.
+*/}}
+<brick:client>
+brick.mount("Tooltip", (el) => {
+  const tip = el.querySelector(":scope > .bk-tooltip__tip");
+  if (!tip) return;
+  const target = el.querySelector("a[href], button, input, select, textarea, [tabindex]") || el;
+  if (target !== el) el.removeAttribute("aria-describedby");
+  else if (!el.hasAttribute("tabindex")) el.tabIndex = 0;
+  const ids = (target.getAttribute("aria-describedby") || "").split(/\s+/).filter(Boolean);
+  if (!ids.includes(tip.id)) target.setAttribute("aria-describedby", ids.concat(tip.id).join(" "));
+  const key = (e) => { if (e.key === "Escape") el.classList.add("bk-tooltip--dismissed"); };
+  const reset = () => el.classList.remove("bk-tooltip--dismissed");
+  el.addEventListener("keydown", key);
+  el.addEventListener("mouseleave", reset);
+  el.addEventListener("focusout", reset);
+  return () => {
+    el.removeEventListener("keydown", key);
+    el.removeEventListener("mouseleave", reset);
+    el.removeEventListener("focusout", reset);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-tooltip { position: relative; display: inline-flex; vertical-align: middle; }
+.bk-tooltip__tip { position: absolute; z-index: var(--bk-z-tooltip); width: max-content; max-width: 16rem; padding: .3rem .5rem; border-radius: var(--bk-radius-sm); background: var(--bk-neutral); color: var(--bk-neutral-fg); box-shadow: var(--bk-shadow); font: 500 var(--bk-text-xs)/1.35 var(--bk-font); text-align: center; white-space: normal; pointer-events: none; opacity: 0; visibility: hidden; transition: opacity var(--bk-duration) ease, visibility 0s linear var(--bk-duration); }
+.bk-tooltip:hover > .bk-tooltip__tip { opacity: 1; visibility: visible; transition-delay: var(--bk-tooltip-delay, .3s); }
+.bk-tooltip:focus-visible > .bk-tooltip__tip { opacity: 1; visibility: visible; transition-delay: var(--bk-tooltip-delay, .3s); }
+.bk-tooltip:has(:focus-visible) > .bk-tooltip__tip { opacity: 1; visibility: visible; transition-delay: var(--bk-tooltip-delay, .3s); }
+.bk-tooltip--dismissed > .bk-tooltip__tip, .bk-tooltip--dismissed:hover > .bk-tooltip__tip { opacity: 0; visibility: hidden; transition: none; }
+.bk-tooltip--top > .bk-tooltip__tip { bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); }
+.bk-tooltip--bottom > .bk-tooltip__tip { top: calc(100% + 6px); left: 50%; transform: translateX(-50%); }
+.bk-tooltip--left > .bk-tooltip__tip { right: calc(100% + 6px); top: 50%; transform: translateY(-50%); }
+.bk-tooltip--right > .bk-tooltip__tip { left: calc(100% + 6px); top: 50%; transform: translateY(-50%); }
+@supports (anchor-name: --a) {
+  .bk-tooltip { anchor-name: var(--bk-tooltip-anchor); }
+  .bk-tooltip > .bk-tooltip__tip { position: fixed; position-anchor: var(--bk-tooltip-anchor); inset: auto; transform: none; margin: 6px; }
+  .bk-tooltip--top > .bk-tooltip__tip { position-area: top; position-try-fallbacks: flip-block; }
+  .bk-tooltip--bottom > .bk-tooltip__tip { position-area: bottom; position-try-fallbacks: flip-block; }
+  .bk-tooltip--left > .bk-tooltip__tip { position-area: left; position-try-fallbacks: flip-inline; }
+  .bk-tooltip--right > .bk-tooltip__tip { position-area: right; position-try-fallbacks: flip-inline; }
+}
+</brick:style>
+{{ $id := print .ID `-tip` }}
+<span class="{{ cx `bk-tooltip` (print `bk-tooltip--` .Props.side) .Attrs.class }}" aria-describedby="{{ $id }}" style="--bk-tooltip-delay: {{ .Props.delay }}ms; --bk-tooltip-anchor: --{{ $id }}{{ with .Attrs.style }}; {{ . }}{{ end }}" {{ attrs `class` `style` }}>{{ children }}<span class="bk-tooltip__tip" role="tooltip" id="{{ $id }}">{{ .Props.text }}</span></span>

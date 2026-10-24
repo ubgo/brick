@@ -1,0 +1,6 @@
+---
+use:
+  demo: ~/demos/demo_charts.star
+load: demo.orders_by_status
+---
+<DonutChart :data=".Props.data" name="Orders" centerLabel="Orders" label="Orders by status" :thickness="16" />

@@ -1,0 +1,47 @@
+---
+props:
+  title: {type: string, required: true}
+  description: {type: string, default: ""}
+  divider: {type: bool, default: false}
+  level: {type: int, default: 1, oneof: [1, 2]}
+---
+{{/*
+PageHeader: the top of an app screen — where you are, what the page is,
+and the page's main actions.
+
+  <PageHeader title="Contacts" description="Everyone in your workspace.">
+    <brick:prop name="actions"><Button icon="plus">New contact</Button></brick:prop>
+  </PageHeader>
+  <PageHeader title="Ada Lovelace" divider>
+    <brick:prop name="breadcrumbs"><a href="/contacts/">Contacts</a> / Ada</brick:prop>
+    <Text tone="muted" size="sm">Joined March 2024</Text>
+  </PageHeader>
+
+Blocks: breadcrumbs (above the title), actions (right of the title; they
+wrap below it on narrow screens) and children (below the description: tabs,
+metadata). The title is an <h1>; level 2 suits a header inside a panel.
+*/}}
+<brick:style>
+.bk-page-header { display: flex; flex-direction: column; gap: var(--bk-space-3); margin-bottom: var(--bk-space-6); }
+.bk-page-header--divider { padding-bottom: var(--bk-space-4); border-bottom: 1px solid var(--bk-border); }
+.bk-page-header__crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.bk-page-header__crumbs :where(a) { color: inherit; text-decoration: none; }
+.bk-page-header__crumbs :where(a:hover) { color: var(--bk-fg); }
+.bk-page-header__row { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--bk-space-3) var(--bk-space-6); }
+.bk-page-header__text { display: flex; flex-direction: column; gap: .3rem; min-width: 0; flex: 1 1 20rem; }
+.bk-page-header__title { margin: 0; font-size: var(--bk-text-2xl); font-weight: 600; line-height: 1.2; letter-spacing: -.02em; color: var(--bk-fg); }
+.bk-page-header__description { margin: 0; max-width: 42rem; color: var(--bk-muted-fg); font-size: var(--bk-text-base); }
+.bk-page-header__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--bk-space-2); }
+</brick:style>
+{{ $p := .Props }}
+<header class="{{ cx `bk-page-header` (cond $p.divider `bk-page-header--divider` ``) .Attrs.class }}" {{ attrs `class` }}>
+  {{ if hasNode "breadcrumbs" }}<nav class="bk-page-header__crumbs" aria-label="Breadcrumb">{{ node "breadcrumbs" }}</nav>{{ end }}
+  <div class="bk-page-header__row">
+    <div class="bk-page-header__text">
+      {{ if eq $p.level 2 }}<h2 class="bk-page-header__title">{{ $p.title }}</h2>{{ else }}<h1 class="bk-page-header__title">{{ $p.title }}</h1>{{ end }}
+      {{ with $p.description }}<p class="bk-page-header__description">{{ . }}</p>{{ end }}
+    </div>
+    {{ if hasNode "actions" }}<div class="bk-page-header__actions">{{ node "actions" }}</div>{{ end }}
+  </div>
+  {{ if hasNode "children" }}<div class="bk-page-header__extra">{{ children }}</div>{{ end }}
+</header>

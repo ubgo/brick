@@ -1,0 +1,18 @@
+---
+title: Stats
+category: Data display
+description: "A responsive row of Stat cards — spaced, or joined into one card with dividers. Values can come straight from the database."
+api:
+  - {name: variant, type: "grid | joined", default: grid, desc: "Separate cards, or one card with dividers."}
+  - {name: columns, type: int, default: "0 (fit)", desc: "Cards per row on wide screens; 0 fits as many 12rem cards as there is room for."}
+---
+<h1>Stats</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Grid" block><StatsGrid /><brick:prop name="code"><Source src="~/demos/StatsGrid.html" /></brick:prop></Example>
+<Example title="Joined" block><StatsJoined /><brick:prop name="code"><Source src="~/demos/StatsJoined.html" /></brick:prop></Example>
+<Example title="From the database (a Starlark loader)" block><StatsDatabase /><brick:prop name="code"><Source src="~/demos/StatsDatabase.html" /></brick:prop></Example>
+<h2>Loading the numbers</h2>
+<Prose><p>The last example is a component with <code>load: demo.order_stats</code>: a Starlark function queries the demo SQLite database and returns the props, so the page passes nothing in.</p></Prose>
+<CodeBlock lang="python" title="demos/demo_data.star" src="~/demos/demo_data.star" height="14rem" />
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

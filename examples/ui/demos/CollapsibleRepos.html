@@ -1,0 +1,8 @@
+<div style="width: 100%; max-width: 24rem; padding: .75rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg)">
+  <div style="display: flex; justify-content: space-between; margin-bottom: .5rem; font-size: var(--bk-text-sm)"><b>@ada starred 5 repositories</b></div>
+  {{ range list "ubgo/brick" "ubgo/errx" }}<div style="padding: .4rem .6rem; margin-bottom: .35rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); font: var(--bk-text-xs) var(--bk-mono)">{{ . }}</div>{{ end }}
+  <Collapsible :chevron="false">
+    <brick:prop name="trigger"><span style="color: var(--bk-primary-text)">Show 3 more</span></brick:prop>
+    {{ range list "ubgo/logger" "ubgo/otelkit" "ubgo/cache" }}<div style="padding: .4rem .6rem; margin-bottom: .35rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); font: var(--bk-text-xs) var(--bk-mono)">{{ . }}</div>{{ end }}
+  </Collapsible>
+</div>

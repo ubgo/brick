@@ -1,0 +1,20 @@
+---
+title: Diff
+category: Data display
+description: "Two versions of a picture stacked, with a divider to drag between them — a real range input, so it works from the keyboard."
+api:
+  - {name: before, type: string, desc: "The first image."}
+  - {name: after, type: string, desc: "The second image."}
+  - {name: "beforeAlt, afterAlt", type: string, default: "Before, After", desc: "The images' alternative text."}
+  - {name: "beforeLabel, afterLabel", type: string, default: "Before, After", desc: "Corner labels, and the slider's name; empty hides the label."}
+  - {name: position, type: int, default: "50", desc: "Where the divider starts, in percent."}
+  - {name: ratio, type: "16/9 | 4/3 | 3/2 | 1/1 | 21/9 | auto", default: 16/9, desc: "The box's shape."}
+  - {name: label, type: string, default: Comparison, desc: "The slider's accessible name."}
+  - {name: "beforeContent, afterContent (blocks)", type: markup, desc: "Any markup instead of the images."}
+---
+<h1>Diff</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Images — drag, or focus and use the arrow keys" block><DiffImages /><brick:prop name="code"><Source src="~/demos/DiffImages.html" /></brick:prop></Example>
+<Example title="Any markup" block><DiffContent /><brick:prop name="code"><Source src="~/demos/DiffContent.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

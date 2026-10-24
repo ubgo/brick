@@ -1,0 +1,38 @@
+---
+state:
+  n: 0
+---
+<brick:script>
+def bump(state, props):
+    return dict(state, n = state["n"] + 1)
+
+def crash(state, props):
+    # A bug on purpose: the action fails, the showcase's host answers it
+    # as a server fault (serverFaults in examples/ui/main.go: a 500), and
+    # the client code below offers brick.reloadComponent.
+    fail("the demo action failed on purpose")
+</brick:script>
+<brick:client>
+// The way back from a 500: the action-error event names the component
+// (d.root) and the status, and reloadComponent fetches a fresh render of
+// just this component and morphs it in, so its state starts over.
+brick.mount("RuntimeReload", (el) => {
+  const off = brick.on("action-error", (d) => {
+    if (d.status !== 500 || !(d.root === el || d.root.contains(el))) return;
+    el.querySelector("[data-rx-error]").hidden = false;
+  });
+  const click = (e) => {
+    if (e.target.closest("[data-rx-reload]")) brick.reloadComponent(el);
+  };
+  el.addEventListener("click", click);
+  return () => { off(); el.removeEventListener("click", click); };
+});
+</brick:client>
+<div style="display: grid; gap: .6rem">
+  <div style="display: flex; align-items: center; gap: .5rem">
+    <span>Count: <b id="rx-count">{{ .State.n }}</b></span>
+    <Button id="rx-add" variant="outline" brick:click="bump">Add one</Button>
+    <Button id="rx-crash" variant="danger" brick:click="crash">Break it</Button>
+  </div>
+  <div id="rx-error" data-rx-error hidden role="alert" style="display: flex; align-items: center; gap: .5rem; color: var(--bk-danger); font-size: var(--bk-text-sm)">The action failed with a 500. <Button id="rx-reload" size="sm" variant="outline" data-rx-reload>Reload the component</Button></div>
+</div>

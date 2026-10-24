@@ -1,0 +1,14 @@
+---
+state: {liked: 0, pinned: false}
+---
+<brick:script>
+def liked(state, props, event):
+    return dict(state, liked = state["liked"] + 1)
+
+def pin(state, props):
+    return dict(state, pinned = True)
+</brick:script>
+<article class="thread">
+  <p id="summary">{{ .State.liked }} liked{{ if .State.pinned }}, pinned{{ end }}</p>
+  <Reply brick:on:liked="liked" />
+</article>

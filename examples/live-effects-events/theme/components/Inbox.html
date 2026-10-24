@@ -1,0 +1,93 @@
+---
+state:
+  messages:
+    - {id: 1, subject: Welcome}
+    - {id: 2, subject: Invoice}
+    - {id: 3, subject: "Lunch?"}
+---
+<brick:script>
+def archive(state, props, id):
+    left = [m for m in state["messages"] if m["id"] != id]
+    if len(left) == len(state["messages"]):
+        brick.flash("Message %d was already archived." % id, "warning")
+        return state
+    brick.dispatch("message-archived", {"id": id})
+    brick.flash("Archived message %d." % id, "success")
+    brick.title("Inbox (%d)" % len(left))
+    return dict(state, messages = left)
+
+def dismiss(state, props):
+    brick.clear_flash()
+    return state
+
+def read(state, props, id):
+    brick.navigate("/messages/%d" % id)
+    return state
+
+def unread_only(state, props):
+    brick.url("/?filter=unread", replace = True)
+    return state
+
+def export(state, props):
+    brick.download("/export.csv", "inbox.csv")
+    return state
+
+def sign_out(state, props):
+    brick.redirect("/login")
+    return state
+
+def pay(state, props):
+    brick.redirect("https://pay.example/checkout")
+    return state
+
+def leave(state, props):
+    brick.redirect("https://elsewhere.example/")
+    return state
+
+def bulk(state, props):
+    brick.dispatch("big", {"blob": "x" * 5000})
+    return state
+</brick:script>
+<brick:client>
+// The browser side of the host's own effect kind: the server sends data,
+// never code, and this handler decides what x-confetti looks like.
+brick.effect("x-confetti", (effect) => {
+  document.documentElement.dataset.confetti = String(effect.data.pieces);
+});
+
+// The second custom kind, recorded from Go by the audit middleware.
+brick.effect("x-audit", (effect) => {
+  document.documentElement.dataset.audited = effect.data.action;
+});
+
+// Tell the host which build of the page sent each action. A hook may add
+// headers; changing Content-Type, Accept or a Brick-* header throws.
+brick.hook("request", (r) => {
+  r.headers["X-Page-Build"] = "inbox-1";
+});
+
+// A 422 is a script failure the component already shows; a 500 or more
+// comes from the host, so start that component over from a fresh render.
+brick.on("action-error", (d) => {
+  if (d.root && d.status >= 500) brick.reloadComponent(d.root);
+});
+
+// The runtime retried an action after a 503 or 429.
+brick.on("action-retry", (d) => {
+  console.info("retrying", d.action, "in", d.wait, "ms");
+});
+</brick:client>
+<section class="inbox">
+  <ul>{{ range .State.messages }}
+    <li>{{ .subject }}
+      <button brick:click="read({{ .id }})">Read</button>
+      <button brick:click="archive({{ .id }})">Archive</button></li>{{ end }}
+  </ul>
+  <button brick:click="unread_only">Unread only</button>
+  <button brick:click="export">Export</button>
+  <button brick:click="dismiss">Dismiss messages</button>
+  <button brick:click="sign_out">Sign out</button>
+  <button brick:click="pay">Pay</button>
+  <button brick:click="leave">Leave</button>
+  <button brick:click="bulk">Bulk</button>
+</section>

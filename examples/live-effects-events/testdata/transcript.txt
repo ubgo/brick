@@ -1,0 +1,24 @@
+GET /
+  <p class="badge">0 archived</p>, 3 messages
+POST Inbox.archive(2)
+  effect {"kind":"dispatch","name":"message-archived","data":{"id":2}}
+  effect {"kind":"flash","message":"Archived message 2.","level":"success"}
+  effect {"kind":"title","text":"Inbox (2)"}
+  effect {"kind":"x-confetti","data":{"pieces":40}}
+  html: 2 messages
+the runtime delivers message-archived to Badge:
+POST Badge.count({"id":2})
+  html: <p class="badge">1 archived, last #2</p>
+POST Inbox.archive(2)
+  effect {"kind":"flash","message":"Message 2 was already archived.","level":"warning"}
+POST Inbox.read(3)
+  effect {"kind":"navigate","url":"/messages/3"}
+POST Inbox.unread_only()
+  effect {"kind":"url","url":"/?filter=unread","replace":true}
+POST Inbox.export()
+  effect {"kind":"x-audit","data":{"action":"export","component":"Inbox"}}
+  effect {"kind":"download","url":"/export.csv","filename":"inbox.csv"}
+POST Inbox.dismiss()
+  effect {"kind":"flash-clear"}
+POST Inbox.sign_out()
+  effect {"kind":"redirect","url":"/login"}

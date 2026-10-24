@@ -1,0 +1,76 @@
+---
+props:
+  items: {type: list, default: []}
+  labelKey: {type: string, default: label}
+  valueKey: {type: string, default: ""}
+  marker: {type: string, default: square, oneof: [square, line, dot]}
+  prefix: {type: string, default: ""}
+  suffix: {type: string, default: ""}
+  direction: {type: string, default: row, oneof: [row, column]}
+  percent: {type: bool, default: false}
+---
+{{/*
+ChartLegend: the key to a chart's colours — a swatch and a name per
+series, optionally with a value. BarChart, LineChart and DonutChart draw
+one for you; use it directly for a legend shared by several charts or
+placed elsewhere.
+
+  <ChartLegend :items="list (dict `label` `Web`) (dict `label` `App` `tone` `3`)" />
+  <ChartLegend :items=".Params.plan" valueKey="users" direction="column" />
+  <ChartLegend :items="$series" marker="line" />
+  <ChartLegend :items=".Params.traffic" labelKey="source" valueKey="visits" percent />
+
+An item's tone is 1–6 or a token name, exactly as in the charts; without
+one, item n takes tone n, the order the charts use, so a shared legend
+matches their colours. With valueKey each item shows its value, and with
+percent also its share of the items' total. Swatches are decoration; the names carry the
+meaning, so identity never rests on colour alone.
+*/}}
+<brick:style>
+/* bk-chart base: the same in every chart component (kit_nav_test.go checks) */
+.bk-chart { --bk-chart-bg: var(--bk-surface); --bk-chart-grid: color-mix(in oklab, var(--bk-border) 70%, transparent); --bk-chart-gutter: 2.75rem; position: relative; margin: 0; min-width: 0; color: var(--bk-muted-fg); font-size: .6875rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.bk-chart [data-tone="1"] { --bk-c: var(--bk-chart-1); }
+.bk-chart [data-tone="2"] { --bk-c: var(--bk-chart-2); }
+.bk-chart [data-tone="3"] { --bk-c: var(--bk-chart-3); }
+.bk-chart [data-tone="4"] { --bk-c: var(--bk-chart-4); }
+.bk-chart [data-tone="5"] { --bk-c: var(--bk-chart-5); }
+.bk-chart [data-tone="6"] { --bk-c: var(--bk-chart-6); }
+.bk-chart [data-tone=primary] { --bk-c: var(--bk-primary); }
+.bk-chart [data-tone=success] { --bk-c: var(--bk-success); }
+.bk-chart [data-tone=warning] { --bk-c: var(--bk-warning); }
+.bk-chart [data-tone=danger] { --bk-c: var(--bk-danger); }
+.bk-chart [data-tone=info] { --bk-c: var(--bk-info); }
+.bk-chart [data-tone=neutral] { --bk-c: color-mix(in oklab, var(--bk-muted-fg) 70%, transparent); }
+.bk-chart__plot { position: relative; }
+.bk-chart__plot:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 4px; border-radius: var(--bk-radius-sm); }
+.bk-chart__gl { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--bk-chart-grid); }
+.bk-chart__gl:first-child { border-top-color: var(--bk-border); }
+.bk-chart__gl > span { position: absolute; right: calc(100% + .5rem); top: 0; transform: translateY(-50%); white-space: nowrap; }
+.bk-chart__xaxis { display: flex; margin: .45rem 0 0 var(--bk-chart-gutter); }
+.bk-chart__xaxis > span { display: flex; flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
+.bk-chart__xaxis > .bk-chart__skip { visibility: hidden; }
+@container (max-width: 520px) { .bk-chart__xaxis > .bk-chart__x2 { visibility: hidden; } }
+@container (max-width: 300px) { .bk-chart__xaxis > .bk-chart__x4 { visibility: hidden; } }
+.bk-chart__tip { position: absolute; z-index: var(--bk-z-tooltip); min-width: 8rem; padding: .4rem .55rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); pointer-events: none; font-size: var(--bk-text-xs); }
+.bk-chart__tip-head { margin-bottom: .2rem; color: var(--bk-muted-fg); font-weight: 500; }
+.bk-chart__tip-row { display: flex; align-items: center; gap: .45rem; line-height: 1.5; }
+.bk-chart__tip-row > i { flex: none; width: .7rem; height: 2px; border-radius: 1px; background: var(--bk-c, var(--bk-muted-fg)); }
+.bk-chart__tip-row > b { font-weight: 600; }
+.bk-chart__tip-row > span { color: var(--bk-muted-fg); }
+.bk-chart__empty { display: grid; place-items: center; min-height: 8rem; border: 1px dashed var(--bk-border); border-radius: var(--bk-radius); font-size: var(--bk-text-sm); }
+.bk-chart .bk-chart-legend { margin-top: .75rem; }
+/* end bk-chart base */
+.bk-chart-legend { display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: 0; padding: 0; list-style: none; color: var(--bk-fg); font-size: var(--bk-text-xs); }
+.bk-chart-legend--column { flex-direction: column; gap: .45rem; }
+.bk-chart-legend__item { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+.bk-chart-legend__key { flex: none; width: .65rem; height: .65rem; border-radius: 2px; background: var(--bk-c); }
+.bk-chart-legend--line .bk-chart-legend__key { width: .85rem; height: 2px; border-radius: 1px; }
+.bk-chart-legend--dot .bk-chart-legend__key { border-radius: 50%; }
+.bk-chart-legend__label { color: var(--bk-muted-fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-chart-legend__value { margin-left: auto; padding-left: .75rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bk-chart-legend__pct { min-width: 2.6rem; color: var(--bk-muted-fg); text-align: right; font-variant-numeric: tabular-nums; }
+.bk-chart-legend:not(.bk-chart-legend--column) .bk-chart-legend__value { margin-left: .15rem; padding-left: 0; }
+.bk-chart-legend:not(.bk-chart-legend--column) .bk-chart-legend__pct { min-width: 0; }
+</brick:style>
+{{ $total := 0.0 }}{{ if .Props.valueKey }}{{ range .Props.items }}{{ $total = add $total (max 0.0 (mul 1.0 (default 0 (index . $.Props.valueKey)))) }}{{ end }}{{ end }}
+<ul class="{{ cx `bk-chart` `bk-chart-legend` (cond (ne .Props.marker `square`) (print `bk-chart-legend--` .Props.marker) ``) (cond (eq .Props.direction `column`) `bk-chart-legend--column` ``) .Attrs.class }}" {{ attrs `class` }}>{{ range $i, $it := .Props.items }}<li class="bk-chart-legend__item" data-tone="{{ default (add (mod $i 6) 1) (index $it `tone`) }}"><span class="bk-chart-legend__key" aria-hidden="true"></span><span class="bk-chart-legend__label">{{ default (index $it `key`) (index $it $.Props.labelKey) }}</span>{{ if $.Props.valueKey }}<span class="bk-chart-legend__value">{{ $v := mul 1.0 (default 0 (index $it $.Props.valueKey)) }}{{ $.Props.prefix }}{{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $v 2)))) }}{{ $.Props.suffix }}</span>{{ if and $.Props.percent (gt $total 0.0) }}<span class="bk-chart-legend__pct">{{ printf `%.0f` (mul 100.0 (div (max 0.0 $v) $total)) }}%</span>{{ end }}{{ end }}</li>{{ end }}</ul>

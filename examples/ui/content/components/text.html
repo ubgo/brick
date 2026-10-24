@@ -1,0 +1,19 @@
+---
+title: Text
+category: Foundations
+description: Body copy with a size, tone and weight from the kit's scale — secondary text, errors and captions look the same everywhere.
+api:
+  - {name: as, type: "p | span | div | small | strong", default: p, desc: The element.}
+  - {name: size, type: "xs | sm | base | lg | xl", default: base, desc: Font size.}
+  - {name: tone, type: "default | muted | primary | danger | success | warning | info", default: default, desc: The colour.}
+  - {name: weight, type: "normal | medium | semibold | bold", default: normal, desc: The weight.}
+  - {name: align, type: "start | center | end", default: start, desc: Text alignment.}
+  - {name: truncate, type: bool, desc: Cuts to one line with an ellipsis.}
+---
+<h1>Text</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Sizes" block><TextSizes /><brick:prop name="code"><Source src="~/demos/TextSizes.html" /></brick:prop></Example>
+<Example title="Tones" block><TextTones /><brick:prop name="code"><Source src="~/demos/TextTones.html" /></brick:prop></Example>
+<Example title="Inline, truncated and aligned" block><TextInline /><brick:prop name="code"><Source src="~/demos/TextInline.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

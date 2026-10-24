@@ -1,0 +1,15 @@
+---
+title: Deferred forms
+category: Forms
+description: Fields bound with brick:model.defer send nothing while you type; the submit carries every value in one request. With a checkbox group bound to a list, a targeted loading indicator, an unsaved-changes notice and a one-attribute confirm.
+---
+<h1>Deferred forms</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Type, tick some topics, then save — one request" block><DeferredSignup /><brick:prop name="code"><Source src="~/demos/DeferredSignup.html" /></brick:prop></Example>
+<h2>How it works</h2>
+<ul>
+  <li><b><code>brick:model.defer</code></b> updates <code>brick:text</code> and <code>brick:dirty</code> in the browser at once but sends nothing. The values wait and ride as <code>sets</code> with the next request of the component, here the submit, so <code>save</code> sees them already in <code>state</code>.</li>
+  <li><b>Checkbox groups.</b> <code>tags</code> starts as a list, so the engine marks it in <code>data-brick-arrays</code> and the boxes bound to it send the checked values as a list.</li>
+  <li><b>Loading.</b> <code>brick:disable-with</code> swaps the button's label while it saves, <code>data-loading</code> lands on the button and the form, and <code>brick:loading.delay="save"</code> appears only when <code>save</code> takes longer than 200 ms.</li>
+  <li><b>Confirm.</b> <code>brick:confirm</code> asks before <code>clear</code> runs; the browser's dialog by default, or any dialog registered with <code>brick.confirmWith(fn)</code>.</li>
+</ul>

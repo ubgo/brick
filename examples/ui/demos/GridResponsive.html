@@ -1,0 +1,14 @@
+---
+plans:
+  - {name: Hobby, price: "$0", note: For side projects}
+  - {name: Pro, price: "$19", note: For growing teams}
+  - {name: Business, price: "$49", note: For companies}
+  - {name: Enterprise, price: Custom, note: For scale and compliance}
+---
+<Grid :sm="2" :lg="4" style="width: 100%">
+  {{ range .Params.plans }}
+  <Card :title=".name" :description=".note" variant="outline">
+    <Text size="xl" weight="bold">{{ .price }}</Text>
+  </Card>
+  {{ end }}
+</Grid>

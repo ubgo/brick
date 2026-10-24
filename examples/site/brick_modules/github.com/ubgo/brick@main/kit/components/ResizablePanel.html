@@ -1,0 +1,29 @@
+---
+props:
+  size: {type: float, default: 0}
+  min: {type: float, default: 10}
+  max: {type: float, default: 90}
+  label: {type: string, default: ""}
+---
+{{/*
+ResizablePanel: one panel of a <Resizable> group. size is its share of the
+group in percent (the panels' sizes should add up to 100; leave them all
+out for equal shares); min and max bound what dragging can do, also in
+percent.
+
+  <Resizable id="mail">
+    <ResizablePanel :size="25" :min="15" label="Folders">…</ResizablePanel>
+    <ResizablePanel :size="75" label="Messages">…</ResizablePanel>
+  </Resizable>
+
+label names the panel for the handle next to it ("Resize Folders") and
+makes the panel a labelled region. A panel scrolls its own content, so it
+is focusable (tabindex="0"): keyboard users can scroll it with the arrow
+keys. It works only inside a Resizable, which draws the handles between
+panels.
+*/}}
+<brick:style>
+.bk-resizable__panel { min-width: 0; min-height: 0; overflow: auto; outline: none; }
+.bk-resizable__panel:focus-visible { box-shadow: inset 0 0 0 2px var(--bk-ring); }
+</brick:style>
+<div class="{{ cx `bk-resizable__panel` .Attrs.class }}" style="flex: {{ if gt .Props.size 0.0 }}{{ .Props.size }} 1 0px{{ else }}1 1 0px{{ end }}{{ with .Attrs.style }}; {{ . }}{{ end }}" data-min="{{ .Props.min }}" data-max="{{ .Props.max }}" tabindex="0"{{ with .Props.label }} data-label="{{ . }}" role="region" aria-label="{{ . }}"{{ end }} {{ attrs `class` `style` }}>{{ children }}</div>

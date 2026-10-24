@@ -1,0 +1,28 @@
+---
+state:
+  name: ""
+  email: ""
+  tags: []
+  address: {city: ""}
+  saves: 0
+---
+<brick:script>
+def save(state, props):
+    return dict(state, saves = state["saves"] + 1)
+
+def clear(state, props):
+    return dict(state, name = "", email = "", tags = [], address = {"city": ""}, saves = 0)
+</brick:script>
+<form brick:submit="save">
+  <input brick:model.defer="name" value="{{ .State.name }}">
+  <input brick:model.defer="email" value="{{ .State.email }}">
+  <input brick:model.defer="address.city" value="{{ .State.address.city }}">
+  <label><input type="checkbox" brick:model.defer="tags" value="go"> Go</label>
+  <label><input type="checkbox" brick:model.defer="tags" value="js"> JS</label>
+  <p>Hello, <b brick:text="name">{{ .State.name }}</b></p>
+  <p id="saved">Saves: {{ .State.saves }}, topics: {{ .State.tags }}, city: {{ .State.address.city }}</p>
+  <p brick:dirty hidden>Unsaved changes.</p>
+  <span brick:loading.delay="save" hidden>Still saving…</span>
+  <button type="button" brick:click="clear" brick:confirm="Clear the form and everything saved?">Clear</button>
+  <button brick:disable-with="Saving…">Save</button>
+</form>

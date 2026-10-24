@@ -1,0 +1,9 @@
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: .5rem">
+  <Button variant="outline" data-bk-open="demo-terms">data-bk-open</Button>
+  <Button variant="outline" commandfor="demo-terms" command="show-modal">commandfor (no JavaScript needed)</Button>
+  <a href="#terms" data-bk-open="demo-terms" style="font-size: var(--bk-text-sm)">or a link</a>
+  <Dialog id="demo-terms" title="Terms of service" size="lg">
+    {{ range seq 6 }}<p style="margin-bottom: .75rem">Section {{ add . 1 }}. These terms govern your use of the service. By creating an account you agree to them. We may update them, and we tell you by e-mail thirty days before a change takes effect.</p>{{ end }}
+    <brick:prop name="footer"><Button variant="ghost" data-bk-close>Decline</Button><Button data-bk-close>Accept</Button></brick:prop>
+  </Dialog>
+</div>

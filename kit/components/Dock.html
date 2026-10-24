@@ -1,0 +1,36 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  items: {type: list, required: true}
+  current: {type: string, default: ""}
+  label: {type: string, default: Primary}
+  fixed: {type: bool, default: true}
+---
+{{/*
+Dock: the bottom navigation bar of a phone layout — three to five
+destinations, each an icon over a short label.
+
+  <Dock current="/home/" :items=".Site.Data.dock" />
+  items: [{label: Home, href: /home/, icon: home}, {label: Inbox, href: /inbox/, icon: inbox, badge: "3"}]
+  <Dock :fixed="false" :items="…" />   in the flow of the page, e.g. inside a PhoneMockup
+
+An item is {label, href, icon, badge, active, prefetch} (prefetch: true or
+"visible" writes brick:prefetch on its link); the one whose href equals
+current (or with active set) gets aria-current="page". Fixed docks pin to
+the bottom of the viewport and pad for the home indicator
+(env(safe-area-inset-bottom)); hide one on wide screens with your own
+class, since whether a dock shows on a desktop is a layout choice.
+*/}}
+<brick:style>
+.bk-dock { display: flex; align-items: stretch; justify-content: space-around; gap: .25rem; padding: .35rem .5rem calc(.35rem + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--bk-border); background: color-mix(in oklab, var(--bk-surface) 92%, transparent); backdrop-filter: blur(10px); font-size: .6875rem; }
+.bk-dock--fixed { position: fixed; left: 0; right: 0; bottom: 0; z-index: var(--bk-z-sticky); }
+.bk-dock__item { position: relative; display: flex; flex: 1 1 0; flex-direction: column; align-items: center; justify-content: center; gap: .2rem; max-width: 6rem; min-height: 2.75rem; padding: .25rem; border-radius: var(--bk-radius); color: var(--bk-muted-fg); font-weight: 500; text-decoration: none; transition: color var(--bk-duration); }
+.bk-dock__item:hover { color: var(--bk-fg); }
+.bk-dock__item:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.bk-dock__item[aria-current=page] { color: var(--bk-primary-text); }
+.bk-dock__item[aria-current=page]::before { content: ""; position: absolute; top: -.35rem; width: 1.5rem; height: 2px; border-radius: 0 0 2px 2px; background: var(--bk-primary); }
+.bk-dock__icon { position: relative; display: grid; place-items: center; }
+.bk-dock__badge { position: absolute; top: -.35rem; left: calc(100% - .45rem); min-width: 1rem; height: 1rem; padding: 0 .25rem; border: 2px solid var(--bk-surface); border-radius: var(--bk-radius-full); background: var(--bk-danger); color: var(--bk-danger-fg); font-size: .625rem; font-weight: 700; line-height: .75rem; text-align: center; box-sizing: content-box; }
+</brick:style>
+<nav class="{{ cx `bk-dock` (cond .Props.fixed `bk-dock--fixed` ``) .Attrs.class }}" aria-label="{{ .Props.label }}" {{ attrs `class` }}>{{ range .Props.items }}<a class="bk-dock__item" href="{{ .href }}"{{ with .prefetch }} brick:prefetch{{ if eq (print .) "visible" }}="visible"{{ end }}{{ end }}{{ if or .active (and .href $.Props.current (eq (print .href) $.Props.current)) }} aria-current="page"{{ end }}><span class="bk-dock__icon">{{ with .icon }}<Icon :name="." :size="20" />{{ end }}{{ with .badge }}<span class="bk-dock__badge">{{ . }}</span>{{ end }}</span><span>{{ .label }}</span></a>{{ end }}</nav>

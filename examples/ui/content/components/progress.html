@@ -1,0 +1,20 @@
+---
+title: Progress
+category: Feedback
+description: "A bar for a task's progress or a quota's use — tones, four sizes, a label with the percentage, and an indeterminate sweep."
+api:
+  - {name: value, type: float, default: "0", desc: "From 0 to max; clamped."}
+  - {name: max, type: float, default: "100", desc: "The full bar."}
+  - {name: label, type: string, desc: "The accessible name, shown above the bar with showValue."}
+  - {name: showValue, type: bool, desc: "The label and the percentage above the bar."}
+  - {name: indeterminate, type: bool, desc: "Unknown length: the bar sweeps and aria-valuenow is left out."}
+  - {name: size, type: "xs | sm | md | lg", default: md, desc: "The bar's height."}
+  - {name: tone, type: "primary | success | warning | danger | info | neutral", default: primary, desc: "The bar's colour."}
+---
+<h1>Progress</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Values and labels" block><ProgressBasic /><brick:prop name="code"><Source src="~/demos/ProgressBasic.html" /></brick:prop></Example>
+<Example title="Sizes" block><ProgressSizes /><brick:prop name="code"><Source src="~/demos/ProgressSizes.html" /></brick:prop></Example>
+<Example title="Indeterminate" block><ProgressIndeterminate /><brick:prop name="code"><Source src="~/demos/ProgressIndeterminate.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

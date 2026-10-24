@@ -1,0 +1,26 @@
+---
+props:
+  size: {type: string, default: lg, oneof: [sm, md, lg, xl, 2xl, full]}
+  padding: {type: bool, default: true}
+---
+{{/*
+Container: centres content and caps its width, with side padding so text
+never touches the edge of a phone screen.
+
+  <Container>…</Container>                 64rem, the default
+  <Container size="sm">a sign-in form</Container>
+  <Container size="full" :padding="false">edge to edge</Container>
+
+Widths: sm 40rem · md 48rem · lg 64rem · xl 80rem · 2xl 96rem · full none.
+*/}}
+<brick:style>
+.bk-container { width: 100%; max-width: 64rem; margin-inline: auto; padding-inline: var(--bk-space-4); box-sizing: border-box; }
+.bk-container--sm { max-width: 40rem; }
+.bk-container--md { max-width: 48rem; }
+.bk-container--xl { max-width: 80rem; }
+.bk-container--2xl { max-width: 96rem; }
+.bk-container--full { max-width: none; }
+.bk-container--flush { padding-inline: 0; }
+@media (min-width: 768px) { .bk-container:not(.bk-container--flush) { padding-inline: var(--bk-space-6); } }
+</brick:style>
+<div class="{{ cx `bk-container` (cond (ne .Props.size `lg`) (print `bk-container--` .Props.size) ``) (cond (not .Props.padding) `bk-container--flush` ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</div>

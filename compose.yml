@@ -1,0 +1,39 @@
+# The throwaway services this repository's integration tests run against.
+# They are the project's own, never the shared local dev stack: each test
+# task starts the profile it needs, runs, and removes the containers and
+# their volumes, pass or fail (`docker compose down -v` in a Taskfile
+# `defer` registered before the start, so a failed start is cleaned up
+# too). Nothing here keeps data, no volume is named, and every port binds
+# to 127.0.0.1 on a number the shared stack (7001-7015) and the owner's
+# other projects do not use. The project name and ports are fixed, so run
+# one integration task at a time per machine.
+name: ubgo-brick
+
+services:
+  localstack:
+    profiles: [kms]
+    # Pinned: later LocalStack images need an account token to start.
+    image: localstack/localstack:4.4
+    environment:
+      SERVICES: kms
+    # 14566, not 4566 (LocalStack's default, which another project may hold).
+    ports: ["127.0.0.1:14566:4566"]
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:4566/_localstack/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+
+  vault:
+    profiles: [vault]
+    image: hashicorp/vault:1.20
+    # Dev mode: in memory, unsealed, a fixed root token. Test-only.
+    command: server -dev -dev-root-token-id=brick-test-root -dev-listen-address=0.0.0.0:8200
+    cap_add: [IPC_LOCK]
+    # 18200, not 8200 (Vault's default).
+    ports: ["127.0.0.1:18200:8200"]
+    healthcheck:
+      test: ["CMD", "vault", "status", "-address=http://127.0.0.1:8200"]
+      interval: 1s
+      timeout: 3s
+      retries: 30

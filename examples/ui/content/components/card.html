@@ -1,0 +1,25 @@
+---
+title: Card
+category: Layout
+description: A surface that groups one thing — a setting, a product, a metric, a post — with optional media, header, body and footer.
+api:
+  - {name: title, type: string, desc: The heading (an h3).}
+  - {name: description, type: string, desc: A line under the title.}
+  - {name: variant, type: "default | outline | elevated | muted | ghost", default: default, desc: The look.}
+  - {name: padding, type: "none | sm | md | lg", default: md, desc: "Inner spacing: 0, .75, 1 or 1.5rem."}
+  - {name: level, type: "2 | 3 | 4 | 5 | 6", default: "3", desc: "The title's heading level. Headings must not skip a level: use 2 for a card directly under the page's h1."}
+  - {name: href, type: string, desc: Makes the whole card one link with a hover lift. It must then hold no other links or buttons.}
+  - {name: media, type: block, desc: Edge-to-edge content on top — an image in an AspectRatio.}
+  - {name: header, type: block, desc: Replaces the title and description.}
+  - {name: footer, type: block, desc: The footer's left side.}
+  - {name: actions, type: block, desc: The footer's right side — buttons.}
+---
+<h1>Card</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Title, body, footer and actions"><CardBasic /><brick:prop name="code"><Source src="~/demos/CardBasic.html" /></brick:prop></Example>
+<Example title="Variants" block><CardVariants /><brick:prop name="code"><Source src="~/demos/CardVariants.html" /></brick:prop></Example>
+<Example title="Media and link cards — hover one" block><CardMedia /><brick:prop name="code"><Source src="~/demos/CardMedia.html" /></brick:prop></Example>
+<Example title="Stat cards" block><CardStats /><brick:prop name="code"><Source src="~/demos/CardStats.html" /></brick:prop></Example>
+<Example title="Actions" block><CardActions /><brick:prop name="code"><Source src="~/demos/CardActions.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

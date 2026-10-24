@@ -1,0 +1,22 @@
+---
+title: Field
+category: Forms
+description: "One form row: label, control, hint and error, wired with for, aria-describedby and aria-invalid without repeating an id."
+api:
+  - {name: label, type: "string", desc: "The label text."}
+  - {name: for, type: "string", desc: "The control's id; derived from the instance when empty."}
+  - {name: hint, type: "string", desc: "Help text under the control."}
+  - {name: error, type: "string", desc: "An error message; nil or empty shows nothing, so :error=\".Errors.email\" is safe."}
+  - {name: required, type: "bool", desc: "Star on the label and required on the control."}
+  - {name: optional, type: "bool", desc: "Marks the label (optional)."}
+  - {name: horizontal, type: "bool", desc: "Label on the left, control on the right (stacks on phones)."}
+  - {name: aside (block), type: "markup", desc: "Markup at the end of the label row, such as a Forgot password link."}
+---
+<h1>Field</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Label, hint and error" block><FieldBasic /><brick:prop name="code"><Source src="~/demos/FieldBasic.html" /></brick:prop></Example>
+<Example title="Horizontal" block><FieldHorizontal /><brick:prop name="code"><Source src="~/demos/FieldHorizontal.html" /></brick:prop></Example>
+<h2>How the id travels</h2>
+<p>A Field picks the control's id and <em>provides</em> it (with the hint and error ids, the invalid flag and required) to everything inside it. Every kit control injects that context, so the label's <code>for</code>, the control's <code>id</code> and its <code>aria-describedby</code> always match — you never write an id twice. Put one control in a Field; a list of checkboxes belongs in a Fieldset, and a RadioGroup names itself after the Field's label.</p>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

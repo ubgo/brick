@@ -1,0 +1,13 @@
+---
+state:
+  saves: 0
+---
+<brick:script>
+def save(state, props):
+    return dict(state, saves = state["saves"] + 1)
+</brick:script>
+<div style="display: flex; align-items: center; gap: .75rem">
+  <Button brick:click="save" icon="check">Save changes</Button>
+  <span style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Saved {{ .State.saves }} times <span brick:loading hidden>· saving…</span></span>
+  {{ if .State.saves }}<Toast variant="success" id="{{ print `saved-` .State.saves }}" title="Changes saved" description="{{ print `Rendered by the server after save #` .State.saves `.` }}" />{{ end }}
+</div>

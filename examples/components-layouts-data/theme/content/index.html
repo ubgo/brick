@@ -1,0 +1,5 @@
+---
+title: Pricing
+---
+<h1>{{ .Title }}</h1>
+{{ range .Site.Data.pricing.plans }}<Card :plan="." />{{ end }}

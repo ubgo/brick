@@ -1,0 +1,27 @@
+---
+props:
+  tone:
+    type: string
+    default: neutral
+    oneof: [neutral, info]
+    doc: The panel's accent. info tints the border.
+    examples: [neutral, info]
+brick:
+  slots:
+    title:
+      required: true
+      doc: The heading, one line of text or inline markup.
+      examples: ["<b>Quarterly report</b>"]
+    actions:
+      doc: Buttons shown at the right of the heading.
+    children:
+      required: true
+      doc: The panel's body.
+---
+<section class="rp" style="width: 100%; max-width: 30rem; border: 1px solid {{ if eq .Props.tone "info" }}var(--bk-info){{ else }}var(--bk-border){{ end }}; border-radius: var(--bk-radius-md)">
+  <header style="display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .5rem .75rem; border-bottom: 1px solid var(--bk-border)">
+    <div id="rp-title" style="font-weight: 600">{{ node "title" }}</div>
+    {{ if hasNode "actions" }}<div id="rp-actions">{{ node "actions" }}</div>{{ end }}
+  </header>
+  <div id="rp-body" style="padding: .75rem">{{ children }}</div>
+</section>

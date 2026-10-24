@@ -1,0 +1,9 @@
+---
+use:
+  users: ~/demos/runtime_users.star
+brick:
+  load_many: users.cards
+props:
+  id: {type: string, required: true}
+---
+<li class="ru-card" data-batch="{{ .Props.batch }}" style="display: flex; justify-content: space-between; gap: .75rem; padding: .45rem .75rem; border-bottom: 1px solid var(--bk-border)"><span><b>{{ .Props.name }}</b> · {{ .Props.role }}</span><small style="color: var(--bk-muted-fg)">one call, {{ .Props.batch }} inputs</small></li>

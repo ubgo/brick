@@ -1,0 +1,41 @@
+---
+inject:
+  bkField: {default: {}}
+props:
+  label: {type: string, default: ""}
+  description: {type: string, default: ""}
+  checked: {type: bool, default: false}
+  size: {type: string, default: md, oneof: [sm, md]}
+  disabled: {type: bool, default: false}
+---
+{{/*
+Switch: an on/off toggle — a native checkbox with role="switch", so it
+submits like a checkbox and screen readers announce "switch, on".
+
+  <Switch name="notify" label="E-mail notifications" checked />
+  <Switch name="beta" label="Beta features" description="Try things before everyone else." />
+  <Switch name="dark" size="sm" label="Compact" />
+
+Use it for a setting that takes effect at once or on save; for consent
+("I agree") use a Checkbox. The caller's class goes on the row, every
+other attribute on the <input>.
+*/}}
+<brick:style>
+.bk-switch { display: inline-flex; align-items: flex-start; gap: .6rem; font: var(--bk-text-sm)/1.4 var(--bk-font); color: var(--bk-fg); cursor: pointer; }
+.bk-switch__track { appearance: none; position: relative; flex: none; width: 2.1rem; height: 1.2rem; margin: 0; border: 0; border-radius: var(--bk-radius-full); background: var(--bk-input); cursor: pointer; transition: background var(--bk-duration); }
+.bk-switch__track::before { content: ""; position: absolute; top: .15rem; left: .15rem; width: .9rem; height: .9rem; border-radius: var(--bk-radius-full); background: var(--bk-surface); background: light-dark(var(--bk-surface), color-mix(in oklab, var(--bk-fg) 70%, var(--bk-input))); box-shadow: var(--bk-shadow); transition: transform var(--bk-duration); }
+.bk-switch__track:checked { background: var(--bk-primary); }
+.bk-switch__track:checked::before { transform: translateX(.9rem); background: var(--bk-primary-fg); }
+.bk-switch__track:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-switch__text { display: flex; flex-direction: column; gap: .1rem; }
+.bk-switch__label { font-weight: 500; }
+.bk-switch__desc { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); line-height: 1.45; }
+.bk-switch--sm .bk-switch__track { width: 1.75rem; height: 1rem; }
+.bk-switch--sm .bk-switch__track::before { width: .7rem; height: .7rem; }
+.bk-switch--sm .bk-switch__track:checked::before { transform: translateX(.75rem); }
+.bk-switch--sm .bk-switch__text { font-size: var(--bk-text-xs); }
+.bk-switch--disabled { opacity: .55; cursor: not-allowed; }
+.bk-switch--disabled .bk-switch__track { cursor: not-allowed; }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+<label class="{{ cx `bk-switch` (cond (eq .Props.size `sm`) `bk-switch--sm` ``) (cond .Props.disabled `bk-switch--disabled` ``) .Attrs.class }}"><input type="checkbox" role="switch" class="bk-switch__track"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if .Props.checked }} checked{{ end }}{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` `id` }}>{{ if or .Props.label .Props.description (hasNode "children") }}<span class="bk-switch__text"><span class="bk-switch__label">{{ .Props.label }}{{ children }}</span>{{ with .Props.description }}<span class="bk-switch__desc">{{ . }}</span>{{ end }}</span>{{ end }}</label>

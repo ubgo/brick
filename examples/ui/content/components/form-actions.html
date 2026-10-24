@@ -1,0 +1,13 @@
+---
+title: FormActions
+category: Forms
+description: "The row of buttons that ends a form: right-aligned over a divider, stacked on phones."
+api:
+  - {name: align, type: "start | end | between", default: "end", desc: "Where the buttons sit."}
+  - {name: divider, type: "bool", default: "true", desc: "A border above the row."}
+---
+<h1>FormActions</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Alignments" block><FormActionsBasic /><brick:prop name="code"><Source src="~/demos/FormActionsBasic.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

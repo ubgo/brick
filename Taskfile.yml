@@ -1,0 +1,289 @@
+version: '3'
+
+# BRICK_DESIGN_DIR (the private design overlay that holds site/src, the source of
+# docs/guide.md and docs/cookbook.md) is read from the environment or .env.design.
+dotenv: ['.env.design']
+
+# A test piped into grep still fails the task.
+set: [pipefail]
+
+vars:
+  # Where the design site lives; set BRICK_DESIGN_DIR in .env.design (gitignored).
+  DESIGN_DIR: '{{.BRICK_DESIGN_DIR | default "design"}}'
+  # The design-site builder: a `design-spec` on PATH by default, or set
+  # DESIGN_SPEC (environment or .env.design) to the tool's full path.
+  DESIGN_SPEC: '{{.DESIGN_SPEC | default "design-spec"}}'
+  # The gopass entry holding the dev state key (BRICK_SECRET) the demo
+  # servers and exports seal stateful components with; brick keygen makes one.
+  STATE_KEY: personal/brick/dev-state-key
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+
+  docs:
+    desc: Rebuild the design site (site/src → site/*.html under the design directory)
+    cmds:
+      - '"{{.DESIGN_SPEC}}" build {{.DESIGN_DIR}}/site'
+
+  docs:check:
+    desc: Report anything missing from the design site, including links to anchors that do not exist (exit 1 if so)
+    cmds:
+      - '"{{.DESIGN_SPEC}}" check {{.DESIGN_DIR}}/site'
+      # design-spec checks pages and sections, not in-page fragments.
+      - python3 scripts/check_anchors.py {{.DESIGN_DIR}}/site
+
+  docs:open:
+    desc: Open the design site in the default browser
+    cmds:
+      - open {{.DESIGN_DIR}}/site/index.html
+
+  test:
+    desc: Run every test (root module and each contrib module) with the race detector
+    cmds:
+      - go test -race ./...
+      - for: [contrib/script-starlark, contrib/markdown-goldmark, contrib/sanitize-bluemonday, contrib/image-webp, contrib/assets-http, contrib/upload-s3, contrib/states-redis, contrib/states-sql, contrib/actions-otel, contrib/ratelimit-redis, contrib/push-redis, contrib/keys-awskms, contrib/keys-gcpkms, contrib/keys-vault, examples, cmd/brick]
+        cmd: cd {{.ITEM}} && go test -race ./...
+
+  test:s3:
+    desc: Run contrib/upload-s3's integration test against the shared local RustFS (S3 on :7010; set BRICK_S3_BUCKET to use another bucket)
+    dir: contrib/upload-s3
+    env:
+      BRICK_S3_TEST: "1"
+    cmds:
+      - go test -count=1 -run Integration -v ./...
+
+  test:redis:
+    desc: Run contrib/states-redis's, contrib/ratelimit-redis's and contrib/push-redis's integration tests against the shared local Redis (:7012; set BRICK_REDIS_ADDR / BRICK_REDIS_PASSWORD for another)
+    env:
+      BRICK_REDIS_TEST: "1"
+    cmds:
+      - for: [contrib/states-redis, contrib/ratelimit-redis, contrib/push-redis]
+        cmd: cd {{.ITEM}} && go test -count=1 -run Integration -v ./...
+
+  test:sql:
+    desc: Run contrib/states-sql against the local Postgres.app (database brick_test, created if missing; BRICK_PG_DSN to override; BRICK_MYSQL_TEST=1 plus BRICK_MYSQL_DSN adds MySQL)
+    dir: contrib/states-sql
+    env:
+      BRICK_PG_TEST: "1"
+    cmds:
+      - go test -count=1 -run 'Integration' -v ./...
+
+  # The keys-* live tests run against throwaway services from compose.yml
+  # (never the shared stack). Each task registers its teardown defer FIRST,
+  # then starts its profile: Task registers a defer only when it reaches
+  # it, so one placed after a failed `up --wait` would never run.
+  test:keys:
+    desc: Run every keys-* provider's live test (LocalStack KMS, Vault dev server; GCP KMS has no emulator, so its fake-backed tests run in task test)
+    cmds:
+      - task: test:keys:aws
+      - task: test:keys:vault
+
+  test:keys:aws:
+    desc: Run contrib/keys-awskms against a throwaway LocalStack KMS (compose profile kms, 127.0.0.1:14566), then remove it
+    env:
+      BRICK_KMS_TEST: "1"
+    cmds:
+      - defer: docker compose --profile kms down -v
+      - docker compose --profile kms up -d --wait
+      - cd contrib/keys-awskms && go test -count=1 -run Integration -v ./...
+
+  test:keys:vault:
+    desc: Run contrib/keys-vault against a throwaway Vault dev server (compose profile vault, 127.0.0.1:18200), then remove it
+    env:
+      BRICK_VAULT_TEST: "1"
+    cmds:
+      - defer: docker compose --profile vault down -v
+      - docker compose --profile vault up -d --wait
+      - cd contrib/keys-vault && go test -count=1 -run Integration -v ./...
+
+  lint:
+    desc: gofmt, go vet and staticcheck over the root module and every contrib module
+    cmds:
+      - test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - go vet ./...
+      - staticcheck ./...
+      - for: [contrib/script-starlark, contrib/markdown-goldmark, contrib/sanitize-bluemonday, contrib/image-webp, contrib/assets-http, contrib/upload-s3, contrib/states-redis, contrib/states-sql, contrib/actions-otel, contrib/ratelimit-redis, contrib/push-redis, contrib/keys-awskms, contrib/keys-gcpkms, contrib/keys-vault, examples, cmd/brick]
+        cmd: cd {{.ITEM}} && go vet ./... && staticcheck ./...
+
+  cross:
+    desc: Build for every supported OS, so a platform claim is checked rather than stated
+    cmds:
+      - for: [linux, darwin, windows, freebsd]
+        cmd: GOOS={{.ITEM}} GOARCH=amd64 go build ./...
+
+  check:
+    desc: The gate before any commit — lint, cross-build and the full test suites
+    cmds:
+      - task: lint
+      - task: cross
+      - task: test
+
+  golden:update:
+    desc: Rewrite bricktest golden files after an intended output change
+    cmds:
+      - go test ./bricktest/ -update
+
+  cover:
+    desc: Show test coverage of the root module, lowest first
+    cmds:
+      - go test -coverprofile=/tmp/brick-cover.out ./... > /dev/null
+      - go tool cover -func=/tmp/brick-cover.out | sort -k3 -n | head -40
+
+  demo:
+    desc: Serve the full demo site on :8080 with live reload (/fr/ for French, /?as=Sara for the island)
+    dir: examples
+    env:
+      # Stateful components seal state with this key, so open pages keep
+      # working across a restart. Without gopass the server makes a key for
+      # the process (and says so); an export needs a real key.
+      BRICK_SECRET: &brick_secret
+        sh: gopass show -o {{.STATE_KEY}} 2>/dev/null || true
+    cmds:
+      - go run . -serve :8080
+
+  demo:build:
+    desc: Render the examples/site demo into examples/build (needs the BRICK_SECRET key from gopass)
+    dir: examples
+    env:
+      BRICK_SECRET: *brick_secret
+    cmds:
+      - go run . -out build
+
+  docs:public:
+    desc: Regenerate docs/guide.md and docs/cookbook.md from the design site sources
+    cmds:
+      - python3 scripts/public_docs.py
+
+  docs:links:
+    desc: Check every relative link and #anchor in README.md and docs/**/*.md resolves, with GitHub's heading slugs (exit 1 if not)
+    cmds:
+      - python3 scripts/check_doc_links.py
+
+  docs:snippets:
+    desc: Check every code snippet in the GitHub docs matches the tested file it came from (whole files via scripts/check_doc_snippets.py, Go declarations via docsync ds:block)
+    cmds:
+      - python3 scripts/check_doc_snippets.py
+      # ds check passes a ds:block that was never refreshed, so a dry run
+      # that would still rewrite a copy is a failure too.
+      - 'if ds refresh --dry-run --no-update | grep -Eq "^[1-9][0-9]* repo-mode copies would be rewritten"; then echo "a ds:block copy is missing or stale: run task docs:snippets:fix"; exit 1; fi'
+      - ds check --no-update
+
+  docs:snippets:fix:
+    desc: Rewrite every docs snippet from its source file (whole-file snippets and docsync ds:block copies); review the diff, then ds ack the changed blocks
+    cmds:
+      - python3 scripts/check_doc_snippets.py --fix
+      - ds refresh --no-update
+
+  cli:install:
+    desc: Install the brick CLI into $GOBIN
+    dir: cmd/brick
+    cmds:
+      - go install .
+
+  fmt:
+    desc: Show what brick fmt would change in the kit and the examples (brick fmt -d)
+    dir: cmd/brick
+    cmds:
+      - go run . fmt -d ../../kit ../../examples
+
+  js:deps:
+    desc: Install the test-only JavaScript dependencies (jsdom) for the runtime tests
+    dir: runtime/test
+    cmds:
+      - npm ci --no-audit --no-fund
+
+  vscode:test:
+    desc: "Test the VS Code extension: its grammars, live frontmatter checking against the real schema, and its wiring (installs its test dependencies first)"
+    dir: editors/vscode
+    cmds:
+      - npm ci --no-audit --no-fund
+      - npm test
+
+  e2e:
+    desc: End-to-end check of the demo site in a real headless Chrome (actions, bindings, navigation)
+    cmds:
+      - scripts/e2e.sh
+
+  test:v21:chrome:
+    desc: Headless Chrome check of the v21 runtime features (window focus, loading targets, enter transitions, brick.js, brick.find, flash-clear) against runtime/test/v21site
+    cmds:
+      - scripts/v21_chrome.sh
+
+  test:v22:chrome:
+    desc: Headless Chrome check of the v22 runtime features (Modelable, brick.transition, brick:keydown.norepeat, brick:click.details) against the kit showcase
+    cmds:
+      - scripts/v22_chrome.sh
+
+  test:v23:chrome:
+    desc: Headless Chrome check of brick:method links (PATCH, DELETE with brick:confirm, POST through a component, plain GET) against examples/methodlinks, with navigation off and on
+    cmds:
+      - scripts/v23_chrome.sh
+
+  ui:serve:
+    desc: Serve the kit showcase and demo apps with live reload on http://localhost:8002
+    dir: examples
+    env:
+      BRICK_SECRET: *brick_secret
+    cmds:
+      - go run ./ui -serve :8002
+
+  ui:check:
+    desc: Report every problem in the kit showcase site
+    dir: examples
+    cmds:
+      - go run ./ui -check
+
+  ui:test:
+    desc: Run the kit's lint and jsdom tests and the showcase tests
+    cmds:
+      - go test -run 'TestKit|TestClassMerge' . ./kit/
+      - cd examples && go test ./ui/
+
+  ui:test:app:
+    desc: "Run one demo app's showcase tests (examples/ui/apps_<app>_test.go), e.g. task ui:test:app APP=contacts"
+    requires:
+      vars: [APP]
+    dir: examples
+    cmds:
+      # Every test in apps_<app>_test.go is named Test<App>…, so the title-cased folder name selects them.
+      - go test ./ui/ -run '^Test{{title .APP}}'
+
+  kit:catalog:
+    desc: Regenerate the component catalog in kit/README.md from the showcase pages
+    cmds:
+      - python3 scripts/kit_catalog.py
+
+  ui:e2e:
+    desc: End-to-end check of the kit showcase and demo apps in a real headless Chrome
+    cmds:
+      - scripts/e2e_ui.sh
+
+  ui:a11y:
+    desc: Accessibility audit of the kit showcase with axe-core in headless Chrome (fails on serious or critical findings)
+    cmds:
+      - scripts/a11y_ui.sh
+
+  demo:both:
+    desc: Serve both examples from one server on http://localhost:8003 — the kit showcase at /ui/, the engine demo at /engine/ (site.Mount + BasePath)
+    dir: examples
+    env:
+      BRICK_SECRET: *brick_secret
+    cmds:
+      - go run ./ui -serve :8003 -engine site
+
+  e2e:both:
+    desc: End-to-end check of both examples mounted under /ui/ and /engine/ on one server, in a real headless Chrome
+    cmds:
+      - scripts/e2e_both.sh
+
+  examples:vendor:
+    desc: Re-vendor the repository's kit/ into examples/site as a remote library (after changing kit/)
+    dir: examples
+    cmds:
+      # The kit's version is pinned, and vendoring never refetches a pinned
+      # version it already holds, so drop the old copy to pick up edits.
+      - rm -rf site/brick_modules/github.com/ubgo/brick@*
+      - go run ./vendorkit

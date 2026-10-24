@@ -1,0 +1,17 @@
+---
+title: Tree
+category: Data display
+description: "Nested, collapsible items — a file browser or a docs outline — built on details, so it opens without JavaScript."
+api:
+  - {name: items, type: "list of {label, href, icon, open, children}", desc: "The items; children makes a branch. Required."}
+  - {name: open, type: bool, desc: "Opens every branch."}
+  - {name: current, type: string, desc: "An href: that item is marked current and every branch around it opens."}
+  - {name: files, type: bool, desc: "Folder and file icons for items without their own."}
+  - {name: label, type: string, desc: "The tree's accessible name."}
+---
+<h1>Tree</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A repository"><TreeFiles /><brick:prop name="code"><Source src="~/demos/TreeFiles.html" /></brick:prop></Example>
+<Example title="A docs outline — current item, and all open"><TreeNav /><brick:prop name="code"><Source src="~/demos/TreeNav.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

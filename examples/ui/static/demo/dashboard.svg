@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+<defs>
+<linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6366f1" stop-opacity=".35"/><stop offset="1" stop-color="#6366f1" stop-opacity="0"/></linearGradient>
+</defs>
+<rect width="800" height="500" fill="#ffffff"/>
+<rect width="168" height="500" fill="#fafafa"/><path d="M168 0v500" stroke="#e4e4e7"/>
+<rect x="20" y="20" width="22" height="22" rx="6" fill="#4f46e5"/><text x="52" y="36" font-size="14" font-weight="700" fill="#18181b">Brickyard</text>
+<rect x="12" y="64" width="144" height="30" rx="7" fill="#eef2ff"/>
+<rect x="24" y="75" width="10" height="10" rx="2" fill="#4f46e5"/><text x="44" y="84" font-size="12" font-weight="600" fill="#4338ca">Overview</text>
+<g font-size="12" fill="#52525b"><rect x="24" y="109" width="10" height="10" rx="2" fill="#a1a1aa"/><text x="44" y="118">Projects</text><rect x="24" y="143" width="10" height="10" rx="2" fill="#a1a1aa"/><text x="44" y="152">Deployments</text><rect x="24" y="177" width="10" height="10" rx="2" fill="#a1a1aa"/><text x="44" y="186">Analytics</text><rect x="24" y="211" width="10" height="10" rx="2" fill="#a1a1aa"/><text x="44" y="220">Team</text><rect x="24" y="245" width="10" height="10" rx="2" fill="#a1a1aa"/><text x="44" y="254">Settings</text></g>
+<text x="192" y="44" font-size="18" font-weight="700" fill="#09090b">Overview</text>
+<text x="192" y="62" font-size="11" fill="#71717a">Last 30 days · all projects</text>
+<rect x="676" y="26" width="100" height="30" rx="7" fill="#4f46e5"/><text x="726" y="45" font-size="11" font-weight="600" fill="#fff" text-anchor="middle">New project</text>
+<g>
+<rect x="192" y="82" width="184" height="78" rx="10" fill="#fff" stroke="#e4e4e7"/><text x="206" y="104" font-size="11" fill="#71717a">Requests</text><text x="206" y="134" font-size="22" font-weight="700" fill="#09090b">1.28M</text><text x="206" y="150" font-size="10" font-weight="600" fill="#16a34a">▲ 12.4%</text>
+<rect x="392" y="82" width="184" height="78" rx="10" fill="#fff" stroke="#e4e4e7"/><text x="406" y="104" font-size="11" fill="#71717a">Median render</text><text x="406" y="134" font-size="22" font-weight="700" fill="#09090b">38 ms</text><text x="406" y="150" font-size="10" font-weight="600" fill="#16a34a">▼ 4 ms</text>
+<rect x="592" y="82" width="184" height="78" rx="10" fill="#fff" stroke="#e4e4e7"/><text x="606" y="104" font-size="11" fill="#71717a">Error rate</text><text x="606" y="134" font-size="22" font-weight="700" fill="#09090b">0.02%</text><text x="606" y="150" font-size="10" font-weight="600" fill="#71717a">steady</text>
+</g>
+<rect x="192" y="176" width="584" height="178" rx="10" fill="#fff" stroke="#e4e4e7"/>
+<text x="206" y="198" font-size="12" font-weight="600" fill="#18181b">Traffic</text>
+<g stroke="#f4f4f5"><path d="M206 234H762M206 268H762M206 302H762M206 336H762"/></g>
+<path d="M206 316 C246 306 266 290 306 296 S366 262 406 270 S466 240 506 246 S566 214 606 222 S686 196 762 204 V336 H206Z" fill="url(#area)"/>
+<path d="M206 316 C246 306 266 290 306 296 S366 262 406 270 S466 240 506 246 S566 214 606 222 S686 196 762 204" fill="none" stroke="#4f46e5" stroke-width="2.5"/>
+<path d="M206 326 C256 322 286 314 336 318 S426 300 476 304 S586 290 636 292 S716 284 762 286" fill="none" stroke="#a5b4fc" stroke-width="2" stroke-dasharray="4 4"/>
+<circle cx="606" cy="222" r="4.5" fill="#fff" stroke="#4f46e5" stroke-width="2.5"/>
+<rect x="192" y="370" width="584" height="112" rx="10" fill="#fff" stroke="#e4e4e7"/>
+<g font-size="11"><text x="206" y="392" font-weight="600" fill="#18181b">Recent deployments</text>
+<text x="206" y="420" fill="#18181b">marketing-site</text><text x="400" y="420" fill="#71717a">main · 2m ago</text><rect x="690" y="409" width="62" height="16" rx="8" fill="#dcfce7"/><text x="721" y="421" font-size="9" font-weight="600" fill="#15803d" text-anchor="middle">Ready</text>
+<path d="M206 432H762" stroke="#f4f4f5"/>
+<text x="206" y="452" fill="#18181b">dashboard</text><text x="400" y="452" fill="#71717a">feat/islands · 9m ago</text><rect x="690" y="441" width="62" height="16" rx="8" fill="#e0e7ff"/><text x="721" y="453" font-size="9" font-weight="600" fill="#4338ca" text-anchor="middle">Building</text>
+</g>
+</svg>

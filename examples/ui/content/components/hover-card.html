@@ -1,0 +1,17 @@
+---
+title: HoverCard
+category: Overlays
+description: "A rich preview card shown after a short hover or on keyboard focus — a profile behind an @mention, a link preview. Pure CSS."
+api:
+  - {name: side, type: "bottom | top", default: bottom, desc: "Where the card opens."}
+  - {name: align, type: "start | center | end", default: start, desc: "Alignment along the trigger."}
+  - {name: delay, type: int, default: "500", desc: "Milliseconds of hover before it opens."}
+  - {name: closeDelay, type: int, default: "150", desc: "Milliseconds after leaving before it closes."}
+  - {name: trigger, type: "block", desc: "What to hover: a link, a name, a button. Required."}
+---
+<h1>HoverCard</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A profile behind a mention"><HoverCardProfile /><brick:prop name="code"><Source src="~/demos/HoverCardProfile.html" /></brick:prop></Example>
+<Example title="Placement and timing"><HoverCardPlacement /><brick:prop name="code"><Source src="~/demos/HoverCardPlacement.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

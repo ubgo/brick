@@ -1,0 +1,53 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  items: {type: list, default: []}
+  current: {type: string, default: ""}
+  label: {type: string, default: Menu}
+  size: {type: string, default: md, oneof: [sm, md]}
+  bordered: {type: bool, default: false}
+---
+{{/*
+Menu: a vertical list of links and buttons with icons, section headings
+and an active item — the building block for settings pages, account
+popovers and side panels.
+
+  <Menu current="/settings/billing/" :items=".Params.menu" />
+  items:
+    - {section: Account}
+    - {label: Profile, href: /settings/, icon: user}
+    - {label: Billing, href: /settings/billing/, icon: credit-card, badge: New}
+    - {divider: true}
+    - {label: Sign out, icon: log-out, kbd: ⇧⌘Q}
+  <Menu bordered><li><a class="bk-menu__item" href="/x/">Custom</a></li></Menu>
+
+An item is {label, href, icon, badge, kbd, active, disabled, prefetch}
+(true, or "visible", writes brick:prefetch on its link); {section: T}
+is a heading and {divider: true} a rule. An item with href is a link
+(aria-current="page" when it equals current or active is set), one without
+is a button for hx-* or a form. It is a list of links, not an ARIA menu, so
+Tab moves through it; children (write <li> elements) follow the items.
+*/}}
+<brick:style>
+.bk-menu { --bk-menu-h: var(--bk-h-sm); font-size: var(--bk-text-sm); }
+.bk-menu--sm { --bk-menu-h: var(--bk-h-xs); font-size: var(--bk-text-xs); }
+.bk-menu--bordered { padding: .25rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); }
+.bk-menu > ul { display: flex; flex-direction: column; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.bk-menu__item { box-sizing: border-box; display: flex; align-items: center; gap: .55rem; width: 100%; height: var(--bk-menu-h); padding: 0 .55rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-fg); font: 500 1em/1 var(--bk-font); text-align: left; text-decoration: none; cursor: pointer; transition: background var(--bk-duration), color var(--bk-duration); }
+.bk-menu__item:hover { background: var(--bk-accent); }
+.bk-menu__item:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.bk-menu__item > .bk-icon { flex: none; color: var(--bk-muted-fg); }
+.bk-menu__item[aria-current=page] { background: color-mix(in oklab, var(--bk-primary) 11%, transparent); color: var(--bk-primary-text); }
+.bk-menu__item[aria-current=page] > .bk-icon { color: var(--bk-primary-text); }
+.bk-menu__item:disabled, .bk-menu__item[aria-disabled=true] { opacity: .45; pointer-events: none; }
+.bk-menu__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-menu__badge { padding: .1rem .4rem; border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); font-size: var(--bk-text-xs); font-weight: 600; line-height: 1.2; }
+.bk-menu__kbd { color: var(--bk-muted-fg); font: var(--bk-text-xs) var(--bk-font); letter-spacing: .04em; }
+.bk-menu__section { padding: .6rem .55rem .25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; }
+.bk-menu__section:first-child { padding-top: .25rem; }
+.bk-menu__divider { height: 1px; margin: .25rem .25rem; background: var(--bk-border); }
+</brick:style>
+<nav class="{{ cx `bk-menu` (cond (eq .Props.size `sm`) `bk-menu--sm` ``) (cond .Props.bordered `bk-menu--bordered` ``) .Attrs.class }}" aria-label="{{ .Props.label }}" {{ attrs `class` }}>
+  <ul>{{ range .Props.items }}{{ if .section }}<li class="bk-menu__section">{{ .section }}</li>{{ else if .divider }}<li class="bk-menu__divider" aria-hidden="true"></li>{{ else }}{{ $on := or .active (and .href $.Props.current (eq (print .href) $.Props.current)) }}<li>{{ if .href }}<a class="bk-menu__item" href="{{ .href }}"{{ with .prefetch }} brick:prefetch{{ if eq (print .) "visible" }}="visible"{{ end }}{{ end }}{{ if $on }} aria-current="page"{{ end }}{{ if .disabled }} aria-disabled="true" tabindex="-1"{{ end }}>{{ else }}<button type="button" class="bk-menu__item"{{ if .disabled }} disabled{{ end }}>{{ end }}{{ with .icon }}<Icon :name="." :size="15" />{{ end }}<span class="bk-menu__label">{{ .label }}</span>{{ with .badge }}<span class="bk-menu__badge">{{ . }}</span>{{ end }}{{ with .kbd }}<kbd class="bk-menu__kbd">{{ . }}</kbd>{{ end }}{{ if .href }}</a>{{ else }}</button>{{ end }}</li>{{ end }}{{ end }}{{ children }}</ul>
+</nav>

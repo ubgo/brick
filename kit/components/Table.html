@@ -1,0 +1,72 @@
+---
+props:
+  columns: {type: list, default: []}
+  rows: {type: list, default: []}
+  caption: {type: string, default: ""}
+  empty: {type: string, default: No results.}
+  striped: {type: bool, default: false}
+  bordered: {type: bool, default: false}
+  compact: {type: bool, default: false}
+  hover: {type: bool, default: false}
+  sticky: {type: bool, default: false}
+  height: {type: string, default: ""}
+  label: {type: string, default: ""}
+---
+{{/*
+Table: a styled data table, from data or from your own markup.
+
+From data — columns are {key, label, align, width}, rows are maps:
+
+  <Table :columns=".Params.columns" :rows=".Params.people" hover striped />
+
+A cell is the row's value at the column's key. To draw cells yourself,
+pass a scoped slot: "cell_<key>" for one column, or "cell" for all the
+others. Inside the block, Slot.row is the row, Slot.col the column and
+Slot.value the cell (each read with a leading dot, as for any value).
+
+  <Table :columns=".Params.columns" :rows=".Params.people">
+    <brick:prop name="cell_status"><Badge tone="success">…Slot.value…</Badge></brick:prop>
+  </Table>
+
+From markup — without columns the children are the table's content:
+
+  <Table bordered compact><thead>…</thead><tbody>…</tbody></Table>
+
+Column keys used in a slot name must be identifiers (letters, digits, _).
+With sticky, the header stays in view while the table scrolls inside a box
+height tall (for example height="20rem"). A table with a height is a
+scroll box, so it is also a focusable region (tabindex="0",
+role="region") named by label, or by the caption when there is no label,
+so keyboard users can scroll it and screen readers announce it. An empty rows list shows one row
+saying empty (or the "empty" block, when given).
+*/}}
+<brick:style>
+.bk-table { position: relative; width: 100%; overflow: auto; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); }
+.bk-table__table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--bk-text-sm); font-variant-numeric: tabular-nums; }
+.bk-table__caption { caption-side: top; padding: .6rem .75rem; text-align: left; font-weight: 600; color: var(--bk-fg); border-bottom: 1px solid var(--bk-border); }
+.bk-table :where(.bk-table__table > thead > tr > th) { height: 2.25rem; padding: 0 .75rem; background: var(--bk-surface-2); color: var(--bk-muted-fg); font-weight: 500; font-size: var(--bk-text-xs); text-align: left; white-space: nowrap; border-bottom: 1px solid var(--bk-border); }
+.bk-table :where(.bk-table__table > tbody > tr > td, .bk-table__table > tbody > tr > th) { height: 2.5rem; padding: .35rem .75rem; border-bottom: 1px solid var(--bk-border); vertical-align: middle; color: var(--bk-fg); }
+.bk-table :where(.bk-table__table > tbody > tr > th) { text-align: left; font-weight: 500; }
+.bk-table :where(.bk-table__table > tbody > tr:last-child > td, .bk-table__table > tbody > tr:last-child > th) { border-bottom: 0; }
+.bk-table :where(.bk-table__table > tfoot > tr > td, .bk-table__table > tfoot > tr > th) { padding: .5rem .75rem; border-top: 1px solid var(--bk-border); background: var(--bk-surface-2); font-weight: 600; }
+.bk-table .bk-table__right { text-align: right; }
+.bk-table .bk-table__center { text-align: center; }
+.bk-table--compact :where(.bk-table__table > thead > tr > th) { height: 1.9rem; padding: 0 .6rem; }
+.bk-table--compact :where(.bk-table__table > tbody > tr > td, .bk-table__table > tbody > tr > th) { height: 2rem; padding: .2rem .6rem; }
+.bk-table--striped :where(.bk-table__table > tbody > tr:nth-child(even)) { background: color-mix(in oklab, var(--bk-muted) 55%, transparent); }
+.bk-table--hover :where(.bk-table__table > tbody > tr:hover) { background: color-mix(in oklab, var(--bk-muted) 80%, transparent); }
+.bk-table--bordered :where(.bk-table__table th + th, .bk-table__table td + td, .bk-table__table th + td, .bk-table__table td + th) { border-left: 1px solid var(--bk-border); }
+.bk-table--sticky :where(.bk-table__table > thead > tr > th) { position: sticky; top: 0; z-index: 1; }
+.bk-table .bk-table__empty { height: 6rem; text-align: center; color: var(--bk-muted-fg); }
+.bk-table:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-table--flush { border: 0; border-radius: 0; background: none; }
+</brick:style>
+{{- $cols := .Props.columns -}}
+<div class="{{ cx `bk-table` (cond .Props.striped `bk-table--striped` ``) (cond .Props.bordered `bk-table--bordered` ``) (cond .Props.compact `bk-table--compact` ``) (cond .Props.hover `bk-table--hover` ``) (cond .Props.sticky `bk-table--sticky` ``) .Attrs.class }}"{{ with .Props.height }} style="max-height: {{ . }}" tabindex="0" role="region"{{ with or $.Props.label $.Props.caption }} aria-label="{{ . }}"{{ end }}{{ end }} {{ attrs `class` }}>
+<table class="bk-table__table">{{ with .Props.caption }}<caption class="bk-table__caption">{{ . }}</caption>{{ end }}
+{{- if $cols }}
+<thead><tr>{{ range $cols }}<th scope="col"{{ with .align }}{{ if ne . "left" }} class="bk-table__{{ . }}"{{ end }}{{ end }}{{ with .width }} style="width: {{ . }}"{{ end }}>{{ .label }}</th>{{ end }}</tr></thead>
+<tbody>{{ range $row := .Props.rows }}<tr>{{ range $col := $cols }}{{ $v := index $row $col.key }}<td{{ with $col.align }}{{ if ne . "left" }} class="bk-table__{{ . }}"{{ end }}{{ end }}>{{ if hasNode (print "cell_" $col.key) }}{{ node (print "cell_" $col.key) (dict "row" $row "col" $col "value" $v) }}{{ else if hasNode "cell" }}{{ node "cell" (dict "row" $row "col" $col "value" $v) }}{{ else }}{{ $v }}{{ end }}</td>{{ end }}</tr>{{ else }}<tr><td class="bk-table__empty" colspan="{{ len $cols }}">{{ if hasNode "empty" }}{{ node "empty" }}{{ else }}{{ .Props.empty }}{{ end }}</td></tr>{{ end }}</tbody>
+{{- else }}{{ children }}{{ end }}
+</table>
+</div>

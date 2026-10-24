@@ -1,0 +1,12 @@
+<div style="width: 15rem; padding: .5rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg)">
+  <Sidebar current="/docs/guide/">
+    <SidebarItem href="/docs/" icon="home" label="A link" />
+    <SidebarItem href="/docs/guide/" icon="book-open" label="Active: href equals current" />
+    <SidebarItem href="/docs/inbox/" icon="inbox" label="With a badge" badge="23" />
+    <SidebarItem icon="plus" label="A button (no href)" />
+    <SidebarItem label="Nested — opens around current" icon="folder" href="/docs/">
+      <SidebarItem href="/docs/guide/" label="Guide" />
+      <SidebarItem href="/docs/api/" label="API" />
+    </SidebarItem>
+  </Sidebar>
+</div>

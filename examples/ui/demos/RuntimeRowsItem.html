@@ -1,0 +1,7 @@
+{{/*
+RuntimeRowsItem: one message of the row-stream demo (RuntimeRows). The
+action's brick.rows renders it per item, and the first render of the feed
+ranges over it too, so both carry the same brick:key the runtime matches
+rows by.
+*/}}
+<li brick:key="{{ .Props.id }}" class="rr-row" style="display: flex; justify-content: space-between; gap: .75rem; padding: .45rem .75rem; border-bottom: 1px solid var(--bk-border)"><span class="rr-text">{{ .Props.text }}</span><small style="color: var(--bk-muted-fg)">#{{ .Props.id }}</small></li>

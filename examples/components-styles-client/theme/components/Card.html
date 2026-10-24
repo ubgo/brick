@@ -1,0 +1,8 @@
+---
+props:
+  title: string
+---
+<brick:style scoped>
+.title { color: crimson }
+</brick:style>
+<article class="card"><h3 class="title">{{ .Props.title }}</h3>{{ children }}</article>

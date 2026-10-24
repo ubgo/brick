@@ -1,0 +1,91 @@
+---
+state:
+  name: Ada Lovelace
+  username: ada
+  bio: Mathematician and writer. I wrote the first program for a machine that did not exist yet.
+  website: https://example.com/ada
+  saves: 0
+  saved: false
+---
+{{/*
+SettingsProfile: the Profile section of the Settings app — a stateful form
+whose save action validates every field and returns [state, errors], so
+the errors render inline and the typed values survive. A successful save
+bumps saves, which names the success toast (a new id per save, so each
+save shows one toast and a re-render shows none twice).
+*/}}
+<brick:script>
+TAKEN = ["admin", "root", "brick", "support"]
+ALLOWED = "abcdefghijklmnopqrstuvwxyz0123456789-"
+
+def save(state, props, fields):
+    name = fields.get("name", "").strip()
+    username = fields.get("username", "").strip().lower()
+    bio = fields.get("bio", "").strip()
+    website = fields.get("website", "").strip()
+    new = dict(state, name = name, username = username, bio = bio, website = website, saved = False)
+    errors = {}
+    if len(name) < 2:
+        errors["name"] = "Enter your name (at least two letters)."
+    if len(username) < 3 or len(username) > 20:
+        errors["username"] = "Use 3 to 20 characters."
+    elif [c for c in username.elems() if c not in ALLOWED]:
+        errors["username"] = "Use only lowercase letters, digits and dashes."
+    elif username in TAKEN:
+        errors["username"] = "brick.dev/" + username + " is taken."
+    if len(bio) > 160:
+        errors["bio"] = "Keep it to 160 characters."
+    if website and not (website.startswith("https://") or website.startswith("http://")):
+        errors["website"] = "Start the address with https://."
+    if errors:
+        return [new, errors]
+    return dict(new, saved = True, saves = state["saves"] + 1)
+</brick:script>
+<form brick:submit="save" novalidate class="settings-form">
+  <Card :level="2" title="Profile" description="This is how others see you on the site." padding="lg">
+    <div class="settings-avatar">
+      <Avatar :name=".State.name" size="xl" />
+      <div class="settings-avatar__body">
+        <Label for="settings-avatar">Profile picture</Label>
+        <FileInput id="settings-avatar" accept="image/png,image/jpeg" size="sm" />
+        <Text size="sm" tone="muted">PNG or JPG, at least 256 × 256 px.</Text>
+      </div>
+    </div>
+    <Separator />
+    <div class="settings-grid">
+      <Field label="Name" :error=".Errors.name" required><Input name="name" value="{{ .State.name }}" autocomplete="name" /></Field>
+      <Field label="Username" hint="Your public page: brick.dev/{{ .State.username }}" :error=".Errors.username" required>
+        <InputGroup><span class="bk-input-group__text">brick.dev/</span><Input name="username" value="{{ .State.username }}" autocomplete="username" /></InputGroup>
+      </Field>
+      <Field label="Bio" hint="A sentence or two. Shown on your profile." :error=".Errors.bio" class="settings-wide"><Textarea name="bio" :value=".State.bio" :maxlength="160" counter autosize :rows="3" /></Field>
+      <Field label="Website" :error=".Errors.website" optional class="settings-wide"><Input type="url" name="website" value="{{ .State.website }}" icon="link" placeholder="https://" /></Field>
+    </div>
+    <brick:prop name="footer"><span brick:loading hidden><span class="settings-busy"><Icon name="loader" :size="14" class="bk-btn__spin" />Saving…</span></span></brick:prop>
+    <brick:prop name="actions"><Button type="submit">Save profile</Button></brick:prop>
+  </Card>
+  {{ if .State.saved }}<Toast variant="success" title="Profile saved" description="Your public page is up to date." id="settings-profile-{{ .State.saves }}" />{{ end }}
+</form>
+<brick:style>
+/* The Settings page and the styles its five sections share: here because
+   Profile is always on the page. */
+.settings-top { margin-left: auto; display: flex; gap: .5rem; }
+.settings-page { max-width: 56rem; margin: 0 auto; padding: .75rem .5rem 3rem; display: flex; flex-direction: column; gap: 1.25rem; }
+@media (max-width: 640px) { .settings-page { padding: .25rem 0 2rem; } .settings-page .bk-card--lg { --bk-card-pad: var(--bk-space-4); } }
+/* Shared by the Settings… section components. */
+.settings-page .bk-field__body > .bk-segmented { align-self: flex-start; }
+.settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 1.25rem; margin-top: 1.25rem; }
+.settings-wide { grid-column: 1 / -1; }
+.settings-busy { display: inline-flex; align-items: center; gap: .4rem; }
+@media (max-width: 640px) { .settings-grid { grid-template-columns: minmax(0, 1fr); } .settings-avatar { align-items: flex-start; } }
+.settings-stack { display: flex; flex-direction: column; gap: 1.25rem; }
+.settings-sections { display: flex; flex-direction: column; gap: 1.5rem; margin-top: .5rem; }
+.settings-switches { display: flex; flex-direction: column; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); overflow: hidden; }
+.settings-switch { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1rem; }
+.settings-switch + .settings-switch { border-top: 1px solid var(--bk-border); }
+.settings-switch:hover { background: var(--bk-surface-2); }
+.settings-switch__text { flex: 1; cursor: pointer; display: flex; flex-direction: column; gap: .1rem; min-width: 0; font-size: var(--bk-text-sm); }
+.settings-switch b { font-weight: 500; }
+.settings-switch small { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.settings-avatar { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.25rem; }
+.settings-avatar__body { display: flex; flex-direction: column; gap: .4rem; flex: 1; min-width: 0; max-width: 22rem; }
+</brick:style>

@@ -1,0 +1,4 @@
+welcome: "Welcome, {name}!"
+about:
+  title: About us
+  body: A demo of every brick feature.

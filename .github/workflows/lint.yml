@@ -1,0 +1,71 @@
+# Manual only, on purpose. See the note at the top of test.yml: this repository
+# is private and Actions minutes are metered, so `task check` is the real gate.
+#
+# To restore automatic runs when there is budget, replace the `on:` block with:
+#
+#   on:
+#     push:
+#       branches: [main]
+#     pull_request:
+#     workflow_dispatch:
+
+name: lint
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - .
+          - contrib/script-starlark
+          - contrib/markdown-goldmark
+          - contrib/sanitize-bluemonday
+          - contrib/assets-http
+          - examples
+          - cmd/brick
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: ${{ matrix.module }}/go.mod
+          cache: true
+          cache-dependency-path: ${{ matrix.module }}/go.sum
+      - name: gofmt
+        working-directory: ${{ matrix.module }}
+        run: test -z "$(gofmt -l .)" || (gofmt -l . && exit 1)
+      - name: vet
+        working-directory: ${{ matrix.module }}
+        run: go vet ./...
+      - name: staticcheck
+        working-directory: ${{ matrix.module }}
+        run: go run honnef.co/go/tools/cmd/staticcheck@latest ./...
+
+  cross:
+    # The root module claims Linux, macOS, Windows and FreeBSD; building for
+    # each is what checks the claim (task cross).
+    name: build (${{ matrix.goos }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, darwin, windows, freebsd]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: amd64
+        run: go build ./...

@@ -1,0 +1,22 @@
+---
+props:
+  id: string
+  title: string
+---
+<brick:client>
+// The app's CSRF token rides in a <meta> tag. A method link submits a
+// hidden form, so this hook appends the token to it as a field the DELETE
+// route can check. fn(form, link) runs once per click, before the submit.
+const restore = brick.methodFormWith((form, link) => {
+  const input = document.createElement("input");
+  input.type = "hidden";
+  input.name = "_csrf";
+  input.value = document.querySelector('meta[name="csrf-token"]').content;
+  form.append(input);
+});
+// restore() puts the previous hook back; a page that never swaps hooks
+// still releases it when it goes away.
+window.addEventListener("pagehide", restore);
+</brick:client>
+<li id="post-{{ .Props.id }}">{{ .Props.title }}
+  <a href="/posts/{{ .Props.id }}" brick:method="delete" brick:confirm="Delete {{ .Props.title }}?">Delete</a></li>

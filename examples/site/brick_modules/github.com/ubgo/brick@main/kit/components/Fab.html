@@ -1,0 +1,69 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  icon: {type: string, default: plus}
+  label: {type: string, required: true}
+  href: {type: string, default: ""}
+  actions: {type: list, default: []}
+  position: {type: string, default: bottom-end, oneof: [bottom-end, bottom-start, top-end, top-start]}
+  fixed: {type: bool, default: true}
+  tone: {type: string, default: primary, oneof: [primary, neutral]}
+---
+{{/*
+Fab: a floating action button pinned to a corner of the viewport — the
+screen's one main action. With actions it is a speed dial: the button
+opens a short stack of labelled actions (a native <details>, so it opens
+with no JavaScript and closes on Escape once enhanced).
+
+  <Fab icon="plus" label="New task" href="/tasks/new/" />
+  <Fab label="Create" :actions="list (dict `label` `Note` `icon` `file-text` `href` `/notes/new/`) (dict `label` `Upload` `icon` `upload` `href` `/upload/`)" />
+  <Fab label="Compose" icon="pencil" position="bottom-start" :fixed="false" />
+
+label is the button's accessible name (and the speed dial's). An action
+is {label, icon, href}; one without href is a button, for hx-* or a form
+around the Fab (children follow the actions, for anything custom).
+fixed=false keeps it in the flow, positioned in its container.
+*/}}
+<brick:client>
+// Escape closes an open speed dial and returns focus to its button; a
+// click outside closes it too. Without this module <details> still works.
+brick.mount("Fab", (el) => {
+  const dial = el.querySelector(".bk-fab__dial");
+  if (!dial) return;
+  const summary = dial.querySelector("summary");
+  const onKey = (e) => { if (e.key === "Escape" && dial.open) { dial.open = false; summary.focus(); } };
+  const onDoc = (e) => { if (dial.open && !dial.contains(e.target)) dial.open = false; };
+  dial.addEventListener("keydown", onKey);
+  document.addEventListener("click", onDoc);
+  return () => { dial.removeEventListener("keydown", onKey); document.removeEventListener("click", onDoc); };
+})
+</brick:client>
+<brick:style>
+.bk-fab { position: fixed; z-index: var(--bk-z-sticky); display: flex; flex-direction: column; align-items: flex-end; gap: .6rem; margin: 1.25rem; }
+.bk-fab--inline { position: absolute; margin: 1rem; }
+.bk-fab--bottom-end { right: 0; bottom: 0; }
+.bk-fab--bottom-start { left: 0; bottom: 0; align-items: flex-start; }
+.bk-fab--top-end { right: 0; top: 0; flex-direction: column-reverse; }
+.bk-fab--top-start { left: 0; top: 0; align-items: flex-start; flex-direction: column-reverse; }
+.bk-fab__main { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border: 0; border-radius: var(--bk-radius-full); background: var(--bk-primary); color: var(--bk-primary-fg); box-shadow: var(--bk-shadow-lg); cursor: pointer; list-style: none; text-decoration: none; transition: transform var(--bk-duration), background var(--bk-duration); }
+.bk-fab--neutral .bk-fab__main { background: var(--bk-neutral); color: var(--bk-neutral-fg); }
+.bk-fab__main::-webkit-details-marker { display: none; }
+.bk-fab__main:hover { background: var(--bk-primary-hover); }
+.bk-fab--neutral .bk-fab__main:hover { background: color-mix(in oklab, var(--bk-neutral), var(--bk-bg) 15%); }
+.bk-fab__main:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 3px; }
+.bk-fab__main .bk-icon { transition: transform var(--bk-duration); }
+.bk-fab__dial { display: flex; flex-direction: column-reverse; align-items: inherit; gap: .6rem; }
+.bk-fab--top-end .bk-fab__dial, .bk-fab--top-start .bk-fab__dial { flex-direction: column; }
+.bk-fab__dial[open] > .bk-fab__main .bk-icon { transform: rotate(45deg); }
+.bk-fab__actions { display: flex; flex-direction: column; align-items: inherit; gap: .5rem; margin: 0; padding: 0; list-style: none; animation: bk-pop-in var(--bk-duration) ease-out; }
+.bk-fab__action { display: inline-flex; align-items: center; gap: .6rem; padding: 0; border: 0; background: none; color: var(--bk-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); text-decoration: none; cursor: pointer; }
+.bk-fab--bottom-end .bk-fab__action, .bk-fab--top-end .bk-fab__action { flex-direction: row; }
+.bk-fab__action-label { padding: .35rem .6rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); box-shadow: var(--bk-shadow); white-space: nowrap; }
+.bk-fab__action-icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-full); background: var(--bk-surface); box-shadow: var(--bk-shadow); }
+.bk-fab--bottom-start .bk-fab__action, .bk-fab--top-start .bk-fab__action { flex-direction: row-reverse; }
+.bk-fab__action:hover .bk-fab__action-icon, .bk-fab__action:hover .bk-fab__action-label { background: var(--bk-accent); }
+.bk-fab__action:focus-visible { outline: none; }
+.bk-fab__action:focus-visible .bk-fab__action-icon { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+</brick:style>
+<div class="{{ cx `bk-fab` (print `bk-fab--` .Props.position) (cond .Props.fixed `` `bk-fab--inline`) (cond (eq .Props.tone `neutral`) `bk-fab--neutral` ``) .Attrs.class }}" {{ attrs `class` }}>{{ if or .Props.actions (hasNode "children") }}<details class="bk-fab__dial"><summary class="bk-fab__main" aria-label="{{ .Props.label }}"><Icon :name=".Props.icon" :size="22" /></summary><ul class="bk-fab__actions" aria-label="{{ .Props.label }}">{{ range .Props.actions }}<li>{{ if .href }}<a class="bk-fab__action" href="{{ .href }}">{{ else }}<button type="button" class="bk-fab__action">{{ end }}<span class="bk-fab__action-label">{{ .label }}</span><span class="bk-fab__action-icon" aria-hidden="true">{{ with .icon }}<Icon :name="." :size="16" />{{ end }}</span>{{ if .href }}</a>{{ else }}</button>{{ end }}</li>{{ end }}{{ children }}</ul></details>{{ else if .Props.href }}<a class="bk-fab__main" href="{{ .Props.href }}" aria-label="{{ .Props.label }}" title="{{ .Props.label }}"><Icon :name=".Props.icon" :size="22" /></a>{{ else }}<button type="button" class="bk-fab__main" aria-label="{{ .Props.label }}" title="{{ .Props.label }}"><Icon :name=".Props.icon" :size="22" /></button>{{ end }}</div>

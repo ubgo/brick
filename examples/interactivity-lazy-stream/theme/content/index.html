@@ -1,0 +1,16 @@
+<!doctype html>
+<html><body>
+<header><Account /></header>
+<brick:boundary>
+  <SalesChart brick:lazy="visible" />
+  <brick:prop name="loading"><div class="skeleton">Loading sales…</div></brick:prop>
+  <brick:prop name="fallback"><p>Sales unavailable.</p></brick:prop>
+</brick:boundary>
+<brick:boundary>
+  <Revenue brick:lazy="stream" />
+  <brick:prop name="loading"><div class="skeleton">Loading revenue…</div></brick:prop>
+  <brick:prop name="fallback"><p>Revenue unavailable.</p></brick:prop>
+</brick:boundary>
+<Ask />
+{{ assets }}
+</body></html>

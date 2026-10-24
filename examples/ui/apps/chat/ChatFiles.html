@@ -1,0 +1,6 @@
+---
+props:
+  files: {type: list, default: []}
+---
+{{/* ChatFiles: the files shared in a channel, for ChatApp's details drawer, with an empty state. */}}
+{{ if .Props.files }}<List variant="bordered" size="sm">{{ range .Props.files }}<ListItem :title=".attachment" :description="print `Shared by ` .sender ` · ` .day" icon="file" href="#" />{{ end }}</List>{{ else }}<EmptyState icon="paperclip" title="No files yet" description="Files shared in this conversation show up here." size="sm" />{{ end }}

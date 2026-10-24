@@ -1,0 +1,9 @@
+---
+events:
+  - {title: Order placed, time: "Sep 2, 09:14", datetime: "2026-09-02T09:14", icon: shopping-cart, tone: primary, body: "Order #1042 · 3 items · $184.00"}
+  - {title: Payment confirmed, time: "Sep 2, 09:15", icon: credit-card, tone: success}
+  - {title: Shipped, time: "Sep 3, 16:40", icon: package, tone: info, body: "UPS · tracking 1Z999AA10123456784"}
+  - {title: Delivery delayed, time: "Sep 5, 08:02", icon: alert-triangle, tone: warning, body: "Weather in the region. New estimate: Sep 6."}
+  - {title: Delivered, time: "Sep 6, 13:27", icon: check, tone: success}
+---
+<Timeline :items=".Params.events" label="Order history" style="max-width: 30rem" />

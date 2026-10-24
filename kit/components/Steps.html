@@ -1,0 +1,49 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  items: {type: list, required: true}
+  current: {type: int, default: 0}
+  orientation: {type: string, default: horizontal, oneof: [horizontal, vertical]}
+  size: {type: string, default: md, oneof: [sm, md]}
+  label: {type: string, default: Progress}
+---
+{{/*
+Steps: a stepper — the stages of a process and how far along it is.
+
+  <Steps :items="list (dict `title` `Account`) (dict `title` `Profile`) (dict `title` `Done`)" :current="1" />
+  <Steps orientation="vertical" :items=".Params.timeline" />
+  items: [{title: Ordered, description: Mon 4 Jan, status: complete}, {title: Shipped, status: current, icon: truck}]
+
+An item is {title, description, status, icon}. status is complete,
+current, upcoming or error; without it, items before current are complete,
+the one at current is current and the rest upcoming. The current step has
+aria-current="step", and each step's state is spelled out for screen
+readers, never carried by colour alone. A complete step shows a check, an
+error step a cross, the others their number or icon.
+*/}}
+<brick:style>
+.bk-steps { --bk-steps-dot: 1.75rem; display: flex; margin: 0; padding: 0; list-style: none; font-size: var(--bk-text-sm); counter-reset: bk-step; }
+.bk-steps--sm { --bk-steps-dot: 1.35rem; font-size: var(--bk-text-xs); }
+.bk-step { position: relative; display: flex; flex: 1 1 0; min-width: 0; }
+.bk-steps--horizontal .bk-step { flex-direction: column; align-items: center; text-align: center; padding: 0 .5rem; }
+.bk-steps--horizontal .bk-step:not(:last-child)::after { content: ""; position: absolute; top: calc(var(--bk-steps-dot) / 2 - 1px); left: calc(50% + var(--bk-steps-dot) / 2 + .5rem); right: calc(-50% + var(--bk-steps-dot) / 2 + .5rem); height: 2px; border-radius: 2px; background: var(--bk-border); }
+.bk-steps--vertical { flex-direction: column; }
+.bk-steps--vertical .bk-step { gap: .75rem; padding-bottom: 1.25rem; }
+.bk-steps--vertical .bk-step:last-child { padding-bottom: 0; }
+.bk-steps--vertical .bk-step:not(:last-child)::after { content: ""; position: absolute; left: calc(var(--bk-steps-dot) / 2 - 1px); top: calc(var(--bk-steps-dot) + .3rem); bottom: .3rem; width: 2px; border-radius: 2px; background: var(--bk-border); }
+.bk-step--complete:not(:last-child)::after { background: var(--bk-primary); }
+.bk-step__dot { display: grid; place-items: center; flex: none; width: var(--bk-steps-dot); height: var(--bk-steps-dot); border: 2px solid var(--bk-border); border-radius: 50%; background: var(--bk-surface); color: var(--bk-muted-fg); font-weight: 600; font-size: .92em; font-variant-numeric: tabular-nums; transition: background var(--bk-duration), border-color var(--bk-duration); }
+.bk-step--complete .bk-step__dot { border-color: var(--bk-primary); background: var(--bk-primary); color: var(--bk-primary-fg); }
+.bk-step--current .bk-step__dot { border-color: var(--bk-primary); color: var(--bk-primary-text); box-shadow: 0 0 0 4px color-mix(in oklab, var(--bk-primary) 15%, transparent); }
+.bk-step--error .bk-step__dot { border-color: var(--bk-danger); background: var(--bk-danger); color: var(--bk-danger-fg); }
+.bk-step__body { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.bk-steps--horizontal .bk-step__body { margin-top: .5rem; }
+.bk-steps--vertical .bk-step__body { padding-top: calc((var(--bk-steps-dot) - 1.25rem) / 2); }
+.bk-step__title { font-weight: 500; color: var(--bk-muted-fg); line-height: 1.25rem; }
+.bk-step--complete .bk-step__title, .bk-step--current .bk-step__title { color: var(--bk-fg); }
+.bk-step--current .bk-step__title { font-weight: 600; }
+.bk-step--error .bk-step__title { color: var(--bk-danger-text); }
+.bk-step__desc { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+</brick:style>
+<ol class="{{ cx `bk-steps` (print `bk-steps--` .Props.orientation) (cond (eq .Props.size `sm`) `bk-steps--sm` ``) .Attrs.class }}" aria-label="{{ .Props.label }}" {{ attrs `class` }}>{{ range $i, $it := .Props.items }}{{ $st := "upcoming" }}{{ if lt $i $.Props.current }}{{ $st = "complete" }}{{ else if eq $i $.Props.current }}{{ $st = "current" }}{{ end }}{{ with $it.status }}{{ $st = print . }}{{ end }}<li class="bk-step bk-step--{{ $st }}"{{ if eq $st "current" }} aria-current="step"{{ end }}><span class="bk-step__dot" aria-hidden="true">{{ if eq $st "complete" }}<Icon name="check" :size="14" stroke="3" />{{ else if eq $st "error" }}<Icon name="x" :size="14" stroke="3" />{{ else if $it.icon }}<Icon :name="$it.icon" :size="14" />{{ else }}{{ add $i 1 }}{{ end }}</span><span class="bk-step__body"><span class="bk-step__title">{{ $it.title }}</span>{{ with $it.description }}<span class="bk-step__desc">{{ . }}</span>{{ end }}<span class="bk-sr-only"> ({{ $st }})</span></span></li>{{ end }}</ol>

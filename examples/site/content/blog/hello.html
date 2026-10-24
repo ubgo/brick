@@ -1,0 +1,6 @@
+---
+title: Hello
+date: 2026-09-27
+---
+<p>Posted {{ dateFormat "2 Jan 2006" .Date }}.</p>
+{{ range .Site.Data.blocks }}<brick:render :name=".type" :props="omit . `type`" />{{ end }}

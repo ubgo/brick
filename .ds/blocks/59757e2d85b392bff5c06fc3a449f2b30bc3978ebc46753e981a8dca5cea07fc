@@ -1,0 +1,15 @@
+func parseKV(src []byte) (any, error) {
+	out := map[string]any{}
+	for i, line := range strings.Split(string(src), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		k, v, ok := strings.Cut(line, " = ")
+		if !ok {
+			return nil, fmt.Errorf("line %d: want `name = value`", i+1)
+		}
+		out[k] = strings.Trim(v, `"`)
+	}
+	return out, nil
+}

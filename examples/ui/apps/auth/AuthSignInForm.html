@@ -1,0 +1,125 @@
+---
+inject:
+  query: {default: {}}
+state:
+  touched: false
+  mode: signin
+  name: ""
+  email: ""
+  remember: true
+  agree: false
+  done: false
+---
+{{/*
+AuthSignInForm: the sign-in demo's form — sign in, or register, in one
+stateful component. Nothing is authenticated: sign_in checks the input and
+accepts only the demo account (demo@brick.dev / brickyard); register
+accepts any valid input. Passwords never enter the state.
+
+?mode=register (read from the request through .Ctx.query) opens the
+register form, but only while the state is fresh: every action sets
+touched, and from then on state.mode alone decides. The form posts the
+mode it shows, so the first submit after a ?mode=register render
+validates as a registration.
+*/}}
+<brick:script>
+DEMO_EMAIL = "demo@brick.dev"
+DEMO_PASSWORD = "brickyard"
+MIN_PASSWORD = 8
+
+def valid_email(s):
+    at = s.find("@")
+    return at > 0 and "." in s[at + 1:] and not s.endswith(".") and " " not in s
+
+def sign_in(state, props, fields):
+    if not state["touched"] and fields.get("mode", "") in ["signin", "register"]:
+        state = dict(state, mode = fields["mode"])
+    state = dict(state, touched = True)
+    email = fields.get("email", "").strip().lower()
+    password = fields.get("password", "")
+    name = fields.get("name", "").strip()
+    new = dict(state, email = email, name = name, remember = fields.get("remember", "") == "on", agree = fields.get("agree", "") == "on")
+    errors = {}
+    if not valid_email(email):
+        errors["email"] = "Enter an email address like you@company.com."
+    if len(password) < MIN_PASSWORD:
+        errors["password"] = "Passwords are at least %d characters." % MIN_PASSWORD
+    if state["mode"] == "register":
+        if len(name) < 2:
+            errors["name"] = "Tell us your name."
+        if not new["agree"]:
+            errors["agree"] = "Please accept the terms to create an account."
+    elif not errors and (email != DEMO_EMAIL or password != DEMO_PASSWORD):
+        errors["form"] = "That email and password don't match. Try the demo account below."
+    if errors:
+        return [new, errors]
+    if state["mode"] == "signin":
+        new["name"] = "Demo"
+    return dict(new, done = True)
+
+def show_register(state, props):
+    return dict(state, mode = "register", done = False, touched = True)
+
+def show_sign_in(state, props):
+    return dict(state, mode = "signin", done = False, touched = True)
+
+def sign_out(state, props):
+    return dict(state, done = False, name = "", agree = False, touched = True)
+</brick:script>
+<brick:style>
+.auth-form { display: grid; gap: 1.25rem; width: 100%; }
+.auth-form__head { display: grid; gap: .35rem; }
+.auth-form__social { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.auth-form__fields { display: grid; gap: 1rem; }
+.auth-form__forgot { font-size: var(--bk-text-sm); }
+.auth-form__loading { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.auth-form__loading[hidden] { display: none; }
+.auth-form__demo { display: flex; align-items: center; gap: .5rem; padding: .6rem .75rem; border: 1px dashed var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface-2); color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.auth-form__done { display: grid; justify-items: start; gap: .75rem; }
+.auth-form__done-icon { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-success) 14%, transparent); color: var(--bk-success); }
+.auth-form__done-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+</brick:style>
+{{- $mode := .State.mode -}}
+{{- if and (not .State.touched) (eq (print (index .Ctx.query `mode`)) `register`) }}{{ $mode = `register` }}{{ end -}}
+<div class="auth-form">
+  {{ if .State.done }}
+  <div class="auth-form__done" role="status">
+    <span class="auth-form__done-icon"><Icon name="check-circle" :size="28" /></span>
+    <Heading :level="2" size="xl">{{ if eq $mode "register" }}Welcome aboard, {{ .State.name }}{{ else }}Welcome back, {{ .State.name }}{{ end }}</Heading>
+    <Text tone="muted">{{ if eq $mode "register" }}Your workspace is ready. We sent a confirmation link to {{ .State.email }}.{{ else }}You are signed in as {{ .State.email }}{{ if .State.remember }} on this device for 30 days{{ end }}.{{ end }}</Text>
+    <div class="auth-form__done-actions">
+      <Button href="/apps/dashboard/" iconRight="arrow-right">Go to dashboard</Button>
+      <Button variant="ghost" brick:click="sign_out">Sign out</Button>
+    </div>
+  </div>
+  {{ else }}
+  <div class="auth-form__head">
+    <Heading :level="1" size="2xl">{{ if eq $mode "register" }}Create your account{{ else }}Welcome back{{ end }}</Heading>
+    <Text tone="muted">{{ if eq $mode "register" }}Start free — no credit card needed.{{ else }}Sign in to your Brickyard workspace.{{ end }}</Text>
+  </div>
+  <div class="auth-form__social">
+    <Button type="button" variant="outline" icon="github" block>GitHub</Button>
+    <Button type="button" variant="outline" icon="lock" block>Passkey</Button>
+  </div>
+  <Separator label="or continue with email" />
+  {{ with .Errors.form }}<Alert variant="danger" title="Sign-in failed">{{ . }}</Alert>{{ end }}
+  <form brick:submit="sign_in" novalidate class="auth-form__fields">
+    <input type="hidden" name="mode" value="{{ $mode }}">
+    {{ if eq $mode "register" }}<Field label="Full name" :error=".Errors.name" required><Input name="name" value="{{ .State.name }}" placeholder="Ada Lovelace" autocomplete="name" /></Field>{{ end }}
+    <Field label="Email" :error=".Errors.email" required><Input type="email" name="email" value="{{ .State.email }}" placeholder="you@company.com" icon="mail" autocomplete="email" /></Field>
+    <Field label="Password" :error=".Errors.password" :hint="cond (eq $mode `register`) `At least 8 characters.` ``" required>
+      <brick:prop name="aside"><Link href="#" tone="muted" class="auth-form__forgot">Forgot password?</Link></brick:prop>
+      <PasswordInput name="password" icon="lock" :autocomplete="cond (eq $mode `register`) `new-password` `current-password`" />
+    </Field>
+    {{ if eq $mode "register" }}<Field :error=".Errors.agree"><Checkbox name="agree" :checked=".State.agree">I agree to the <Link href="#" underline="always">terms</Link> and <Link href="#" underline="always">privacy policy</Link></Checkbox></Field>{{ else }}<Checkbox name="remember" label="Keep me signed in for 30 days" :checked=".State.remember" />{{ end }}
+    <Button type="submit" block size="lg">{{ if eq $mode "register" }}Create account{{ else }}Sign in{{ end }}</Button>
+    <span brick:loading hidden class="auth-form__loading"><Icon name="loader" :size="14" class="bk-btn__spin" />Checking…</span>
+  </form>
+  {{ if eq $mode "register" }}
+  <Text size="sm" tone="muted" align="center">Already have an account? <Button variant="link" brick:click="show_sign_in">Sign in</Button></Text>
+  {{ else }}
+  <div class="auth-form__demo"><Icon name="info" :size="14" /><span>Demo account: <Code>demo@brick.dev</Code> / <Code>brickyard</Code></span></div>
+  <Text size="sm" tone="muted" align="center">New to Brickyard? <Button variant="link" brick:click="show_register">Create an account</Button></Text>
+  {{ end }}
+  {{ end }}
+</div>

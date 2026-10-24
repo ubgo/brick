@@ -1,0 +1,21 @@
+---
+title: Toggle
+category: Actions
+description: "A button that stays pressed — a native checkbox in a label, so it works and submits with no JavaScript."
+api:
+  - {name: name, type: "string", desc: "The checkbox name, for forms."}
+  - {name: value, type: "string", default: "on", desc: "The value submitted when pressed."}
+  - {name: pressed, type: "bool", desc: "Starts pressed (checked)."}
+  - {name: icon, type: "string", desc: "An icon; alone, it makes an icon-only toggle."}
+  - {name: label, type: "string", desc: "The accessible name; required for an icon-only toggle."}
+  - {name: variant, type: "ghost | outline", default: "ghost", desc: "The look."}
+  - {name: size, type: "sm | md | lg", default: "md", desc: "Height."}
+  - {name: disabled, type: "bool", desc: "Cannot be pressed."}
+---
+<h1>Toggle</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Icon and text toggles"><ToggleBasic /><brick:prop name="code"><Source src="~/demos/ToggleBasic.html" /></brick:prop></Example>
+<Example title="Sizes and disabled"><ToggleSizes /><brick:prop name="code"><Source src="~/demos/ToggleSizes.html" /></brick:prop></Example>
+<Example title="In a form — submits pinned=on"><ToggleForm /><brick:prop name="code"><Source src="~/demos/ToggleForm.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

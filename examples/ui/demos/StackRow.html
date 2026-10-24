@@ -1,0 +1,10 @@
+<brick:style>
+.stack-box { display: grid; place-items: center; min-width: 3rem; height: 2.5rem; padding: 0 .75rem; border-radius: var(--bk-radius); background: color-mix(in oklab, var(--bk-primary) 12%, var(--bk-surface)); color: var(--bk-primary-text); font: 600 var(--bk-text-xs) var(--bk-mono); }
+.stack-lane { width: 100%; padding: .5rem; border: 1px dashed var(--bk-border); border-radius: var(--bk-radius); }
+</brick:style>
+<Stack gap="sm" style="width: 100%">
+  <Stack direction="row" gap="sm" class="stack-lane"><div class="stack-box">1</div><div class="stack-box">2</div><div class="stack-box">3</div></Stack>
+  <Stack direction="row" justify="center" class="stack-lane"><div class="stack-box">center</div><div class="stack-box">center</div></Stack>
+  <Stack direction="row" justify="between" class="stack-lane"><div class="stack-box">between</div><div class="stack-box">between</div><div class="stack-box">between</div></Stack>
+  <Stack direction="row" justify="end" gap="xs" class="stack-lane"><div class="stack-box">end</div><div class="stack-box">end</div></Stack>
+</Stack>

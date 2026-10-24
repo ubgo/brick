@@ -1,0 +1,13 @@
+/* your stylesheet, loaded after <Theme /> */
+:root {
+  --bk-primary: #0f766e;          /* a brand colour of your own */
+  --bk-primary-hover: #115e59;
+  --bk-radius: .25rem;            /* squarer corners everywhere */
+  --bk-radius-lg: .4rem;
+  --bk-font: "Inter", system-ui, sans-serif;
+}
+:root[data-theme=dark] {
+  --bk-primary: #2dd4bf;
+  --bk-primary-hover: #5eead4;
+  --bk-primary-fg: #042f2e;
+}

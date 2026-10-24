@@ -1,0 +1,15 @@
+<div style="height: 22rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); overflow: hidden">
+  <Sidebar label="Workspace, collapsed" current="/apps/inbox/" collapsed>
+    <brick:prop name="header"><a href="/" aria-label="Acme"><Icon name="zap" :size="18" /></a></brick:prop>
+    <SidebarGroup title="Workspace">
+      <SidebarItem href="/apps/dashboard/" icon="layout-dashboard" label="Dashboard" />
+      <SidebarItem href="/apps/inbox/" icon="inbox" label="Inbox" badge="4" />
+      <SidebarItem href="/apps/tasks/" icon="kanban" label="Tasks" />
+    </SidebarGroup>
+    <SidebarGroup title="More">
+      <SidebarItem href="/apps/contacts/" icon="users" label="Contacts" />
+      <SidebarItem href="/apps/store/" icon="shopping-cart" label="Store" />
+    </SidebarGroup>
+    <brick:prop name="footer"><SidebarItem href="/apps/settings/" icon="settings" label="Settings" /></brick:prop>
+  </Sidebar>
+</div>

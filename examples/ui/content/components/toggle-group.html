@@ -1,0 +1,20 @@
+---
+title: Toggle group
+category: Actions
+description: "Joined toggles: pick one (radios) or any (checkboxes) — alignment, view switchers, text formatting."
+api:
+  - {name: name, type: "string", desc: "The inputs’ name. Required."}
+  - {name: options, type: "list", desc: "Strings, or maps of value, label, icon and disabled. Required."}
+  - {name: type, type: "single | multiple", default: "single", desc: "Radios or checkboxes."}
+  - {name: value, type: "string | list", desc: "The checked value, or a list for multiple."}
+  - {name: label, type: "string", desc: "The group’s accessible name."}
+  - {name: variant, type: "outline | ghost", default: "outline", desc: "Joined box or separate buttons."}
+  - {name: size, type: "sm | md | lg", default: "md", desc: "Height."}
+  - {name: disabled, type: "bool", desc: "Disables every option."}
+---
+<h1>Toggle group</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Single: icons, and text"><ToggleGroupSingle /><brick:prop name="code"><Source src="~/demos/ToggleGroupSingle.html" /></brick:prop></Example>
+<Example title="Multiple, with disabled options"><ToggleGroupMultiple /><brick:prop name="code"><Source src="~/demos/ToggleGroupMultiple.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

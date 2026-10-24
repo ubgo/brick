@@ -1,0 +1,18 @@
+---
+state:
+  avatar: null
+brick:
+  uploads:
+    avatar: {accept: [image/png, image/jpeg, image/gif, image/webp], max_size: 2MB}
+---
+<div style="display: grid; gap: .9rem; width: 100%; max-width: 26rem">
+  <div style="display: flex; align-items: center; gap: 1rem">
+    {{ with .State.avatar }}<img id="au-preview" src="{{ .url }}" alt="{{ .name }}" width="72" height="72" style="width: 72px; height: 72px; object-fit: cover; border-radius: 50%; border: 1px solid var(--bk-border)">{{ else }}<span id="au-empty" style="display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; border: 1px dashed var(--bk-input); color: var(--bk-muted-fg); font-size: var(--bk-text-xs)">No photo</span>{{ end }}
+    <div style="display: grid; gap: .25rem; font-size: var(--bk-text-sm)">
+      {{ with .State.avatar }}<b id="au-name">{{ .name }}</b><span style="color: var(--bk-muted-fg)">{{ .type }} · {{ .size }} bytes</span><Button id="au-remove" variant="outline" size="sm" brick:click='$removeUpload("avatar", "{{ .id }}")'>Remove</Button>{{ else }}<span style="color: var(--bk-muted-fg)">Choose a picture; it uploads as soon as you pick it.</span>{{ end }}
+    </div>
+  </div>
+  <Dropzone id="au-input" brick:upload="avatar" accept="image/png,image/jpeg,image/gif,image/webp" hint="PNG, JPG, GIF or WebP, up to 2 MB" />
+  <progress id="au-progress" brick:upload-progress="avatar" value="0" max="1" style="width: 100%; height: .4rem"></progress>
+  <Button id="au-cancel" variant="ghost" size="sm" brick:click='$cancelUpload("avatar")'>Cancel upload</Button>
+</div>

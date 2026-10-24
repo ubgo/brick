@@ -1,0 +1,118 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  value: {type: string, default: ""}
+  placeholder: {type: string, default: Add a tag…}
+  max: {type: int, default: 0}
+  label: {type: string, default: Add a tag}
+  invalid: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+TagInput: type a word and press Enter (or a comma) to make it a chip;
+× or Backspace removes one.
+
+  <TagInput name="tags" value="design,go" />
+  <TagInput name="skills" placeholder="Add a skill" :max="5" />
+
+The value is ONE text input holding the tags joined by commas (name= and
+every attribute but class land on it). Without JavaScript that input is
+all there is, and the user types "design, go" by hand; the server splits
+on commas either way. The client module hides it, shows chips (from the
+<template> row) and an entry field, and after every change writes the
+joined tags back and fires input and change. Duplicates are ignored; max=
+stops adding at that count.
+*/}}
+<brick:client>
+brick.mount("TagInput", (el) => {
+  const value = el.querySelector(".bk-tags__value");
+  const chips = el.querySelector(".bk-tags__chips");
+  const entry = el.querySelector(".bk-tags__entry");
+  const tpl = el.querySelector(".bk-tags__tpl");
+  const max = Number(el.getAttribute("data-max")) || Infinity;
+  const split = (s) => s.split(",").map((t) => t.trim()).filter(Boolean);
+  let tags = [];
+  const render = () => {
+    chips.replaceChildren(...tags.map((t, i) => {
+      const chip = tpl.content.firstElementChild.cloneNode(true);
+      chip.querySelector(".bk-tags__text").textContent = t;
+      const rm = chip.querySelector(".bk-tags__remove");
+      rm.dataset.index = String(i);
+      rm.setAttribute("aria-label", `${rm.getAttribute("aria-label")} ${t}`);
+      return chip;
+    }));
+    entry.hidden = value.disabled;
+    entry.placeholder = tags.length ? "" : value.placeholder;
+    el.classList.toggle("bk-tags--full", tags.length >= max);
+  };
+  const commit = () => {
+    const joined = tags.join(",");
+    if (value.value === joined) return;
+    value.value = joined;
+    value.dispatchEvent(new Event("input", { bubbles: true }));
+    value.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  const add = (text) => {
+    for (const t of split(text)) {
+      if (tags.length >= max) break;
+      if (!tags.some((x) => x.toLowerCase() === t.toLowerCase())) tags.push(t);
+    }
+    entry.value = "";
+    render();
+    commit();
+  };
+  const removeAt = (i) => { tags.splice(i, 1); render(); commit(); entry.focus(); };
+  const onKey = (e) => {
+    if (e.key === "Enter" || e.key === ",") {
+      if (e.isComposing) return;
+      e.preventDefault();
+      if (entry.value.trim()) add(entry.value);
+    } else if (e.key === "Backspace" && entry.value === "" && tags.length) {
+      e.preventDefault();
+      removeAt(tags.length - 1);
+    }
+  };
+  const onInput = () => { if (entry.value.includes(",")) add(entry.value); };
+  const onBlur = () => { if (entry.value.trim()) add(entry.value); };
+  const onClick = (e) => {
+    const rm = e.target.closest(".bk-tags__remove");
+    if (rm) { removeAt(Number(rm.dataset.index)); return; }
+    if (e.target === el || e.target === chips) entry.focus();
+  };
+  for (const t of split(value.value)) if (!tags.includes(t)) tags.push(t);
+  render();
+  value.hidden = true;
+  chips.hidden = false;
+  el.classList.add("bk-tags--js");
+  if (value.id) { entry.id = value.id; value.removeAttribute("id"); }
+  const desc = value.getAttribute("aria-describedby");
+  if (desc) entry.setAttribute("aria-describedby", desc);
+  entry.addEventListener("keydown", onKey);
+  entry.addEventListener("input", onInput);
+  entry.addEventListener("blur", onBlur);
+  el.addEventListener("click", onClick);
+  return () => { entry.removeEventListener("keydown", onKey); entry.removeEventListener("input", onInput); entry.removeEventListener("blur", onBlur); el.removeEventListener("click", onClick); };
+})
+</brick:client>
+<brick:style>
+.bk-tags { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; width: 100%; min-height: var(--bk-h-md); padding: .2rem .35rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm)/1.25 var(--bk-font); box-shadow: var(--bk-shadow-sm); cursor: text; transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-tags:focus-within { border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-tags--invalid, .bk-tags--invalid:focus-within { border-color: var(--bk-danger); }
+.bk-tags__value, .bk-tags__entry { flex: 1 1 6rem; min-width: 6rem; height: 1.5rem; margin: 0; padding: 0 .3rem; border: 0; outline: 0; background: none; color: inherit; font: inherit; }
+.bk-tags__value::placeholder, .bk-tags__entry::placeholder { color: var(--bk-muted-fg); opacity: .85; }
+.bk-tags__value:focus-visible, .bk-tags__entry:focus-visible { outline: none; }
+.bk-tags__chips { display: contents; }
+.bk-tags__chips[hidden], .bk-tags__entry[hidden] { display: none; }
+.bk-tags__chip { display: inline-flex; align-items: center; gap: .15rem; height: 1.5rem; padding: 0 .15rem 0 .5rem; border-radius: var(--bk-radius-sm); background: var(--bk-muted); color: var(--bk-fg); font-size: var(--bk-text-xs); font-weight: 500; white-space: nowrap; animation: bk-pop-in var(--bk-duration); }
+.bk-tags__remove { display: grid; place-items: center; width: 1.1rem; height: 1.1rem; padding: 0; border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; }
+.bk-tags__remove:hover { background: color-mix(in oklab, var(--bk-muted), var(--bk-fg) 12%); color: var(--bk-fg); }
+.bk-tags--full .bk-tags__entry { display: none; }
+.bk-tags--disabled { opacity: .6; cursor: not-allowed; background: var(--bk-muted); }
+.bk-tags--disabled .bk-tags__remove { display: none; }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $invalid := or .Props.invalid (index $f "invalid") }}
+<div class="{{ cx `bk-tags` (cond $invalid `bk-tags--invalid` ``) (cond .Props.disabled `bk-tags--disabled` ``) .Attrs.class }}"{{ with .Props.max }} data-max="{{ . }}"{{ end }}><span class="bk-tags__chips" hidden></span><input type="text" class="bk-tags__value"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }} value="{{ .Props.value }}" placeholder="{{ .Props.placeholder }}"{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` `id` }}><input type="text" class="bk-tags__entry" aria-label="{{ .Props.label }}" enterkeyhint="enter" hidden><template class="bk-tags__tpl"><span class="bk-tags__chip"><span class="bk-tags__text"></span><button type="button" class="bk-tags__remove" aria-label="Remove"><Icon name="x" :size="12" /></button></span></template></div>

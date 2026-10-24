@@ -1,0 +1,15 @@
+GET /reports/
+  <div class="report"><button brick:click="start">Build report</button></div>
+POST Report.start()
+  <div class="report"><p>Building the 2026-09 report…</p><button brick:click="cancel">Cancel</button></div>
+the job's work finishes
+← event: refresh  data: reports
+POST Report.$refresh()
+  <div class="report"><p>done: the 2026-09 report has 3 rows</p><button brick:click="start">Build report</button></div>
+POST Report.start()
+  <div class="report"><p>Building the 2026-09 report…</p><button brick:click="cancel">Cancel</button></div>
+POST Report.cancel()
+  <div class="report"><p>Building the 2026-09 report…</p><button brick:click="cancel">Cancel</button></div>
+← event: refresh  data: reports
+POST Report.$refresh()
+  <div class="report"><p>cancelled: stopped before it finished</p><button brick:click="start">Build report</button></div>

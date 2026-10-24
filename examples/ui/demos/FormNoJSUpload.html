@@ -1,0 +1,38 @@
+---
+state:
+  name: ""
+  avatar: null
+  saved: 0
+brick:
+  uploads:
+    avatar: {accept: [image/png, image/jpeg, image/gif, image/webp], max_size: 2MB}
+---
+<brick:script>
+# With scripts on, the file uploads as soon as it is picked. With scripts
+# off, the browser sends it with the form: the engine streams it into the
+# same UploadSink with the same limits before save runs, so save sees
+# .State.avatar already filled. A refused file never reaches save; the page
+# comes back with status 422 and the reason in .Errors.avatar.
+def save(state, props, form):
+    name = str(form.get("name", "")).strip()
+    if not name:
+        return [state, {"name": "Enter a name."}]
+    return dict(state, name = name, saved = state["saved"] + 1)
+</brick:script>
+<form id="nju-form" brick:submit="save" style="display: grid; gap: .75rem; width: 100%; max-width: 26rem">
+  <div style="display: flex; align-items: center; gap: 1rem">
+    {{ with .State.avatar }}<img id="nju-preview" src="{{ .url }}" alt="{{ .name }}" width="56" height="56" style="width: 56px; height: 56px; object-fit: cover; border-radius: 50%; border: 1px solid var(--bk-border)"><span id="nju-file" style="font-size: var(--bk-text-sm); color: var(--bk-muted-fg)">{{ .name }} · {{ .type }}</span>{{ else }}<span id="nju-empty" style="display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; border: 1px dashed var(--bk-input); color: var(--bk-muted-fg); font-size: var(--bk-text-xs)">No photo</span>{{ end }}
+  </div>
+  <label style="display: grid; gap: .25rem; font-size: var(--bk-text-sm)">Name
+    <input id="nju-name" name="name" value="{{ .State.name }}" style="height: 2rem; padding: 0 .5rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: transparent; color: inherit">
+  </label>
+  {{ with .Errors.name }}<p id="nju-err-name" style="margin: 0; color: var(--bk-danger); font-size: var(--bk-text-sm)">{{ . }}</p>{{ end }}
+  <label style="display: grid; gap: .25rem; font-size: var(--bk-text-sm)">Photo (PNG, JPG, GIF or WebP, up to 2 MB)
+    <input id="nju-input" type="file" brick:upload="avatar" accept="image/png,image/jpeg,image/gif,image/webp">
+  </label>
+  {{ with .Errors.avatar }}<p id="nju-err-avatar" style="margin: 0; color: var(--bk-danger); font-size: var(--bk-text-sm)">{{ . }}</p>{{ end }}
+  <div style="display: flex; align-items: center; gap: .75rem">
+    <Button id="nju-save" type="submit">Save profile</Button>
+    {{ if .State.saved }}<span id="nju-saved" style="font-size: var(--bk-text-sm); color: var(--bk-muted-fg)">Saved {{ .State.saved }}× as <b>{{ .State.name }}</b></span>{{ end }}
+  </div>
+</form>

@@ -1,0 +1,25 @@
+---
+state:
+  status: online
+  archived: false
+---
+<brick:script>
+def set_status(state, props, status):
+    return dict(state, status = status)
+
+def toggle_archive(state, props):
+    return dict(state, archived = not state["archived"])
+</brick:script>
+<div style="display: flex; align-items: flex-start; gap: .75rem; width: 100%; max-width: 30rem; min-height: 16rem">
+  <div style="flex: 1; display: flex; align-items: center; gap: .75rem; padding: .6rem .75rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg)">
+    <div style="flex: 1; line-height: 1.5"><b style="font-size: var(--bk-text-sm)">Grace Hopper</b>{{ if .State.archived }} <span style="color: var(--bk-muted-fg); font-size: var(--bk-text-xs)">(archived)</span>{{ end }}<br><Status :status=".State.status" /></div>
+    <DropdownMenu label="Actions for Grace Hopper" icon="more-horizontal" square :caret="false" variant="ghost" size="sm" align="end">
+      <MenuLabel>Set status</MenuLabel>
+      <MenuItem brick:click='set_status("online")' icon="check-circle">Online</MenuItem>
+      <MenuItem brick:click='set_status("away")' icon="clock">Away</MenuItem>
+      <MenuItem brick:click='set_status("busy")' icon="x-circle">Busy</MenuItem>
+      <MenuSeparator />
+      <MenuItem brick:click="toggle_archive" icon="archive">{{ if .State.archived }}Unarchive{{ else }}Archive{{ end }}</MenuItem>
+    </DropdownMenu>
+  </div>
+</div>

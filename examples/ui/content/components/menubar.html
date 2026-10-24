@@ -1,0 +1,14 @@
+---
+title: Menubar
+category: Navigation
+description: "A desktop app's menu bar — File, Edit, View — built from DropdownMenus that behave as one WAI-ARIA menubar."
+api:
+  - {name: label, type: string, default: Menu, desc: "The bar's accessible name."}
+  - {name: children, type: DropdownMenu, desc: "One DropdownMenu per menu; write them with just a label."}
+---
+<h1>Menubar</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="An editor's menus" block><MenubarEditor /><brick:prop name="code"><Source src="~/demos/MenubarEditor.html" /></brick:prop></Example>
+<p style="margin: -.5rem 0 1.25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Focus a menu name, then ←/→ between menus, ↓ to open. With a menu open, ←/→ move to the neighbour's first item, and pointing at another name switches menus.</p>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

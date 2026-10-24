@@ -1,0 +1,53 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  menuLabel: {type: string, default: Open navigation}
+  landmark: {type: bool, default: true}
+---
+{{/*
+AppShell: the frame of an app — a sidebar, a sticky top bar and a
+scrolling main area. Below 1024px the sidebar leaves the page and becomes an
+off-canvas drawer behind a menu button in the top bar. The drawer is a
+native popover: it opens with no JavaScript and closes on Escape or a click
+outside.
+
+  <AppShell>
+    <brick:prop name="sidebar"><Sidebar current="{{ .Page.URL }}">…</Sidebar></brick:prop>
+    <brick:prop name="topbar"><h1>Tasks</h1><Button size="sm">New</Button></brick:prop>
+    …page content…
+  </AppShell>
+  <AppShell :landmark="false" style="height: 28rem">…</AppShell>
+
+The shell fills the viewport (100dvh); give it a height to embed it. The
+main area is a <main> unless landmark is false (use that when a page
+already has one — a document may hold only one visible <main>). The sidebar
+width is the custom property --bk-appshell-sidebar (15rem).
+*/}}
+<brick:style>
+.bk-appshell { --bk-appshell-sidebar: 15rem; display: grid; grid-template-columns: var(--bk-appshell-sidebar) minmax(0, 1fr); height: 100dvh; overflow: hidden; background: var(--bk-bg); color: var(--bk-fg); }
+.bk-appshell__sidebar { position: static; inset: auto; width: auto; height: auto; min-height: 0; margin: 0; padding: 0; border: 0; border-right: 1px solid var(--bk-border); overflow: hidden; background: var(--bk-surface-2); color: inherit; display: flex; flex-direction: column; }
+.bk-appshell__sidebar > * { flex: 1; min-height: 0; }
+.bk-appshell__body { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; }
+.bk-appshell__topbar { position: sticky; top: 0; z-index: var(--bk-z-sticky); display: flex; align-items: center; gap: .75rem; flex: none; height: 3.25rem; padding: 0 1.25rem; border-bottom: 1px solid var(--bk-border); background: color-mix(in oklab, var(--bk-bg) 88%, transparent); backdrop-filter: blur(8px); }
+.bk-appshell__menu { display: none; place-items: center; flex: none; width: var(--bk-h-md); height: var(--bk-h-md); margin-left: -.35rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-fg); cursor: pointer; }
+.bk-appshell__menu:hover { background: var(--bk-accent); }
+.bk-appshell__menu:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.bk-appshell__main { flex: 1; padding: 1.25rem; }
+@media (max-width: 1023.98px) {
+  .bk-appshell { grid-template-columns: minmax(0, 1fr); }
+  .bk-appshell__menu { display: inline-grid; }
+  .bk-appshell__sidebar:not(:popover-open) { display: none; }
+  .bk-appshell__sidebar:popover-open { position: fixed; inset: 0 auto 0 0; width: min(var(--bk-appshell-sidebar), 85vw); height: 100dvh; box-shadow: var(--bk-shadow-lg); animation: bk-appshell-in .2s ease-out; }
+  .bk-appshell__sidebar::backdrop { background: var(--bk-backdrop); }
+}
+@keyframes bk-appshell-in { from { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .bk-appshell__sidebar:popover-open { animation: none; } }
+</brick:style>
+<div class="{{ cx `bk-appshell` .Attrs.class }}" {{ attrs `class` }}>
+  <aside class="bk-appshell__sidebar" id="{{ .ID }}-nav" popover>{{ if hasNode "sidebar" }}{{ node "sidebar" }}{{ end }}</aside>
+  <div class="bk-appshell__body">
+    <header class="bk-appshell__topbar"><button type="button" class="bk-appshell__menu" popovertarget="{{ .ID }}-nav" aria-label="{{ .Props.menuLabel }}"><Icon name="panel-left" :size="18" /></button>{{ if hasNode "topbar" }}{{ node "topbar" }}{{ end }}</header>
+    {{ if .Props.landmark }}<main class="bk-appshell__main">{{ children }}</main>{{ else }}<div class="bk-appshell__main">{{ children }}</div>{{ end }}
+  </div>
+</div>

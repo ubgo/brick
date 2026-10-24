@@ -1,0 +1,18 @@
+---
+title: Rating
+category: Forms
+description: "Stars — interactive radios styled with CSS alone, or a read-only score."
+api:
+  - {name: name, type: "string", default: "rating", desc: "The radios' name."}
+  - {name: value, type: "int", default: "0", desc: "The score."}
+  - {name: max, type: "int", default: "5", desc: "Number of stars."}
+  - {name: readonly, type: "bool", desc: "A picture of the score (role=img)."}
+  - {name: size, type: "sm | md | lg", default: "md", desc: "Star size."}
+  - {name: label, type: "string", default: "Rating", desc: "The group's accessible name."}
+---
+<h1>Rating</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Interactive" block><RatingBasic /><brick:prop name="code"><Source src="~/demos/RatingBasic.html" /></brick:prop></Example>
+<Example title="Read-only" block><RatingReadonly /><brick:prop name="code"><Source src="~/demos/RatingReadonly.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

@@ -1,0 +1,16 @@
+---
+title: Sidebar group
+category: Navigation
+description: "A titled section of a Sidebar, optionally collapsible with a native details element."
+api:
+  - {name: title, type: "string", desc: "The section heading, and the group’s accessible name."}
+  - {name: icon, type: "string", desc: "An icon before the title."}
+  - {name: collapsible, type: "bool", desc: "Folds with a click, no JavaScript."}
+  - {name: open, type: "bool", default: "true", desc: "A collapsible group’s starting state."}
+---
+<h1>Sidebar group</h1>
+<p class="lead">{{ .Params.description }}</p>
+<p>Used inside a <a href="/components/sidebar/">Sidebar</a>.</p>
+<Example title="Collapsible groups"><SidebarGroupCollapsible /><brick:prop name="code"><Source src="~/demos/SidebarGroupCollapsible.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

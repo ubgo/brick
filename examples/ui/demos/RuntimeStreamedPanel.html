@@ -1,0 +1,14 @@
+---
+props:
+  label: {type: string, default: "Orders"}
+---
+<brick:script>
+def slow_count():
+    # A stand-in for a slow query: the page is already on screen.
+    pause(1200)
+    return "1,284"
+</brick:script>
+<div id="rst-panel" style="border: 1px solid var(--bk-border); border-radius: var(--bk-radius); padding: 1rem">
+  <div style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">{{ .Props.label }} (streamed into the same response)</div>
+  <div id="rst-total" style="font-size: var(--bk-text-2xl); font-weight: 600">{{ slow_count }}</div>
+</div>

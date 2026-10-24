@@ -1,0 +1,6 @@
+<div style="display: flex; flex-wrap: wrap; gap: .5rem">
+  {{ range list "top" "right" "bottom" "left" }}
+  <Popover :label="." :side="." align="center" variant="soft"><p style="width: 12rem">Placed on the {{ . }}. Near an edge it flips to the other side.</p></Popover>
+  {{ end }}
+  <Popover label="bottom, end" align="end" variant="ghost" icon="more-horizontal"><p style="width: 12rem">Aligned to the trigger's end.</p></Popover>
+</div>

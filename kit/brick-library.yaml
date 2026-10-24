@@ -1,0 +1,11 @@
+# brick-kit is a brick component library: list it in a
+# site's brick.yaml `libraries:` and every component here is a tag on every
+# page, with no import. Inside the kit, ~/ means this folder, so a component
+# imports its siblings as ~/components/X.html and reads ~/data/icons.yaml
+# wherever the kit sits: embedded, vendored or copied.
+name: brick-kit
+description: The brick UI kit — accessible, themeable components built on brick.
+components: components
+# Theme holds the design tokens (--bk-*), light and dark; linking its CSS on
+# every page that uses the kit means a layout needs no <Theme />.
+global: [Theme]

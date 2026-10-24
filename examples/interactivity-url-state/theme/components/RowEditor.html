@@ -1,0 +1,16 @@
+---
+state:
+  editing_id: 0
+  note: ""
+brick:
+  locked: [editing_id]
+---
+<brick:script>
+def open(state, props, id):
+    return dict(state, editing_id = id)
+</brick:script>
+<div class="editor">
+  <button id="edit7" brick:click="open(7)">Edit row 7</button>
+  <input id="note" brick:model.defer="note" value="{{ .State.note }}">
+  <p id="editing">editing={{ .State.editing_id }} note={{ .State.note }}</p>
+</div>

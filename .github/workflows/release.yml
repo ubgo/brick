@@ -1,0 +1,44 @@
+# Manual only. Tagging is a decision, so it stays a button rather than a
+# consequence of a merge, and this repository is private, where Actions
+# minutes are metered. `task check` is the gate a tag must pass first.
+#
+# Tag locally and push the tag (git tag v0.1.0 && git push origin v0.1.0),
+# then run this workflow with that tag to create the GitHub release.
+#
+# To release on every pushed tag instead, add this to the `on:` block:
+#
+#   on:
+#     push:
+#       tags: ["v*"]
+#     workflow_dispatch:
+
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release, e.g. v0.1.0. It must already exist and be pushed."
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: assert the tag exists
+        run: |
+          if ! git rev-parse "refs/tags/${{ inputs.tag || github.ref_name }}" >/dev/null 2>&1; then
+            echo "tag ${{ inputs.tag || github.ref_name }} does not exist; create and push it first"
+            exit 1
+          fi
+      - name: create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ inputs.tag || github.ref_name }}" --generate-notes --verify-tag

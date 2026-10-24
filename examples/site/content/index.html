@@ -1,0 +1,44 @@
+---
+title: Home
+use:
+  helpers: ~/lib/helpers.star
+---
+<h1>{{ t "welcome" (dict "name" (.Props.user | default "friend")) }}</h1>
+
+<section class="demo">
+  <h2>A component with props and attributes</h2>
+  <Card title="Pro plan" variant="featured" id="pro" data-plan="pro">
+    <p>{{ numberFormat .Site.Data.pricing.pro }} per month, {{ helpers.slugify "Billed Yearly" }}.</p>
+  </Card>
+</section>
+
+<section class="demo">
+  <h2>A scoped slot: the page draws each row</h2>
+  <PostList :posts=".Site.Data.posts">
+    <brick:prop name="item"><a href="/blog/{{ .Slot.slug }}/">{{ .Slot.title }}</a></brick:prop>
+  </PostList>
+</section>
+
+<section class="demo">
+  <h2>.Children: a tab bar built from its tabs</h2>
+  <Tabs>
+    <Tab title="Go">Go tab</Tab>
+    <Tab title="Rust">Rust tab</Tab>
+  </Tabs>
+</section>
+
+<section class="demo">
+  <h2>A raw body: code shown as written</h2>
+  <CodeBlock lang="go">
+    if x < 10 && y > 2 {
+        fmt.Println("{{ not a template action }}")
+    }
+  </CodeBlock>
+</section>
+
+<section class="demo">
+  <h2>Client code (mount) · an action · bindings</h2>
+  <Counter start="3" />
+  <Likes />
+  <Signup />
+</section>

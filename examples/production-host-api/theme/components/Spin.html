@@ -1,0 +1,13 @@
+---
+load: spin
+props:
+  rounds: {type: int, default: 100}
+---
+<brick:script>
+def spin(input):
+    total = 0
+    for i in range(input["props"]["rounds"]):
+        total += i
+    return {"total": total}
+</brick:script>
+<p class="spin">{{ .Props.total }}</p>

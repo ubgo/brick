@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="{{ .Page.Locale }}">
+<head>
+<title>{{ .Title }}</title>
+<link rel="alternate" hreflang="{{ .Page.Locale }}" href="{{ .Page.URL }}">
+{{- range .Page.Translations }}
+<link rel="alternate" hreflang="{{ .Locale }}" href="{{ .URL }}">
+{{- end }}
+</head>
+<body>
+<nav>{{ t "languages" }}:{{ range .Page.Translations }} <a href="{{ .URL }}">{{ .Locale }}</a>{{ end }}</nav>
+<main>{{ children }}</main>
+</body>
+</html>

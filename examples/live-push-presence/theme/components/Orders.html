@@ -1,0 +1,13 @@
+---
+state: {}
+brick: {listen: orders}
+---
+<brick:script>
+def ship(state, props, id):
+    shop.ship(id)
+    brick.publish("orders")
+    return state
+</brick:script>
+<ul class="orders">{{ range orders }}
+  <li>#{{ .ID }} {{ .Status }}{{ if eq .Status "pending" }} <button brick:click="ship({{ .ID }})">Ship</button>{{ end }}</li>{{ end }}
+</ul>

@@ -1,0 +1,17 @@
+---
+title: Fieldset
+category: Forms
+description: "A titled group of fields — a native fieldset and legend, optionally a card with a column grid."
+api:
+  - {name: legend, type: "string", desc: "The group's title."}
+  - {name: description, type: "string", desc: "Muted text under the title."}
+  - {name: variant, type: "plain | card", default: "plain", desc: "Plain or a bordered card."}
+  - {name: columns, type: "int", default: "1", desc: "Grid columns (one on phones); class bk-fieldset__wide spans a row."}
+  - {name: disabled, type: "bool", desc: "Disables every control inside."}
+---
+<h1>Fieldset</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A card with two columns" block><FieldsetBasic /><brick:prop name="code"><Source src="~/demos/FieldsetBasic.html" /></brick:prop></Example>
+<Example title="A list of checkboxes" block><FieldsetCheckboxes /><brick:prop name="code"><Source src="~/demos/FieldsetCheckboxes.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

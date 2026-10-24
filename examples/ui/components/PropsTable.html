@@ -1,0 +1,25 @@
+---
+props:
+  rows: {type: list, required: true}
+---
+{{/*
+PropsTable: a component page's API reference, from the page's frontmatter:
+
+  api:
+    - {name: variant, type: "primary | outline | …", default: primary, desc: The look.}
+  …
+  <PropsTable :rows=".Params.api" />
+*/}}
+<brick:style>
+.pt-scroll { overflow-x: auto; margin: 0 0 1.5rem; }
+.pt { width: 100%; min-width: 36rem; border-collapse: collapse; font-size: var(--bk-text-sm); }
+.pt td:nth-child(2) code { white-space: nowrap; }
+.pt th { text-align: left; font-weight: 600; color: var(--bk-muted-fg); padding: .4rem .6rem; border-bottom: 1px solid var(--bk-border); }
+.pt td { padding: .45rem .6rem; border-bottom: 1px solid var(--bk-border); vertical-align: top; }
+.pt td:first-child code { color: var(--bk-primary-text); font-weight: 600; }
+.pt td code { font-size: var(--bk-text-xs); }
+</brick:style>
+<div class="pt-scroll" tabindex="0" role="region" aria-label="Props"><table class="pt" {{ attrs }}>
+  <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+  <tbody>{{ range .Props.rows }}<tr><td><code>{{ .name }}</code></td><td><code>{{ .type }}</code></td><td>{{ with .default }}<code>{{ . }}</code>{{ else }}—{{ end }}</td><td>{{ .desc }}</td></tr>{{ end }}</tbody>
+</table></div>

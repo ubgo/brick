@@ -1,0 +1,3 @@
+func newEngine(dir string, l limits) (*brick.Engine, error) {
+	return buildEngine(dir, l, sources{})
+}

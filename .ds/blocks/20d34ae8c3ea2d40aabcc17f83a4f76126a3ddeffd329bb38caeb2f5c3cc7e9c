@@ -1,0 +1,18 @@
+func newEngine(dir string, mode brick.Mode, hooks ...any) (*brick.Engine, error) {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, err
+	}
+	sc, err := scriptstarlark.New(scriptstarlark.Options{Steps: scriptSteps})
+	if err != nil {
+		return nil, err
+	}
+	return brick.New(brick.Options{
+		FS:          root.FS(),
+		Roots:       roots,
+		Scripting:   sc,
+		DataFormats: map[string]brick.DataFormat{".kv": parseKV},
+		Mode:        mode,
+		Hooks:       hooks,
+	})
+}

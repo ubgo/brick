@@ -1,0 +1,40 @@
+---
+state:
+  name: ""
+  email: ""
+  password: ""
+  confirm: ""
+  accounts: 0
+brick:
+  rules:
+    name: [required, {min: 2}]
+    email: [required, email, {max: 120}]
+    password: [required, {min: 12}]
+    confirm: [required, {same: password}]
+  messages:
+    confirm.same: "The passwords do not match."
+    password.min: "Use at least 12 characters."
+---
+<brick:script>
+def signup(state, props):
+    errors = brick.validate()
+    if errors:
+        return [state, errors]
+    if state["email"].endswith("@taken.example"):
+        return [state, {"email": "That e-mail already has an account."}]
+    brick.untouch()
+    brick.flash("Welcome, %s!" % state["name"], "success")
+    return dict(state, name = "", email = "", password = "", confirm = "", accounts = state["accounts"] + 1)
+</brick:script>
+<form brick:submit="signup" novalidate style="display: grid; gap: 1rem; width: 100%; max-width: 30rem">
+  <Fieldset>
+    <Field label="Name" :error=".Errors.name" required><Input id="vs-name" brick:model.lazy="name" value="{{ .State.name }}" placeholder="Ada Lovelace" autocomplete="off" /></Field>
+    <Field label="E-mail" :error=".Errors.email" required><Input id="vs-email" type="email" brick:model.lazy="email" value="{{ .State.email }}" placeholder="ada@example.com" icon="mail" autocomplete="off" /></Field>
+    <Field label="Password" :error=".Errors.password" hint="At least 12 characters." required><Input id="vs-password" type="password" brick:model.lazy="password" value="{{ .State.password }}" autocomplete="new-password" /></Field>
+    <Field label="Confirm password" :error=".Errors.confirm" required><Input id="vs-confirm" type="password" brick:model.lazy="confirm" value="{{ .State.confirm }}" autocomplete="new-password" /></Field>
+  </Fieldset>
+  <p id="vs-touched" style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Touched: {{ range $k, $v := .Touched }}{{ $k }} {{ else }}nothing yet{{ end }} · accounts created: {{ .State.accounts }}</p>
+  <FormActions>
+    <Button id="vs-submit" type="submit" size="sm" brick:disable-with="Creating…">Create account</Button>
+  </FormActions>
+</form>

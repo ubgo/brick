@@ -1,0 +1,48 @@
+---
+props:
+  value: {type: float, default: 0}
+  max: {type: float, default: 100}
+  label: {type: string, default: ""}
+  showValue: {type: bool, default: false}
+  indeterminate: {type: bool, default: false}
+  size: {type: string, default: md, oneof: [xs, sm, md, lg]}
+  tone: {type: string, default: primary, oneof: [primary, success, warning, danger, info, neutral]}
+---
+{{/*
+Progress: a horizontal bar for a task's progress or a quota's use.
+
+  <Progress :value="40" />
+  <Progress :value="3" :max="5" label="Steps" showValue />
+  <Progress :value="92" tone="danger" size="sm" label="Storage" showValue />
+  <Progress indeterminate label="Uploading" />
+
+value runs from 0 to max (100 by default) and is clamped. label names the
+bar for screen readers and, with showValue, sits above it beside the
+percentage. indeterminate is for work of unknown length: the bar sweeps
+and aria-valuenow is left out, as the ARIA pattern asks. Without a label
+the accessible name falls back to "Progress" — pass one.
+*/}}
+<brick:style>
+.bk-progress { --bk-progress-c: var(--bk-primary); --bk-progress-h: .375rem; display: grid; gap: .35rem; width: 100%; font-size: var(--bk-text-sm); }
+.bk-progress--xs { --bk-progress-h: .125rem; }
+.bk-progress--sm { --bk-progress-h: .25rem; }
+.bk-progress--lg { --bk-progress-h: .625rem; }
+.bk-progress--success { --bk-progress-c: var(--bk-success); }
+.bk-progress--warning { --bk-progress-c: var(--bk-warning); }
+.bk-progress--danger { --bk-progress-c: var(--bk-danger); }
+.bk-progress--info { --bk-progress-c: var(--bk-info); }
+.bk-progress--neutral { --bk-progress-c: var(--bk-fg); }
+.bk-progress__head { display: flex; justify-content: space-between; gap: .75rem; line-height: 1.2; }
+.bk-progress__label { font-weight: 500; }
+.bk-progress__value { color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; }
+.bk-progress__track { position: relative; height: var(--bk-progress-h); overflow: hidden; border-radius: var(--bk-radius-full); background: color-mix(in oklab, var(--bk-progress-c) 14%, var(--bk-muted)); }
+.bk-progress__bar { height: 100%; border-radius: inherit; background: var(--bk-progress-c); transition: width .3s ease; }
+.bk-progress--indeterminate .bk-progress__bar { position: absolute; width: 40%; animation: bk-progress-sweep 1.3s ease-in-out infinite; }
+@keyframes bk-progress-sweep { from { left: -40%; } to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) { .bk-progress--indeterminate .bk-progress__bar { width: 100%; left: 0; animation: bk-pulse 2s ease-in-out infinite; } .bk-progress__bar { transition: none; } }
+</brick:style>
+{{ $pct := min 100.0 (max 0.0 (div (mul .Props.value 100.0) (cond (gt .Props.max 0.0) .Props.max 100.0))) }}
+<div class="{{ cx `bk-progress` (cond (ne .Props.size `md`) (print `bk-progress--` .Props.size) ``) (cond (ne .Props.tone `primary`) (print `bk-progress--` .Props.tone) ``) (cond .Props.indeterminate `bk-progress--indeterminate` ``) .Attrs.class }}" role="progressbar" aria-label="{{ or .Props.label `Progress` }}"{{ if not .Props.indeterminate }} aria-valuemin="0" aria-valuemax="{{ .Props.max }}" aria-valuenow="{{ .Props.value }}" aria-valuetext="{{ printf `%.0f` $pct }}%"{{ end }} {{ attrs `class` }}>
+  {{ if or .Props.label .Props.showValue }}{{ if or .Props.showValue (not .Props.indeterminate) }}<div class="bk-progress__head" aria-hidden="true"><span class="bk-progress__label">{{ .Props.label }}</span>{{ if and .Props.showValue (not .Props.indeterminate) }}<span class="bk-progress__value">{{ printf `%.0f` $pct }}%</span>{{ end }}</div>{{ end }}{{ end }}
+  <div class="bk-progress__track"><div class="bk-progress__bar"{{ if not .Props.indeterminate }} style="width: {{ printf `%.2f` $pct }}%"{{ end }}></div></div>
+</div>

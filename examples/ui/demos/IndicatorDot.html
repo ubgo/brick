@@ -1,0 +1,9 @@
+<brick:style>
+.avatar-demo { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: var(--bk-radius-full); background: linear-gradient(135deg, color-mix(in oklab, var(--bk-primary) 70%, var(--bk-bg)), var(--bk-primary)); color: var(--bk-primary-fg); font-weight: 600; font-size: var(--bk-text-sm); }
+</brick:style>
+<Stack direction="row" gap="lg">
+  <Indicator dot tone="success" position="bottom-end" label="Online"><span class="avatar-demo">AL</span></Indicator>
+  <Indicator dot tone="warning" position="bottom-end" label="Away"><span class="avatar-demo">GH</span></Indicator>
+  <Indicator dot tone="neutral" position="bottom-end" label="Offline"><span class="avatar-demo">KJ</span></Indicator>
+  <Indicator dot ping label="New activity"><Button variant="ghost" square icon="activity" label="Activity" /></Indicator>
+</Stack>

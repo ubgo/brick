@@ -1,0 +1,18 @@
+---
+title: Carousel
+category: Data display
+description: "Slides in a row with scroll snapping; with JavaScript, arrow buttons, dots and optional autoplay."
+api:
+  - {name: label, type: string, default: Carousel, desc: "The carousel's accessible name."}
+  - {name: perView, type: "1 | 2 | 3 | 4", default: "1", desc: "Slides visible at once."}
+  - {name: autoplay, type: int, default: "0", desc: "Milliseconds per page; pauses on hover or focus, off for reduced motion."}
+  - {name: dots, type: bool, default: "true", desc: "A dot per page."}
+  - {name: gap, type: "none | sm | md", default: md, desc: "Space between slides."}
+---
+<h1>Carousel</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Images" block><CarouselImages /><brick:prop name="code"><Source src="~/demos/CarouselImages.html" /></brick:prop></Example>
+<Example title="Three per view" block><CarouselCards /><brick:prop name="code"><Source src="~/demos/CarouselCards.html" /></brick:prop></Example>
+<Example title="Autoplay" block><CarouselAutoplay /><brick:prop name="code"><Source src="~/demos/CarouselAutoplay.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

@@ -1,0 +1,252 @@
+---
+use:
+  store: ~/apps/store/store.star
+state:
+  q: ""
+  cats: []
+  max_price: 0
+  in_stock: false
+  sort: featured
+  view: shop
+  cart_open: false
+  form: {}
+  order: {}
+---
+{{/*
+StoreCatalog: the whole Store app as one stateful component — the filters
+and sort (state), the product grid (store.products over the products
+table), the cart drawer (the cart table) and the checkout steps.
+
+  <StoreCatalog />
+
+The search, price and in-stock controls bind with brick:model, so typing
+re-renders the grid after a short pause; categories, sort and every cart
+button call actions in apps/store/store.star. The cart drawer is rendered open
+while state.cart_open is set, which the drawer's own actions set and every
+other action clears (see apps/store/store.star), so a quantity change keeps the
+drawer open and nothing reopens a drawer the shopper closed.
+
+The add-to-cart toast is raised in the browser (brick.emit("toast")) when
+an Add button is clicked, not rendered from state: a flash flag in state
+would survive the brick:model re-renders and pop the toast again.
+*/}}
+<brick:client>
+brick.mount("StoreCatalog", (el) => {
+  const onClick = (e) => {
+    const b = e.target.closest("[data-added]");
+    if (b) brick.emit("toast", { title: "Added to cart", description: `${b.dataset.added} is in your cart.`, variant: "success", duration: 2500 });
+  };
+  el.addEventListener("click", onClick);
+  return () => el.removeEventListener("click", onClick);
+})
+</brick:client>
+<brick:style>
+.store { display: flex; flex-direction: column; gap: 1.25rem; min-width: 0; }
+.store__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: .75rem 1rem; }
+.store__title { font-size: var(--bk-text-2xl); font-weight: 650; letter-spacing: -.02em; }
+.store__sub { color: var(--bk-muted-fg); font-size: var(--bk-text-sm); margin-top: .15rem; }
+.store__head-actions { display: flex; align-items: center; gap: .5rem; flex: 1 1 22rem; justify-content: flex-end; }
+.store__head-actions .bk-search { flex: 1 1 auto; max-width: 20rem; }
+.store__layout { display: grid; grid-template-columns: 14rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.store__filters { position: sticky; top: 4rem; display: flex; flex-direction: column; gap: 1.1rem; padding: 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); }
+.store__fgroup { display: flex; flex-direction: column; gap: .5rem; }
+.store__fgroup + .store__fgroup { padding-top: 1rem; border-top: 1px solid var(--bk-border); }
+.store__flabel { font-size: var(--bk-text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; color: var(--bk-muted-fg); }
+.store__cat { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.store__cat-n { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-variant-numeric: tabular-nums; }
+.store__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .9rem; }
+.store__count { font-size: var(--bk-text-sm); color: var(--bk-muted-fg); margin-right: auto; }
+.store__count b { color: var(--bk-fg); }
+.store__bar .bk-select { width: 11rem; }
+.store__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr)); gap: 1rem; }
+.store-card { height: 100%; transition: box-shadow var(--bk-duration), transform var(--bk-duration); }
+.store-card:hover { box-shadow: var(--bk-shadow-lg); transform: translateY(-2px); }
+.store-card .bk-card__body { display: flex; flex-direction: column; gap: .35rem; flex: 1; }
+.store-img { position: relative; display: grid; place-items: center; width: 100%; height: 100%; color: var(--store-c); background: radial-gradient(120% 90% at 25% 15%, color-mix(in oklab, var(--store-c) 22%, var(--bk-surface)), color-mix(in oklab, var(--store-c) 6%, var(--bk-surface-2)) 70%); }
+.store-img::after { content: ""; position: absolute; inset: auto 18% 16% 18%; height: 10%; border-radius: 50%; background: color-mix(in oklab, var(--store-c) 18%, transparent); filter: blur(8px); }
+.store-img .bk-icon { position: relative; z-index: 1; width: 30%; max-width: 4.5rem; height: auto; filter: drop-shadow(0 6px 10px color-mix(in oklab, var(--store-c) 30%, transparent)); }
+.store-img--primary { --store-c: var(--bk-primary); }
+.store-img--success { --store-c: var(--bk-success); }
+.store-img--warning { --store-c: var(--bk-warning); }
+.store-img--info { --store-c: var(--bk-info); }
+.store-img--neutral { --store-c: var(--bk-muted-fg); }
+.store-img__flag { position: absolute; top: .6rem; left: .6rem; z-index: 2; }
+.store-card__name { font-weight: 600; font-size: var(--bk-text-base); color: var(--bk-fg); }
+.store-card__rating { display: flex; align-items: center; gap: .35rem; font-size: var(--bk-text-xs); color: var(--bk-muted-fg); }
+.store-card__foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: auto; padding-top: .5rem; }
+.store-card__price { font-size: var(--bk-text-lg); font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.store-card__stock { font-size: var(--bk-text-xs); color: var(--bk-muted-fg); }
+.store-card__stock--low { color: var(--bk-warning); font-weight: 500; }
+.store-card__stock--out { color: var(--bk-danger); font-weight: 500; }
+.store-line { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) auto; gap: .75rem; align-items: center; padding: .75rem 0; border-bottom: 1px solid var(--bk-border); }
+.store-line__img { width: 3.25rem; height: 3.25rem; border-radius: var(--bk-radius); overflow: hidden; }
+.store-line__name { font-weight: 600; font-size: var(--bk-text-sm); }
+.store-line__meta { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.store-line__qty { display: inline-flex; align-items: center; margin-top: .4rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); }
+.store-line__qty span { min-width: 1.75rem; text-align: center; font-size: var(--bk-text-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+.store-line__qty .bk-btn { border: 0; }
+.store-line__total { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; font-weight: 600; font-variant-numeric: tabular-nums; font-size: var(--bk-text-sm); }
+.store-sum { display: flex; flex-direction: column; gap: .4rem; width: 100%; font-size: var(--bk-text-sm); }
+.store-sum__row { display: flex; justify-content: space-between; color: var(--bk-muted-fg); }
+.store-sum__row b { color: var(--bk-fg); font-weight: 500; font-variant-numeric: tabular-nums; }
+.store-sum__total { display: flex; justify-content: space-between; padding-top: .5rem; border-top: 1px solid var(--bk-border); font-size: var(--bk-text-base); font-weight: 650; font-variant-numeric: tabular-nums; }
+.store-free { display: flex; flex-direction: column; gap: .35rem; margin-bottom: .25rem; padding: .6rem .75rem; border-radius: var(--bk-radius); background: color-mix(in oklab, var(--bk-primary) 7%, transparent); font-size: var(--bk-text-xs); }
+.store-free b { color: var(--bk-primary-text); }
+.store-checkout { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.5rem; align-items: start; }
+.store-panel { padding: 1.25rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); }
+.store-panel__title { font-weight: 600; margin-bottom: .9rem; font-size: var(--bk-text-base); }
+.store-mini { display: flex; align-items: center; gap: .6rem; padding: .45rem 0; font-size: var(--bk-text-sm); }
+.store-mini__img { width: 2.25rem; height: 2.25rem; border-radius: var(--bk-radius-sm); overflow: hidden; flex: none; }
+.store-mini__name { flex: 1; min-width: 0; }
+.store-mini__name small { display: block; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.store-done { display: flex; flex-direction: column; align-items: center; gap: .75rem; max-width: 34rem; margin: 1rem auto; padding: 2rem 1.5rem; text-align: center; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); }
+.store-done__icon { display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 50%; background: color-mix(in oklab, var(--bk-success) 14%, transparent); color: var(--bk-success); }
+.store-done h2 { font-size: var(--bk-text-2xl); letter-spacing: -.02em; }
+.store-done p { color: var(--bk-muted-fg); }
+.store-secure { display: flex; align-items: center; gap: .4rem; margin-top: .75rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+@media (max-width: 900px) {
+  .store__layout, .store-checkout { grid-template-columns: minmax(0, 1fr); }
+  .store__filters { position: static; flex-direction: row; flex-wrap: wrap; gap: .75rem 1.25rem; padding: .75rem; }
+  .store__fgroup { flex: 1 1 12rem; }
+  .store__fgroup + .store__fgroup { padding-top: 0; border-top: 0; }
+  .store__fgroup--cats { flex-basis: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; gap: .35rem .9rem; }
+  .store__fgroup--cats .store__flabel { width: 100%; }
+  .store__fgroup--cats .store__cat-n { display: none; }
+}
+@media (max-width: 560px) {
+  .store__head-actions { flex-basis: 100%; }
+  .store__head-actions .bk-search { max-width: none; }
+  .store__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+  .store-card .bk-card__body { gap: .2rem; }
+  .store-card__foot { flex-direction: column; align-items: stretch; }
+  .store-card__foot .bk-btn { width: 100%; }
+  .store__bar .bk-select { width: 100%; }
+}
+</brick:style>
+{{- $f := store.facets .State -}}
+{{- $items := store.products .State -}}
+{{- $cart := store.cart .State -}}
+{{- $ceiling := $f.ceiling -}}
+<div class="store">
+  <div class="store__head">
+    <div>
+      <h1 class="store__title">{{ if eq .State.view "checkout" }}Checkout{{ else if eq .State.view "done" }}Thank you{{ else }}Shop{{ end }}</h1>
+      <p class="store__sub">{{ if eq .State.view "shop" }}Everyday goods, made to last. Free shipping over $100.{{ else if eq .State.view "checkout" }}Where should we send your order?{{ else }}Your order is on its way.{{ end }}</p>
+    </div>
+    <div class="store__head-actions">
+      {{ if eq .State.view "shop" }}<SearchInput brick:model="q" value="{{ .State.q }}" placeholder="Search products" aria-label="Search products" shortcut="/" />{{ end }}
+      <Indicator :count="$cart.count" tone="primary" :label="print $cart.count ` items in the cart`"><Button variant="outline" icon="shopping-cart" data-bk-open="store-cart">Cart</Button></Indicator>
+    </div>
+  </div>
+
+  {{ if eq .State.view "shop" }}
+  <div class="store__layout">
+    <aside class="store__filters" aria-label="Filters">
+      <div class="store__fgroup store__fgroup--cats">
+        <span class="store__flabel">Category</span>
+        {{ range $f.categories }}<div class="store__cat"><Checkbox :label=".name" :checked=".on" brick:change="store.toggle_cat({{ .i }})" /><span class="store__cat-n">{{ .n }}</span></div>{{ end }}
+      </div>
+      <div class="store__fgroup">
+        <span class="store__flabel">Max price</span>
+        <Slider :min="5" :max="$ceiling" :step="1" :value="cond .State.max_price .State.max_price $ceiling" prefix="$" brick:model.lazy="max_price" aria-label="Maximum price in dollars" />
+      </div>
+      <div class="store__fgroup">
+        <span class="store__flabel">Availability</span>
+        <Switch label="In stock only" :checked=".State.in_stock" brick:model="in_stock" />
+      </div>
+      {{ if or .State.q .State.cats .State.in_stock .State.max_price (ne .State.sort "featured") }}<Button variant="ghost" size="sm" icon="x" brick:click="store.clear_filters">Clear filters</Button>{{ end }}
+    </aside>
+    <section aria-label="Products">
+      <div class="store__bar">
+        <p class="store__count" aria-live="polite"><b>{{ len $items }}</b> of {{ $f.total }} products</p>
+        {{ range .State.cats }}{{ $c := . }}{{ range $f.categories }}{{ if eq .name $c }}<Tag :removeAction="print `store.toggle_cat(` .i `)`" size="sm">{{ .name }}</Tag>{{ end }}{{ end }}{{ end }}
+        {{ with .State.q }}<Tag size="sm" icon="search">“{{ . }}”</Tag>{{ end }}
+        <Select size="sm" :value=".State.sort" brick:change="store.set_sort" aria-label="Sort by" :options="list (dict `value` `featured` `label` `Featured`) (dict `value` `price_asc` `label` `Price: low to high`) (dict `value` `price_desc` `label` `Price: high to low`) (dict `value` `rating` `label` `Top rated`) (dict `value` `name` `label` `Name`)" />
+      </div>
+      {{ if $items }}
+      <div class="store__grid">
+        {{ range $items }}
+        <Card padding="sm" class="store-card" id="{{ print `product-` .id }}">
+          <brick:prop name="media"><AspectRatio ratio="4/3"><div class="store-img store-img--{{ .tone }}"><Icon :name=".icon" :size="56" :stroke="`1.5`" />{{ if eq .stock_state "low" }}<Badge tone="warning" variant="solid" size="sm" class="store-img__flag">Only {{ .stock }} left</Badge>{{ else if eq .stock_state "out" }}<Badge variant="solid" size="sm" class="store-img__flag">Sold out</Badge>{{ end }}</div></AspectRatio></brick:prop>
+          <Badge :tone=".tone" size="sm" style="align-self: flex-start">{{ .category }}</Badge>
+          <span class="store-card__name">{{ .name }}</span>
+          <span class="store-card__rating"><Rating :value=".stars" readonly size="sm" /> {{ .rating_label }}</span>
+          <div class="store-card__foot">
+            <span class="store-card__price">{{ .price_label }}</span>
+            {{ if eq .stock_state "out" }}<Button size="sm" variant="secondary" disabled>Sold out</Button>{{ else }}<Button size="sm" icon="plus" brick:click="store.add({{ .id }})" data-added="{{ .name }}" :label="print `Add ` .name ` to cart`">Add</Button>{{ end }}
+          </div>
+        </Card>
+        {{ end }}
+      </div>
+      {{ else }}
+      <EmptyState icon="search" title="No products match" description="Try another search, a higher price or fewer categories." bordered><Button variant="outline" brick:click="store.clear_filters">Clear filters</Button></EmptyState>
+      {{ end }}
+    </section>
+  </div>
+
+  {{ else if eq .State.view "checkout" }}
+  <Steps :items="list (dict `title` `Cart`) (dict `title` `Shipping`) (dict `title` `Confirmation`)" :current="1" label="Checkout progress" />
+  <div class="store-checkout">
+    <form class="store-panel" brick:submit="store.place_order" novalidate>
+      <p class="store-panel__title">Shipping address</p>
+      <Fieldset :columns="2">
+        <Field label="Full name" :error=".Errors.name" required><Input name="name" value="{{ index .State.form `name` }}" autocomplete="name" placeholder="Ada Lovelace" /></Field>
+        <Field label="E-mail" :error=".Errors.email" hint="For the receipt and tracking." required><Input type="email" name="email" value="{{ index .State.form `email` }}" autocomplete="email" icon="mail" placeholder="ada@example.com" /></Field>
+        <Field label="Street address" :error=".Errors.address" class="bk-fieldset__wide" required><Input name="address" value="{{ index .State.form `address` }}" autocomplete="street-address" placeholder="12 Analytical Row" /></Field>
+        <Field label="City" :error=".Errors.city" required><Input name="city" value="{{ index .State.form `city` }}" autocomplete="address-level2" placeholder="London" /></Field>
+        <Field label="Postal code" :error=".Errors.zip" required><Input name="zip" value="{{ index .State.form `zip` }}" autocomplete="postal-code" placeholder="EC1A 1BB" /></Field>
+        <Field label="Country" :error=".Errors.country" class="bk-fieldset__wide" required><Select name="country" placeholder="Choose a country" :value="default `` (index .State.form `country`)" :options="list `Germany` `India` `Japan` `United Kingdom` `United States`" required /></Field>
+      </Fieldset>
+      {{ with .Errors.cart }}<p role="alert" style="color: var(--bk-danger); font-size: var(--bk-text-sm); margin-top: .75rem">{{ . }}</p>{{ end }}
+      <FormActions align="between">
+        <Button variant="ghost" icon="arrow-left" brick:click="store.back">Back to shop</Button>
+        <Button type="submit" icon="lock">Place order · {{ $cart.total }}</Button>
+      </FormActions>
+    </form>
+    <aside class="store-panel" aria-label="Order summary">
+      <p class="store-panel__title">Order summary</p>
+      {{ range $cart.lines }}<div class="store-mini"><div class="store-mini__img"><div class="store-img store-img--{{ .tone }}"><Icon :name=".icon" :size="18" /></div></div><span class="store-mini__name">{{ .name }}<small>Qty {{ .qty }} · {{ .price_label }}</small></span><b>{{ .total_label }}</b></div>{{ end }}
+      <div class="store-sum" style="margin-top: .75rem">
+        <div class="store-sum__row"><span>Subtotal</span><b>{{ $cart.subtotal }}</b></div>
+        <div class="store-sum__row"><span>Shipping</span><b>{{ $cart.shipping }}</b></div>
+        <div class="store-sum__total"><span>Total</span><span>{{ $cart.total }}</span></div>
+      </div>
+      <p class="store-secure"><Icon name="shield-check" :size="14" />Payment is simulated; nothing is charged.</p>
+    </aside>
+  </div>
+
+  {{ else }}
+  <Steps :items="list (dict `title` `Cart`) (dict `title` `Shipping`) (dict `title` `Confirmation`)" :current="3" label="Checkout progress" />
+  <div class="store-done" role="status">
+    <span class="store-done__icon"><Icon name="check" :size="26" /></span>
+    <h2>Order {{ .State.order.number }} confirmed</h2>
+    <p>{{ .State.order.items }} {{ pluralize .State.order.items "item" "items" }} · {{ .State.order.total }}. A receipt is on its way to <b style="color: var(--bk-fg)">{{ .State.order.email }}</b>, and the parcel ships to {{ .State.order.city }} within two business days.</p>
+    <Button icon="arrow-left" brick:click="store.keep_shopping">Keep shopping</Button>
+  </div>
+  {{ end }}
+
+  <Drawer id="store-cart" title="Your cart" :description="cond $cart.count (print $cart.count ` ` (pluralize $cart.count `item` `items`)) `Nothing here yet`" size="sm" :open=".State.cart_open">
+    {{ if $cart.lines }}
+    {{ with $cart.free_left }}<div class="store-free"><span><b>{{ . }}</b> away from free shipping</span><Progress :value="$cart.free_pct" size="sm" aria-label="Progress to free shipping" /></div>{{ else }}<div class="store-free"><span><Icon name="truck" :size="13" /> <b>Free shipping</b> on this order</span></div>{{ end }}
+    {{ range $cart.lines }}
+    <div class="store-line">
+      <div class="store-line__img"><div class="store-img store-img--{{ .tone }}"><Icon :name=".icon" :size="22" /></div></div>
+      <div>
+        <div class="store-line__name">{{ .name }}</div>
+        <div class="store-line__meta">{{ .category }} · {{ .price_label }}</div>
+        <div class="store-line__qty" role="group" aria-label="{{ print `Quantity of ` .name }}"><Button variant="ghost" size="xs" square icon="minus" :label="print `One fewer ` .name" brick:click="store.set_qty({{ .id }}, {{ sub .qty 1 }})" /><span>{{ .qty }}</span><Button variant="ghost" size="xs" square icon="plus" :label="print `One more ` .name" :disabled="ge .qty .stock" brick:click="store.set_qty({{ .id }}, {{ add .qty 1 }})" /></div>
+      </div>
+      <div class="store-line__total">{{ .total_label }}<Button variant="link" size="xs" brick:click="store.remove({{ .id }})" :label="print `Remove ` .name">Remove</Button></div>
+    </div>
+    {{ end }}
+    {{ else }}
+    <EmptyState icon="shopping-cart" title="Your cart is empty" description="Add something you like and it shows up here." size="sm" />
+    {{ end }}
+    <brick:prop name="footer">{{ if $cart.lines }}<div class="store-sum">
+      <div class="store-sum__row"><span>Subtotal</span><b>{{ $cart.subtotal }}</b></div>
+      <div class="store-sum__row"><span>Shipping</span><b>{{ $cart.shipping }}</b></div>
+      <div class="store-sum__total"><span>Total</span><span>{{ $cart.total }}</span></div>
+      <Button block icon="lock" brick:click="store.checkout" data-bk-close>Checkout</Button>
+    </div>{{ else }}<Button block variant="outline" data-bk-close>Continue shopping</Button>{{ end }}</brick:prop>
+  </Drawer>
+</div>

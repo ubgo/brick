@@ -1,0 +1,38 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  name: {type: string, required: true}
+  href: {type: string, default: /}
+  logo: {type: string, default: ""}
+  icon: {type: string, default: ""}
+  subtitle: {type: string, default: ""}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  hideName: {type: bool, default: false}
+---
+{{/*
+Brand: the product's mark and name as one link home — for a navbar, a
+sidebar header or an auth page.
+
+  <Brand name="Acme" />                                    A on a primary tile
+  <Brand name="Acme" icon="zap" subtitle="Workspace" />
+  <Brand name="Acme" logo="/logo.svg" href="/app/" size="lg" />
+  <Brand name="Acme" icon="zap" hideName />                 mark only; name stays the link's accessible name
+
+The mark is, in order: the logo image, the icon on a primary tile, or the
+name's first letter on that tile. The logo is decorative (the name is the
+link's text), so it gets an empty alt. href="" renders a <span>, for a
+brand that is not a link.
+*/}}
+<brick:style>
+.bk-brand { --bk-brand-mark: 1.75rem; display: inline-flex; align-items: center; gap: .55rem; color: var(--bk-fg); font: 700 var(--bk-text-base)/1.1 var(--bk-font); letter-spacing: -.01em; text-decoration: none; border-radius: var(--bk-radius); }
+.bk-brand--sm { --bk-brand-mark: 1.4rem; font-size: var(--bk-text-sm); gap: .45rem; }
+.bk-brand--lg { --bk-brand-mark: 2.25rem; font-size: var(--bk-text-xl); gap: .7rem; }
+a.bk-brand:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 3px; }
+.bk-brand__mark { display: grid; place-items: center; flex: none; width: var(--bk-brand-mark); height: var(--bk-brand-mark); border-radius: calc(var(--bk-brand-mark) * .28); background: var(--bk-primary); color: var(--bk-primary-fg); font-size: calc(var(--bk-brand-mark) * .5); font-weight: 700; }
+img.bk-brand__mark { background: none; object-fit: contain; }
+.bk-brand__text { display: grid; gap: .1rem; }
+.bk-brand__sub { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 500; letter-spacing: 0; }
+</brick:style>
+{{ $cls := cx "bk-brand" (cond (ne .Props.size "md") (print "bk-brand--" .Props.size) "") .Attrs.class }}{{ $is := cond (eq .Props.size "lg") 20 (cond (eq .Props.size "sm") 14 16) }}
+{{ if .Props.href }}<a class="{{ $cls }}" href="{{ .Props.href }}"{{ if .Props.hideName }} aria-label="{{ .Props.name }}"{{ end }} {{ attrs `class` }}>{{ else }}<span class="{{ $cls }}" {{ attrs `class` }}>{{ end }}{{ if .Props.logo }}<img class="bk-brand__mark" src="{{ .Props.logo }}" alt="">{{ else }}<span class="bk-brand__mark" aria-hidden="true">{{ with .Props.icon }}<Icon :name="." :size="$is" />{{ else }}{{ upper (truncate 1 .Props.name) }}{{ end }}</span>{{ end }}{{ if not .Props.hideName }}<span class="bk-brand__text"><span>{{ .Props.name }}</span>{{ with .Props.subtitle }}<span class="bk-brand__sub">{{ . }}</span>{{ end }}</span>{{ end }}{{ if .Props.href }}</a>{{ else }}</span>{{ end }}

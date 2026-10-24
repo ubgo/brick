@@ -1,0 +1,37 @@
+---
+state:
+  tasks:
+    - {id: 1, name: Write the release notes}
+    - {id: 2, name: Tag v18}
+    - {id: 3, name: Announce it}
+  next: 4
+---
+<brick:script>
+def remove(state, props, id):
+    return dict(state, tasks=[t for t in state["tasks"] if t["id"] != id])
+
+def rename(state, props, id, name):
+    name = name.strip()
+    if not name:
+        return state
+    return dict(state, tasks=[dict(t, name=name) if t["id"] == id else t for t in state["tasks"]])
+
+def add_task(state, props):
+    n = int(state["next"])
+    return dict(state, tasks=state["tasks"] + [{"id": n, "name": "Task " + str(n)}], next=n + 1)
+</brick:script>
+<section style="display: grid; gap: .6rem; width: 100%; max-width: 26rem">
+  <style>
+    .v18-out { transition: opacity .3s ease, transform .3s ease; opacity: 0; transform: translateX(1.5rem); }
+    .v18-row { display: flex; align-items: center; gap: .4rem; padding: .35rem .6rem; border-bottom: 1px solid var(--bk-border); }
+    .v18-help--open { background: var(--bk-muted); }
+  </style>
+  <div style="display: flex; gap: .5rem; align-items: center">
+    <Button id="v18t-add" size="sm" brick:click="add_task">Add a task</Button>
+    <Button id="v18t-help" size="sm" variant="ghost" brick:js.click='toggle("@help"); toggleClass("@help", "v18-help--open")'>How it works</Button>
+  </div>
+  <p brick:ref="help" hidden style="margin: 0; padding: .4rem .6rem; border-radius: var(--bk-radius-md); font-size: var(--bk-text-sm)">Delete fades the row out before the morph removes it (<code>brick:leave</code>); Rename asks for the new name first (<code>brick:confirm.prompt</code>), and Cancel sends nothing. This note was opened by a client command, and it stays open when an action re-renders the list.</p>
+  <ul id="v18t-list" style="margin: 0; padding: 0; list-style: none; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-md)">
+    {{ range .State.tasks }}<li class="v18-row" brick:key="{{ .id }}" brick:leave="v18-out"><span style="flex: 1">{{ .name }}</span><Button size="sm" variant="outline" class="v18t-rename" brick:confirm.prompt="New name for “{{ .name }}”?" brick:click="rename({{ .id }})">Rename</Button><Button size="sm" variant="ghost" class="v18t-del" brick:click="remove({{ .id }})">Delete</Button></li>{{ end }}
+  </ul>
+</section>

@@ -1,0 +1,16 @@
+---
+outline:
+  - label: Getting started
+    icon: rocket
+    children: [{label: Install, href: "#install"}, {label: Your first page, href: "#first-page"}, {label: Project layout, href: "#layout"}]
+  - label: Components
+    icon: layout-dashboard
+    children:
+      - {label: Props, href: "#props"}
+      - {label: Slots, href: "#slots"}
+      - label: Advanced
+        children: [{label: Scoped slots, href: "#scoped"}, {label: Recursion, href: "#recursion"}]
+  - {label: Changelog, href: "#changelog", icon: file-text}
+---
+<Tree :items=".Params.outline" current="#recursion" label="Documentation" style="width: 16rem" />
+<Tree :items=".Params.outline" open label="Documentation, expanded" style="width: 16rem" />

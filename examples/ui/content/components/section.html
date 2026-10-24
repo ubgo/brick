@@ -1,0 +1,19 @@
+---
+title: Section
+category: Layout
+description: A titled region of a page with consistent rhythm — Features, Pricing, a group of settings.
+api:
+  - {name: title, type: string, desc: The heading; it also labels the section as a landmark.}
+  - {name: description, type: string, desc: A line under the title.}
+  - {name: eyebrow, type: string, desc: A short accent-coloured line above the title.}
+  - {name: align, type: "start | center", default: start, desc: Header alignment.}
+  - {name: spacing, type: "none | sm | md | lg", default: md, desc: Vertical padding.}
+  - {name: level, type: "2 | 3", default: "2", desc: The heading level.}
+  - {name: actions, type: block, desc: Buttons beside the header.}
+---
+<h1>Section</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A settings group" block><SectionBasic /><brick:prop name="code"><Source src="~/demos/SectionBasic.html" /></brick:prop></Example>
+<Example title="A centred marketing section" block><SectionCentered /><brick:prop name="code"><Source src="~/demos/SectionCentered.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

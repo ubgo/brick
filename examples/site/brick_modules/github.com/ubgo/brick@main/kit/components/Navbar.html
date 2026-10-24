@@ -1,0 +1,57 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  items: {type: list, default: []}
+  current: {type: string, default: ""}
+  label: {type: string, default: Main}
+  menuLabel: {type: string, default: Menu}
+  sticky: {type: bool, default: false}
+---
+{{/*
+Navbar: a top bar with a brand, links and actions. Below 768px the links
+fold into a menu opened by a button — a native popover, so it opens, closes
+on Escape and on a click outside with no JavaScript.
+
+  <Navbar :items=".Site.Data.menu" current="/pricing/" sticky>
+    <brick:prop name="brand"><a href="/">Acme</a></brick:prop>
+    <brick:prop name="actions"><Button size="sm">Sign in</Button></brick:prop>
+  </Navbar>
+  <Navbar><a class="bk-navbar__link" href="/docs/">Docs</a></Navbar>
+
+An item is {label, href, icon}; the one whose href equals current gets
+aria-current="page". Children are extra links after the items (give them
+class bk-navbar__link). The menu's id derives from the instance id, so two
+navbars on a page never share one.
+*/}}
+<brick:style>
+.bk-navbar { border-bottom: 1px solid var(--bk-border); background: var(--bk-bg); font-size: var(--bk-text-sm); }
+.bk-navbar--sticky { position: sticky; top: 0; z-index: var(--bk-z-sticky); background: color-mix(in oklab, var(--bk-bg) 85%, transparent); backdrop-filter: blur(8px); }
+.bk-navbar__inner { display: flex; align-items: center; gap: 1rem; height: 3.25rem; padding: 0 1rem; }
+.bk-navbar__brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; font-size: var(--bk-text-base); white-space: nowrap; }
+.bk-navbar__brand a { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: .5rem; }
+.bk-navbar__nav { display: flex; align-items: center; gap: .125rem; flex: 1; position: static; inset: auto; width: auto; height: auto; margin: 0; padding: 0; border: 0; overflow: visible; background: none; color: inherit; }
+.bk-navbar__link { display: inline-flex; align-items: center; gap: .4rem; height: var(--bk-h-sm); padding: 0 .65rem; border-radius: var(--bk-radius); color: var(--bk-muted-fg); font-weight: 500; text-decoration: none; white-space: nowrap; transition: color var(--bk-duration), background var(--bk-duration); }
+.bk-navbar__link:hover { color: var(--bk-fg); background: var(--bk-accent); }
+.bk-navbar__link:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+.bk-navbar__link[aria-current=page] { color: var(--bk-fg); background: var(--bk-accent); }
+.bk-navbar__actions { display: flex; align-items: center; gap: .5rem; margin-left: auto; }
+.bk-navbar__toggle { display: none; place-items: center; width: var(--bk-h-md); height: var(--bk-h-md); border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); cursor: pointer; }
+.bk-navbar__toggle:hover { background: var(--bk-accent); }
+@media (max-width: 767.98px) {
+  .bk-navbar__toggle { display: inline-grid; }
+  .bk-navbar__brand { margin-right: auto; }
+  .bk-navbar__actions { margin-left: 0; }
+  .bk-navbar__nav:not(:popover-open) { display: none; }
+  .bk-navbar__nav:popover-open { position: fixed; inset: 3.5rem .5rem auto .5rem; display: grid; gap: 2px; padding: .35rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-lg); animation: bk-pop-in var(--bk-duration) ease-out; }
+  .bk-navbar__nav:popover-open .bk-navbar__link { height: var(--bk-h-md); }
+}
+</brick:style>
+<header class="{{ cx `bk-navbar` (cond .Props.sticky `bk-navbar--sticky` ``) .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-navbar__inner">
+    {{ if hasNode "brand" }}<div class="bk-navbar__brand">{{ node "brand" }}</div>{{ end }}
+    <nav class="bk-navbar__nav" id="{{ .ID }}-menu" popover aria-label="{{ .Props.label }}">{{ range .Props.items }}<a class="bk-navbar__link" href="{{ .href }}"{{ if and $.Props.current (eq (print .href) $.Props.current) }} aria-current="page"{{ end }}>{{ with .icon }}<Icon :name="." :size="15" />{{ end }}{{ .label }}</a>{{ end }}{{ children }}</nav>
+    {{ if hasNode "actions" }}<div class="bk-navbar__actions">{{ node "actions" }}</div>{{ end }}
+    <button type="button" class="bk-navbar__toggle" popovertarget="{{ .ID }}-menu" aria-label="{{ .Props.menuLabel }}"><Icon name="menu" :size="16" /></button>
+  </div>
+</header>

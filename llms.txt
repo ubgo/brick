@@ -1,0 +1,54 @@
+# brick
+
+> Server-rendered HTML components for Go, on html/template: pages, layouts and components are .html files, components are tags, and brick adds a calling convention, never a new template language. It grows into a site layer, islands, server actions and bindings without a client framework, and ships a UI kit of more than 130 components.
+
+brick is an open-source Go library (github.com/ubgo/brick), licensed Apache-2.0. A component is a file (components/Card.html) used as a tag (<Card title="Hi">…</Card>). Everything inside {{ }} is Go's own html/template, so escaping and the template language are unchanged. There is no build step and no code generation.
+
+Every file is trusted code; only data is untrusted. Paths never leave the project's file system, data never chooses a file, and scripts are sandboxed Starlark that reach a database or the network only through capabilities the host grants.
+
+## Docs
+- [README](https://github.com/ubgo/brick/blob/main/README.md): what it is, install, components and props, children and slots, layouts, data and context, scripts, actions, navigation, islands, the site layer and the CLI, remote components, the kit
+- [docs/README.md](https://github.com/ubgo/brick/blob/main/docs/README.md): the documentation map: a twelve-step learning path, a start-from-your-goal table, every guide and reference
+- [docs/getting-started.md](https://github.com/ubgo/brick/blob/main/docs/getting-started.md): install the brick command, then a first page, component and action
+- [docs/choosing/README.md](https://github.com/ubgo/brick/blob/main/docs/choosing/README.md): decision guides, with tables and pitfalls, for the choices brick leaves open
+- [docs/choosing/state-store.md](https://github.com/ubgo/brick/blob/main/docs/choosing/state-store.md): memory, sealed, SQL, Redis or your own state store, and where the sealing key comes from (environment, AWS KMS, Google Cloud KMS, Vault)
+- [docs/choosing/interactivity.md](https://github.com/ubgo/brick/blob/main/docs/choosing/interactivity.md): plain pages, no-JavaScript forms, islands, stateful actions, URL state, navigation, client commands, effects, push and jobs compared
+- [docs/choosing/forms.md](https://github.com/ubgo/brick/blob/main/docs/choosing/forms.md): live or deferred fields, no-JavaScript posts, validation, proxied or presigned uploads, method links
+- [docs/choosing/rendering-and-hosting.md](https://github.com/ubgo/brick/blob/main/docs/choosing/rendering-and-hosting.md): static export, dev server, the site in your binary, the engine alone, hosting under a path, per-visitor pages and the render cache
+- [docs/choosing/component-sources.md](https://github.com/ubgo/brick/blob/main/docs/choosing/component-sources.md): your project, a remote file, a library or the UI kit
+- [docs/guides/components/README.md](https://github.com/ubgo/brick/blob/main/docs/guides/components/README.md), [site](https://github.com/ubgo/brick/blob/main/docs/guides/site/README.md), [interactivity](https://github.com/ubgo/brick/blob/main/docs/guides/interactivity/README.md), [forms](https://github.com/ubgo/brick/blob/main/docs/guides/forms/README.md), [live](https://github.com/ubgo/brick/blob/main/docs/guides/live/README.md), [production](https://github.com/ubgo/brick/blob/main/docs/guides/production/README.md), [tooling](https://github.com/ubgo/brick/blob/main/docs/guides/tooling/README.md): step-by-step guides, each built from a tested example under examples/
+- [docs/guides/components/libraries.md](https://github.com/ubgo/brick/blob/main/docs/guides/components/libraries.md): component libraries: a project folder, the kit, a remote library pinned by brick vendor, prefix and only, shipping your own
+- [docs/reference/features.md](https://github.com/ubgo/brick/blob/main/docs/reference/features.md): every feature with its guide and an example; also [cli](https://github.com/ubgo/brick/blob/main/docs/reference/cli.md), [frontmatter](https://github.com/ubgo/brick/blob/main/docs/reference/frontmatter.md), [attributes](https://github.com/ubgo/brick/blob/main/docs/reference/attributes.md) and [runtime-api](https://github.com/ubgo/brick/blob/main/docs/reference/runtime-api.md)
+- [examples/README.md](https://github.com/ubgo/brick/blob/main/examples/README.md): one row per runnable example with its guide
+- [docs/guide.md](https://github.com/ubgo/brick/blob/main/docs/guide.md): every feature as problem, fix and example
+- [docs/cookbook.md](https://github.com/ubgo/brick/blob/main/docs/cookbook.md): real tasks with every file in full and the exact output
+- [kit/README.md](https://github.com/ubgo/brick/blob/main/kit/README.md): using the component kit, its catalog, and the authoring rules its lint test enforces
+- [CHANGELOG](https://github.com/ubgo/brick/blob/main/CHANGELOG.md): release history
+- [CONTRIBUTING](https://github.com/ubgo/brick/blob/main/CONTRIBUTING.md): the gate, the browser suites, and the rules a change is reviewed against
+- [SECURITY](https://github.com/ubgo/brick/blob/main/SECURITY.md): the trust model and how to report a vulnerability
+
+## Modules
+- `github.com/ubgo/brick` — the render engine, the site layer (`site`, `watch`, `tailwind`), `bricktest`, the browser runtime (actions, server push, client commands with brick:js.*, exit transitions with brick:leave), background jobs (Options.Jobs), forms and uploads that work without JavaScript, validation rules with list wildcards (todos.*.title), an InstanceEndHook for ended state instances, streamed islands (brick:lazy="stream", Engine.Stream), struct-typed props checked by brick check (fields:, of:), brick.errors(el) and brick:scroll in the runtime, route metadata on Site.Routes(), per-component action logging (brick: {log:}), brick:enter transitions, brick.js / brick.find / brick.all, job cancel (brick.cancel_job, Engine.CancelJob), Options.UploadCheck, bricktest SubmitWith / AssertViewHas / WithLazyInline / ClickWith, per-component URL callbacks (brick: {params:}, patch links, $params), navigation fragment mode (brick.WithPageMarks), Modelable components (brick: {model:} with brick:model on a component call), presence (brick: {listen: {presence:}}, .Presence, PushOptions.Presence), dynamic output pages (tags/[tag]/feed.xml.html), per-request pages (brick: {per_request: true}), form objects (.Form), regions (brick.region), server transition control (brick.transition), brick:keydown.norepeat, brick:click.details, method links (brick:method on an <a href>, brick.MethodOverride, brick.methodFormWith), sibling component stylesheets (Card.css, brick: {css:}), the :prop shorthand, and the kit. Its only dependency is a YAML parser.
+- `github.com/ubgo/brick/cmd/brick` — the CLI: check, routes, serve, build, vendor, keygen, new (site, component, page), fmt, docs, schema, lsp (a language server with diagnostics, completion, hover, definition, find references, component rename (tags, `use:` paths and the file), prop rename and prop references, and formatting; `editors/vscode` is a VS Code client that also highlights brick markup and checks frontmatter as you type), version. `brick fmt` reads options from brick.yaml `fmt:` (lineLength, attrOrder, formatters, inline) and `-line-length` / `-attr-order` / `-inline`. Each command takes only its own flags; `-json` on check, routes, build, vendor, docs and version.
+- `github.com/ubgo/brick/contrib/script-starlark` — Starlark scripts, loaders and their answers (brick.not_found, brick.redirect, brick.error, brick.header), action effects (brick.publish, brick.start_job, brick.cancel_job, brick.clear_flash, brick.region, brick.transition and the rest), and the db and http capabilities.
+- `github.com/ubgo/brick/contrib/markdown-goldmark` — markdown pages and the <Markdown> component, with optional heading ids and chroma highlighting (Go 1.25).
+- `github.com/ubgo/brick/contrib/sanitize-bluemonday` — the HTML policy behind {{ sanitize }}.
+- `github.com/ubgo/brick/contrib/assets-http` — an http.Handler for component JavaScript and CSS.
+- `github.com/ubgo/brick/contrib/upload-s3` — an S3 UploadSink with remove and presigned direct-to-bucket uploads.
+- `github.com/ubgo/brick/contrib/states-redis` — a Redis BytesStore for brick.Bytes: shared state with session revocation and listing; reports revoked instances to OnInstanceEnd.
+- `github.com/ubgo/brick/contrib/states-sql` — a brick.BytesStore on database/sql (Postgres, MySQL or SQLite) with revocation, listing and pruning; reports expired and revoked instances to OnInstanceEnd; no driver imported.
+- `github.com/ubgo/brick/contrib/keys-awskms` — a KeyRing from data keys encrypted under AWS KMS, decrypted once at start.
+- `github.com/ubgo/brick/contrib/keys-vault` — a KeyRing from data keys wrapped by Vault transit, unwrapped once at start.
+- `github.com/ubgo/brick/contrib/keys-gcpkms` — a KeyRing from data keys encrypted under Google Cloud KMS, decrypted once at start (fake-tested only).
+- `github.com/ubgo/brick/contrib/actions-otel` — OpenTelemetry spans and metrics for every action and upload, with no user data in attributes.
+- `github.com/ubgo/brick/contrib/ratelimit-redis` — an actionmw.Limiter on Redis: one token bucket shared by every server.
+- `github.com/ubgo/brick/contrib/push-redis` — a brick.Broadcaster on Redis pub/sub, so server push (brick: {listen:}, brick.publish) reaches every server, and Push.RevokeSession ends a session's streams on every server; NewPresenceStore shares presence lists across servers.
+- `github.com/ubgo/brick/contrib/image-webp` — a brick.ImageEncoder for lossless WebP (nativewebp, pure Go); register with Options.ImageEncoders, ask with {{ image "~/static/p.png" 480 "webp" }}. The brick CLI registers it for every site.
+
+## Install
+- `go get github.com/ubgo/brick`
+- `go install github.com/ubgo/brick/cmd/brick@latest`
+- `brick new site blog && brick serve blog` — a working project using the kit.
+
+## Links
+- Repository: https://github.com/ubgo/brick

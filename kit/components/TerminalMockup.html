@@ -1,0 +1,49 @@
+---
+raw: true
+props:
+  title: {type: string, default: ""}
+  prompt: {type: string, default: "$"}
+  typing: {type: bool, default: false}
+  speed: {type: int, default: 45}
+---
+{{/*
+TerminalMockup: a dark terminal window. The body is raw text, one line per
+terminal line: a line starting with "$ " is a command drawn after the
+prompt, any other line is output. Nothing in the body is interpreted, so
+<, {{ }} and quotes show as written.
+
+  <TerminalMockup title="zsh">
+  $ go install github.com/ubgo/brick/cmd/brick@latest
+  $ brick serve
+  serving on http://localhost:8080
+  </TerminalMockup>
+  <TerminalMockup typing>…</TerminalMockup>
+
+typing types each command out (speed milliseconds per character) and
+reveals the output after it, in CSS only; prefers-reduced-motion shows
+everything at once. The terminal stays dark in both themes.
+*/}}
+<brick:style>
+.bk-terminal { --bk-term-bg: var(--bk-neutral); --bk-term-fg: var(--bk-neutral-fg); margin: 0; overflow: hidden; border-radius: var(--bk-radius-lg); background: var(--bk-term-bg); color: var(--bk-term-fg); box-shadow: var(--bk-shadow-lg); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme=light]) .bk-terminal { --bk-term-bg: var(--bk-surface); --bk-term-fg: var(--bk-fg); border: 1px solid var(--bk-border); } }
+:root[data-theme=dark] .bk-terminal { --bk-term-bg: var(--bk-surface); --bk-term-fg: var(--bk-fg); border: 1px solid var(--bk-border); }
+.bk-terminal__bar { position: relative; display: flex; align-items: center; gap: .4rem; height: 2.1rem; padding: 0 .8rem; border-bottom: 1px solid color-mix(in oklab, var(--bk-term-fg) 10%, transparent); }
+.bk-terminal__bar > i { width: .65rem; height: .65rem; border-radius: 50%; background: color-mix(in oklab, var(--bk-term-fg) 22%, transparent); }
+.bk-terminal__title { position: absolute; inset: 0; display: grid; place-items: center; font: 600 var(--bk-text-xs) var(--bk-font); color: color-mix(in oklab, var(--bk-term-fg) 55%, transparent); pointer-events: none; }
+.bk-terminal__body { margin: 0; padding: .85rem 1rem 1rem; overflow-x: auto; font: var(--bk-text-sm)/1.65 var(--bk-mono); white-space: pre; }
+.bk-terminal__line { display: block; min-height: 1.65em; }
+.bk-terminal__out { color: color-mix(in oklab, var(--bk-term-fg) 68%, transparent); }
+.bk-terminal__prompt { margin-right: .6ch; color: color-mix(in oklab, var(--bk-success) 75%, var(--bk-term-fg)); user-select: none; }
+.bk-terminal--typing .bk-terminal__cmd > .bk-terminal__text { display: inline-block; vertical-align: bottom; max-width: 0; overflow: hidden; animation: bk-term-type calc(var(--n) * var(--bk-term-speed)) steps(var(--n), end) calc(var(--at) * 1ms) forwards; }
+.bk-terminal--typing .bk-terminal__line { visibility: hidden; animation: bk-term-show 0s linear calc(var(--start) * 1ms) forwards; }
+.bk-terminal--typing .bk-terminal__line:last-child::after { content: ""; display: inline-block; width: .55em; height: 1.1em; margin-left: .15em; vertical-align: text-bottom; background: currentColor; animation: bk-term-caret 1s steps(2, start) infinite; }
+@keyframes bk-term-type { to { max-width: calc(var(--n) * 1ch); } }
+@keyframes bk-term-show { to { visibility: visible; } }
+@keyframes bk-term-caret { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .bk-terminal--typing .bk-terminal__line, .bk-terminal--typing .bk-terminal__cmd > .bk-terminal__text { visibility: visible; max-width: none; animation: none; } }
+</brick:style>
+{{ $t := 400 }}
+<figure class="{{ cx `bk-terminal` (cond .Props.typing `bk-terminal--typing` ``) .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-terminal__bar" aria-hidden="true"><i></i><i></i><i></i>{{ with .Props.title }}<span class="bk-terminal__title">{{ . }}</span>{{ end }}</div>
+  <pre class="bk-terminal__body" style="--bk-term-speed: {{ .Props.speed }}ms">{{ range split "\n" (trim .Raw) }}{{ if hasPrefix "$ " . }}{{ $cmd := trimPrefix "$ " . }}{{ $n := len $cmd }}<span class="bk-terminal__line bk-terminal__cmd" style="--start: {{ $t }}; --at: {{ add $t 250 }}; --n: {{ $n }}"><span class="bk-terminal__prompt">{{ $.Props.prompt }}</span><span class="bk-terminal__text">{{ $cmd }}</span></span>{{ $t = add $t (add 700 (mul $n $.Props.speed)) }}{{ else }}<span class="bk-terminal__line bk-terminal__out" style="--start: {{ $t }}">{{ . }}</span>{{ $t = add $t 120 }}{{ end }}{{ end }}</pre>
+</figure>

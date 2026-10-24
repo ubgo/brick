@@ -1,0 +1,19 @@
+---
+stats:
+  - {label: Revenue, value: "$48,210", delta: "+12.4%", up: true, icon: dollar}
+  - {label: Subscribers, value: "2,431", delta: "+3.1%", up: true, icon: users}
+  - {label: Churn, value: "1.8%", delta: "-0.4%", up: false, icon: trending-down}
+---
+<brick:style>
+.stat-card__top { display: flex; align-items: center; justify-content: space-between; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.stat-card__value { margin: .35rem 0 .15rem; font-size: var(--bk-text-2xl); font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+</brick:style>
+<Grid :md="3" style="width: 100%">
+  {{ range .Params.stats }}
+  <Card>
+    <div class="stat-card__top">{{ .label }}<Icon :name=".icon" :size="16" /></div>
+    <div class="stat-card__value">{{ .value }}</div>
+    <Text size="xs" :tone="cond .up `success` `danger`" weight="medium">{{ .delta }} <Text as="span" size="xs" tone="muted" weight="normal">from last month</Text></Text>
+  </Card>
+  {{ end }}
+</Grid>

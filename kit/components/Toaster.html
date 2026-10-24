@@ -1,0 +1,166 @@
+---
+use:
+  Toast: ~/components/Toast.html
+props:
+  position: {type: string, default: bottom-right, oneof: [top-left, top-center, top-right, bottom-left, bottom-center, bottom-right]}
+  max: {type: int, default: 5}
+  label: {type: string, default: Notifications}
+---
+{{/*
+Toaster: the fixed corner where toasts appear. Put one in the layout, once.
+
+  <Toaster />
+  <Toaster position="top-center" :max="3" />
+
+A toast reaches it three ways:
+
+  1. A <Toast> rendered anywhere on the page, including one an action's
+     patch inserts later: the Toaster moves it into its list.
+  2. brick.emit("toast", {title, description, variant, duration, id}) from
+     any client code.
+  3. import { toast } from "brick:Toaster" in a component's client module,
+     then toast("Copied") or toast({title: "Saved", variant: "success"}).
+  4. brick.flash("Saved", "success") in an action:
+     the runtime emits "flash" {message, level} and the Toaster shows it
+     as a toast of that variant. Because the Toaster listens to "flash",
+     the runtime's own minimal flash display stays off.
+
+brick.clear_flash() (or clear_flash("warning")) in an action dismisses the
+toasts on screen: the runtime emits "flash-clear" {level}, and every toast,
+or every toast of that variant, leaves as if closed.
+
+Toasts are announced through an aria-live="polite" list, dismiss
+themselves after their duration (hovering or focusing the list pauses
+every timer), and have a close button. At most max are shown; the oldest
+goes first. A toast id is shown once per page: a toast whose id was
+already shown (on screen or dismissed) is dropped, so a stateful
+component that re-renders with the same flash (a search typed after a
+save) does not show it again. Give each new flash a new id (a counter). Only one Toaster is active per page
+(the first mounted); a second one stays hidden, so a demo or a page may
+carry its own <Toaster /> even when the layout has one. Toasts made from code are clones of the
+server-rendered <template>s below, one per variant: the module never
+builds markup.
+
+The Toaster is a named region (label, "Notifications") only while it holds
+a toast: an empty corner is not a landmark worth jumping to, and its name
+would collide with a page's own "Notifications" section. The server renders
+the name as data-label and the client module sets aria-label from it when
+the first toast arrives and removes it when the last one leaves.
+*/}}
+<brick:client>
+export function toast(opts) {
+  brick.emit("toast", typeof opts === "string" ? { title: opts } : opts || {});
+}
+
+// Only one Toaster is active on a page, so a layout's Toaster and a demo's
+// never show a toast twice: the first mounted wins, later ones stay hidden.
+let active = null;
+
+// DEFAULT_MAX matches the max prop's default: how many toasts show at once.
+const DEFAULT_MAX = 5;
+
+brick.mount("Toaster", (el) => {
+  if (active && active.isConnected && active !== el) { el.hidden = true; return; }
+  active = el;
+  const list = el.querySelector(".bk-toaster__list");
+  const max = Number(el.dataset.max) || DEFAULT_MAX;
+  // named keeps the region's name only while a toast is in the list (see
+  // the doc comment): every add and removal re-checks it.
+  const named = () => { if (list.children.length) el.setAttribute("aria-label", el.dataset.label); else el.removeAttribute("aria-label"); };
+  const watch = new MutationObserver(named);
+  watch.observe(list, { childList: true });
+  const top = el.className.includes("bk-toaster--top");
+  const timers = new Map(); // toast -> {left, start, id}
+  const seen = new Set(); // ids shown on this page, even if dismissed since
+  let paused = false;
+  const leaveMs = () => (parseFloat(getComputedStyle(el).getPropertyValue("--bk-duration")) || 0) * 1000;
+  const stop = (t) => { const r = timers.get(t); if (r && r.id) { clearTimeout(r.id); r.left -= Date.now() - r.start; r.id = 0; } };
+  const arm = (t) => {
+    const r = timers.get(t);
+    if (!r || r.id || paused) return;
+    r.start = Date.now();
+    r.id = setTimeout(() => remove(t), Math.max(0, r.left));
+  };
+  const remove = (t) => {
+    stop(t);
+    timers.delete(t);
+    if (t.classList.contains("bk-toast--leaving")) return;
+    t.classList.add("bk-toast--leaving");
+    const ms = leaveMs();
+    if (ms > 0) setTimeout(() => t.remove(), ms); else t.remove();
+  };
+  const show = (t) => {
+    if (!t || t.parentNode === list) return;
+    if (t.id && seen.has(t.id)) { t.remove(); return; }
+    if (t.id) seen.add(t.id);
+    if (top) list.prepend(t); else list.append(t);
+    const close = t.querySelector(".bk-toast__close");
+    if (close) { close.hidden = false; close.addEventListener("click", () => remove(t)); }
+    const d = Number(t.dataset.duration);
+    if (d > 0) { timers.set(t, { left: d, start: 0, id: 0 }); arm(t); }
+    const live = [...list.children].filter((c) => !c.classList.contains("bk-toast--leaving"));
+    while (live.length > max) remove(top ? live.pop() : live.shift());
+  };
+  const fromOptions = (o) => {
+    const tpl = el.querySelector(`template[data-variant="${o.variant || "neutral"}"]`) || el.querySelector("template");
+    const t = tpl.content.firstElementChild.cloneNode(true);
+    t.querySelector(".bk-toast__title").textContent = o.title || "";
+    t.querySelector(".bk-toast__desc").textContent = o.description || "";
+    if (o.duration != null) t.dataset.duration = String(o.duration);
+    if (o.id) t.id = o.id;
+    show(t);
+  };
+  const pause = () => { paused = true; timers.forEach((_, t) => stop(t)); };
+  const resume = () => { paused = false; timers.forEach((_, t) => arm(t)); };
+  const out = (e) => { if (!list.contains(e.relatedTarget)) resume(); };
+  list.addEventListener("mouseenter", pause);
+  list.addEventListener("mouseleave", resume);
+  list.addEventListener("focusin", pause);
+  list.addEventListener("focusout", out);
+  // A flash's level is one of the Toast variants by the engine's own rule,
+  // so it maps straight onto variant.
+  const flash = (f) => fromOptions({ title: f && f.message, variant: f && f.level });
+  // flash-clear dismisses every toast, or those of one variant; a level
+  // is a variant by the same rule as flash.
+  const clear = (d) => {
+    const level = (d && d.level) || "";
+    [...list.children].forEach((t) => { if (!level || t.classList.contains("bk-toast--" + level)) remove(t); });
+  };
+  const offs = [brick.on("toast", fromOptions), brick.on("toast:element", show), brick.on("flash", flash), brick.on("flash-clear", clear)];
+  document.querySelectorAll(".bk-toast:not(.bk-toast--inline)").forEach((t) => { if (!t.closest(".bk-toaster")) show(t); });
+  named();
+  return () => {
+    watch.disconnect();
+    if (active === el) active = null;
+    offs.forEach((off) => off());
+    timers.forEach((_, t) => stop(t));
+    list.removeEventListener("mouseenter", pause);
+    list.removeEventListener("mouseleave", resume);
+    list.removeEventListener("focusin", pause);
+    list.removeEventListener("focusout", out);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-toaster { position: fixed; z-index: var(--bk-z-toast); display: flex; width: min(24rem, calc(100vw - 2rem)); pointer-events: none; }
+.bk-toaster[hidden] { display: none; }
+.bk-toaster--top-left, .bk-toaster--top-center, .bk-toaster--top-right { top: 1rem; }
+/* --bk-toaster-offset lifts a bottom stack clear of a page's own fixed
+   bottom control (a floating button), so it never covers a toast's close. */
+.bk-toaster--bottom-left, .bk-toaster--bottom-center, .bk-toaster--bottom-right { bottom: calc(1rem + var(--bk-toaster-offset, 0px)); }
+.bk-toaster--top-left, .bk-toaster--bottom-left { left: 1rem; }
+.bk-toaster--top-right, .bk-toaster--bottom-right { right: 1rem; }
+.bk-toaster--top-center, .bk-toaster--bottom-center { left: 50%; transform: translateX(-50%); }
+.bk-toaster__list { display: flex; flex-direction: column; gap: .5rem; width: 100%; margin: 0; padding: 0; }
+.bk-toaster .bk-toast { max-width: none; animation: bk-toast-in .22s cubic-bezier(.21, 1.02, .73, 1); }
+.bk-toaster--top-left .bk-toast, .bk-toaster--top-center .bk-toast, .bk-toaster--top-right .bk-toast { animation-name: bk-toast-in-top; }
+.bk-toaster .bk-toast--leaving { animation: bk-toast-out var(--bk-duration) ease forwards; }
+@keyframes bk-toast-in { from { opacity: 0; transform: translateY(.75rem) scale(.97); } }
+@keyframes bk-toast-in-top { from { opacity: 0; transform: translateY(-.75rem) scale(.97); } }
+@keyframes bk-toast-out { to { opacity: 0; transform: scale(.96); } }
+@media (prefers-reduced-motion: reduce) { .bk-toaster .bk-toast { animation: none; } }
+</brick:style>
+<section class="{{ cx `bk-toaster` (print `bk-toaster--` .Props.position) .Attrs.class }}" data-label="{{ .Props.label }}" data-max="{{ .Props.max }}" {{ attrs `class` }}>
+  <div class="bk-toaster__list" aria-live="polite" aria-relevant="additions"></div>
+  {{ range list "neutral" "info" "success" "warning" "danger" }}<template data-variant="{{ . }}"><Toast :variant="." /></template>{{ end }}
+</section>

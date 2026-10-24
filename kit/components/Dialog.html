@@ -1,0 +1,220 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  title: {type: string, default: ""}
+  description: {type: string, default: ""}
+  size: {type: string, default: md, oneof: [sm, md, lg, xl, full]}
+  open: {type: bool, default: false}
+  closable: {type: bool, default: true}
+  dismissible: {type: bool, default: true}
+  label: {type: string, default: Close}
+  closeAction: {type: string, default: ""}
+---
+{{/*
+Dialog: a modal window on the native <dialog>: a header (title,
+description, close button), the body (children) and a footer block.
+
+  <Dialog title="Edit profile" description="Changes are saved when you click Save.">
+    <brick:prop name="trigger"><Button variant="outline">Edit profile</Button></brick:prop>
+    <form id="profile">…</form>
+    <brick:prop name="footer">
+      <Button variant="ghost" data-bk-close>Cancel</Button>
+      <Button type="submit" form="profile">Save</Button>
+    </brick:prop>
+  </Dialog>
+
+  <Dialog id="edit-contact" title="Edit contact" open>…</Dialog>
+  <Button data-bk-open="edit-contact">Edit</Button>
+  <Button commandfor="edit-contact" command="show-modal">Edit</Button>
+
+Three ways to open it:
+  1. a trigger block, rendered before the dialog; a click anywhere in it
+     opens the dialog;
+  2. open, which renders it already open — an edit form re-rendered by an
+     action with errors, say. With JavaScript it becomes modal; without,
+     it shows in place;
+  3. any element with data-bk-open="<the dialog's id>", or a button with
+     the native commandfor="<id>" command="show-modal".
+Only (2), and (3) with commandfor in browsers that support invoker
+commands, work without JavaScript; the trigger block and data-bk-open
+need it. id is yours to choose (it is where the caller's attributes go,
+with class); without one the dialog gets the instance id.
+
+closeAction names an action of the stateful component around the dialog,
+run when the visitor closes it (Escape, backdrop, close button,
+data-bk-close) but not when a re-render closes it. A dialog whose open
+comes from state needs it: without it, the next render (a search typed
+elsewhere in the component) would open the dialog again.
+
+  <Dialog title="Edit contact" :open=".State.form.open" closeAction="close_form">…</Dialog>
+
+Closing: Escape, the close button (a <form method="dialog">, so it works
+without JavaScript), a click on the backdrop (dismissible: false turns
+that off, for forms that must not lose input), or any element inside with
+data-bk-close. Focus moves into the dialog and returns to the opener.
+
+The root is a display: contents wrapper holding the trigger and the
+<dialog>; the caller's attributes land on the <dialog>. Client code can
+import { open, close } from "brick:Dialog" (by id or element); Drawer and
+ConfirmDialog reuse its enhance().
+*/}}
+<brick:client>
+const modal = new WeakSet(); // shown with showModal
+const shown = new WeakSet(); // opened by open(), modal or not
+const serverClosed = new WeakSet(); // closed by settle(), not by the visitor
+const openers = new WeakMap();
+const FOCUSABLE = "[autofocus], input:not([type=hidden]):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), a[href], [tabindex]:not([tabindex='-1'])";
+const find = (d) => typeof d === "string" ? document.getElementById(d) : d;
+const isDialog = (d) => d && d.tagName === "DIALOG";
+
+// open shows a dialog as a modal (or, where showModal is missing, in
+// place) and remembers what to give focus back to.
+export function open(d, opener) {
+  d = find(d);
+  if (!isDialog(d)) return;
+  openers.set(d, opener || document.activeElement);
+  if (d.open && shown.has(d)) return;
+  shown.add(d);
+  if (d.open) d.removeAttribute("open");
+  if (typeof d.showModal === "function") { d.showModal(); modal.add(d); }
+  else {
+    d.setAttribute("open", "");
+    const f = d.querySelector("[autofocus]") || [...d.querySelectorAll(FOCUSABLE)].find((x) => !x.closest("form[method=dialog]"));
+    if (f) f.focus();
+  }
+}
+
+// close closes a dialog; its close event returns focus to the opener.
+export function close(d, value) {
+  d = find(d);
+  if (!isDialog(d) || !d.open) return;
+  if (typeof d.close === "function") d.close(value);
+  else { d.removeAttribute("open"); d.dispatchEvent(new Event("close")); }
+}
+
+// settle makes a dialog match its open attribute, which the server owns
+// inside a stateful component: set (first render or an action's patch)
+// means open as a modal; removed means closed. A browser keeps a modal
+// dialog in the top layer, and the page inert, when only the attribute is
+// removed, so that case is closed properly: open again, then close(). It
+// runs on mount too, because an action's patch remounts the component and
+// can disconnect the observer before the removal reaches it.
+function settle(d) {
+  if (d.hasAttribute("open")) { if (!shown.has(d)) open(d); return; }
+  let stuck = modal.has(d);
+  try { stuck = stuck && d.matches(":modal"); } catch (e) {} // no :modal: assume stuck
+  modal.delete(d);
+  shown.delete(d);
+  if (stuck && typeof d.close === "function") { d.setAttribute("open", ""); shown.add(d); serverClosed.add(d); d.close(); }
+}
+
+// enhance wires one <dialog>: backdrop click, [data-bk-close], Escape
+// where the dialog is not natively modal, focus return, and settle() now
+// and whenever the open attribute changes. It returns the cleanup.
+export function enhance(d) {
+  if (!isDialog(d)) return () => {};
+  let downOnSelf = false;
+  const down = (e) => { downOnSelf = e.target === d; };
+  const click = (e) => {
+    // data-bk-close keeps its default action, so a submit button that
+    // also closes still submits; the close button's own form is replaced.
+    const x = e.target.closest("[data-bk-close], .bk-dialog__close");
+    if (x && x.closest("dialog") === d) {
+      if (!x.hasAttribute("data-bk-close")) e.preventDefault();
+      close(d);
+      return;
+    }
+    if (e.target === d && downOnSelf && d.dataset.dismissible !== "false") close(d);
+  };
+  const key = (e) => { if (e.key === "Escape" && d.open) { e.preventDefault(); e.stopPropagation(); close(d); } };
+  const closed = () => {
+    if (d.open) return;
+    modal.delete(d);
+    shown.delete(d);
+    const o = openers.get(d);
+    openers.delete(d);
+    if (o && o.isConnected && typeof o.focus === "function") o.focus();
+    // The visitor closed a dialog the server owns: tell the server, so its
+    // next render does not open it again. Skipped when the server closed it.
+    const fromServer = serverClosed.delete(d);
+    const action = d.getAttribute("data-bk-close-action");
+    if (action && !fromServer && d.closest("[data-brick-state]")) brick.action(d, action).catch(() => {});
+  };
+  d.addEventListener("pointerdown", down);
+  d.addEventListener("mousedown", down);
+  d.addEventListener("click", click);
+  d.addEventListener("keydown", key);
+  d.addEventListener("close", closed);
+  settle(d);
+  const mo = new MutationObserver(() => settle(d));
+  mo.observe(d, { attributes: true, attributeFilter: ["open"] });
+  return () => {
+    mo.disconnect();
+    d.removeEventListener("pointerdown", down);
+    d.removeEventListener("mousedown", down);
+    d.removeEventListener("click", click);
+    d.removeEventListener("keydown", key);
+    d.removeEventListener("close", closed);
+  };
+}
+
+// One listener for every opener on the page: data-bk-open, and
+// commandfor/command where the browser lacks invoker commands.
+const native = typeof HTMLButtonElement !== "undefined" && "command" in HTMLButtonElement.prototype;
+document.addEventListener("click", (e) => {
+  const t = e.target.closest && e.target.closest("[data-bk-open], [commandfor]");
+  if (!t) return;
+  if (t.hasAttribute("data-bk-open")) {
+    const d = find(t.getAttribute("data-bk-open"));
+    // Focus returns to the control clicked (Safari does not focus a
+    // clicked button), not to a wrapper such as the trigger block's span.
+    if (isDialog(d)) { e.preventDefault(); open(d, e.target.closest("button, a[href], input, [tabindex]") || t); }
+    return;
+  }
+  const d = find(t.getAttribute("commandfor"));
+  const cmd = t.getAttribute("command");
+  if (!isDialog(d)) return;
+  if (cmd === "show-modal") {
+    if (native) openers.set(d, t); else { e.preventDefault(); open(d, t); }
+  } else if (cmd === "close" && !native) { e.preventDefault(); close(d); }
+});
+
+brick.mount("Dialog", (el) => enhance(el.querySelector(":scope > dialog")))
+</brick:client>
+<brick:style>
+.bk-dialog-host { display: contents; }
+.bk-dialog { --bk-dialog-w: 32rem; width: min(calc(100vw - 2rem), var(--bk-dialog-w)); max-width: none; max-height: calc(100dvh - 2rem); padding: 0; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); overflow: hidden; opacity: 0; transform: translateY(.5rem) scale(.98); transition: opacity var(--bk-duration) ease, transform var(--bk-duration) ease, overlay var(--bk-duration) allow-discrete, display var(--bk-duration) allow-discrete; }
+.bk-dialog[open] { display: flex; flex-direction: column; opacity: 1; transform: none; }
+@starting-style { .bk-dialog[open] { opacity: 0; transform: translateY(.5rem) scale(.98); } }
+.bk-dialog::backdrop { background: var(--bk-backdrop, color-mix(in oklab, black 50%, transparent)); backdrop-filter: blur(2px); opacity: 0; transition: opacity var(--bk-duration) ease, overlay var(--bk-duration) allow-discrete, display var(--bk-duration) allow-discrete; }
+.bk-dialog[open]::backdrop { opacity: 1; }
+@starting-style { .bk-dialog[open]::backdrop { opacity: 0; } }
+.bk-dialog--sm { --bk-dialog-w: 24rem; }
+.bk-dialog--lg { --bk-dialog-w: 42rem; }
+.bk-dialog--xl { --bk-dialog-w: 56rem; }
+.bk-dialog--full { --bk-dialog-w: 100vw; height: calc(100dvh - 2rem); }
+.bk-dialog__header { position: relative; flex: none; padding: 1rem 3rem .25rem 1.25rem; }
+.bk-dialog__title { margin: 0; font-size: var(--bk-text-lg); font-weight: 600; line-height: 1.35; }
+.bk-dialog__desc { margin: .2rem 0 0; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.bk-dialog__x { position: absolute; top: .65rem; right: .65rem; margin: 0; }
+.bk-dialog__close { display: inline-grid; place-items: center; width: var(--bk-h-sm); height: var(--bk-h-sm); border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: var(--bk-muted-fg); cursor: pointer; transition: background var(--bk-duration), color var(--bk-duration); }
+.bk-dialog__close:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-dialog__body { flex: 1; min-height: 0; overflow: auto; padding: .75rem 1.25rem 1.25rem; font-size: var(--bk-text-base); }
+.bk-dialog__header:not(:has(.bk-dialog__title)) + .bk-dialog__body { padding-top: 1.25rem; }
+.bk-dialog__footer { flex: none; display: flex; justify-content: flex-end; flex-wrap: wrap; gap: .5rem; padding: .75rem 1.25rem; border-top: 1px solid var(--bk-border); background: var(--bk-surface-2); }
+@media (max-width: 480px) { .bk-dialog__footer { flex-direction: column-reverse; } .bk-dialog__footer > * { width: 100%; } }
+</brick:style>
+{{ $id := or .Attrs.id (print .ID `-dialog`) }}
+<div class="bk-dialog-host">
+  {{ if hasNode "trigger" }}<span class="bk-dialog__trigger" data-bk-open="{{ $id }}">{{ node "trigger" }}</span>{{ end }}
+  <dialog id="{{ $id }}" class="{{ cx `bk-dialog` (print `bk-dialog--` .Props.size) .Attrs.class }}"{{ if .Props.title }} aria-labelledby="{{ $id }}-title"{{ end }}{{ if .Props.description }} aria-describedby="{{ $id }}-desc"{{ end }}{{ if not .Props.dismissible }} data-dismissible="false"{{ end }}{{ with .Props.closeAction }} data-bk-close-action="{{ . }}"{{ end }}{{ if .Props.open }} open{{ end }} {{ attrs `class` `id` }}>
+    {{ if or .Props.title .Props.description .Props.closable }}<header class="bk-dialog__header">
+      {{ with .Props.title }}<h2 class="bk-dialog__title" id="{{ $id }}-title">{{ . }}</h2>{{ end }}
+      {{ with .Props.description }}<p class="bk-dialog__desc" id="{{ $id }}-desc">{{ . }}</p>{{ end }}
+      {{ if .Props.closable }}<form method="dialog" class="bk-dialog__x"><button class="bk-dialog__close" aria-label="{{ .Props.label }}"><Icon name="x" /></button></form>{{ end }}
+    </header>{{ end }}
+    <div class="bk-dialog__body">{{ children }}</div>
+    {{ if hasNode "footer" }}<footer class="bk-dialog__footer">{{ node "footer" }}</footer>{{ end }}
+  </dialog>
+</div>

@@ -1,0 +1,71 @@
+{
+  "name": "brick",
+  "repo": "ubgo/brick",
+  "tagline": "Server-rendered HTML components for Go, on html/template",
+  "description": "A component-based HTML render engine for Go built on html/template: pages, layouts and components are .html files, components are tags, and brick adds a calling convention, never a new template language. It grows into a full site layer, islands, server actions and bindings without a client framework, and ships a 133-component UI kit.",
+  "homepage": "",
+  "language": "go",
+  "kind": "library",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "khanakia",
+    "email": "khanakia@gmail.com",
+    "github": "khanakia"
+  },
+  "positioning": {
+    "category": "Go HTML templating and server-rendered UI",
+    "audience": "Go developers building server-rendered websites and web apps who want components without a JavaScript framework or a build step",
+    "wedge": "Go's html/template has no components: every reusable piece of markup is a copy-pasted define block. brick makes a component a file and a tag, keeps html/template's escaping, and adds interactivity from the server, so a Go app gets a component UI with no bundler and no new template language.",
+    "differentiators": [
+      "Components are .html files and tags (<Card> or <x-card>) with props, children, named and scoped slots, and context",
+      "Every {{ }} is Go's own html/template, so escaping and the whole template language are unchanged",
+      "No build step and no code generation: drop a file, it is a component",
+      "Server-side interactivity: islands, server actions, two-way bindings and in-place navigation from a small runtime (about 5 KB gzipped, plus 3 KB for navigation)",
+      "A site layer with routes, markdown pages, collections, a render cache, live reload, static export and sub-path hosting",
+      "Scripts are sandboxed Starlark; every file path is confined to the project",
+      "A 133-component UI kit that works without JavaScript and gets better with it, with twelve demo apps"
+    ]
+  },
+  "install": {
+    "go": "go get github.com/ubgo/brick"
+  },
+  "topics": [
+    "go",
+    "golang",
+    "html-template",
+    "templates",
+    "template-engine",
+    "components",
+    "server-side-rendering",
+    "ssr",
+    "web-framework",
+    "static-site-generator",
+    "ui-kit",
+    "component-library",
+    "islands",
+    "server-driven-ui",
+    "starlark",
+    "no-build",
+    "developer-tools",
+    "open-source"
+  ],
+  "khanakia": {
+    "addToApps": false
+  },
+  "brand": {
+    "concept": "running-bond brick wall with one accent brick",
+    "color": "indigo",
+    "tile": [
+      "#6366F1",
+      "#3730A3"
+    ],
+    "fg": "#FFFFFF",
+    "accent": "#FBBF24",
+    "radius": 112
+  },
+  "fonts": {
+    "display": "Space Grotesk",
+    "sans": "Inter",
+    "mono": "JetBrains Mono"
+  }
+}

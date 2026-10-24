@@ -1,0 +1,35 @@
+---
+props:
+  orientation: {type: string, default: horizontal, oneof: [horizontal, vertical]}
+  label: {type: string, default: ""}
+  align: {type: string, default: center, oneof: [start, center, end]}
+  spacing: {type: string, default: md, oneof: [none, sm, md, lg]}
+---
+{{/*
+Separator: a thin rule between groups of content, optionally with a label
+in the line ("or", "Today", "Advanced").
+
+  <Separator />
+  <Separator label="or continue with" />
+  <Separator label="Advanced" align="start" />
+  <Separator orientation="vertical" />     between inline items; the parent must be a flex row
+
+Without a label it is an <hr>, which assistive technology already announces;
+a labelled or vertical one is a div with role="separator".
+*/}}
+<brick:style>
+.bk-separator { flex: none; margin: var(--bk-space-4) 0; border: 0; border-top: 1px solid var(--bk-border); height: 0; }
+.bk-separator--none { margin: 0; }
+.bk-separator--sm { margin: var(--bk-space-2) 0; }
+.bk-separator--lg { margin: var(--bk-space-8) 0; }
+.bk-separator--vertical { align-self: stretch; width: 0; height: auto; min-height: 1em; margin: 0 var(--bk-space-3); border-top: 0; border-left: 1px solid var(--bk-border); }
+.bk-separator--vertical.bk-separator--none { margin: 0; }
+.bk-separator--vertical.bk-separator--sm { margin: 0 var(--bk-space-2); }
+.bk-separator--vertical.bk-separator--lg { margin: 0 var(--bk-space-6); }
+.bk-separator--label { display: flex; align-items: center; gap: var(--bk-space-3); height: auto; border-top: 0; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 500; white-space: nowrap; }
+.bk-separator--label::before, .bk-separator--label::after { content: ""; flex: 1; border-top: 1px solid var(--bk-border); }
+.bk-separator--start::before { flex: 0 0 var(--bk-space-2); }
+.bk-separator--end::after { flex: 0 0 var(--bk-space-2); }
+</brick:style>
+{{ $cls := cx "bk-separator" (cond (eq .Props.orientation "vertical") "bk-separator--vertical" "") (cond .Props.label "bk-separator--label" "") (cond (and .Props.label (ne .Props.align "center")) (print "bk-separator--" .Props.align) "") (cond (ne .Props.spacing "md") (print "bk-separator--" .Props.spacing) "") .Attrs.class }}
+{{ if eq .Props.orientation "vertical" }}<div role="separator" aria-orientation="vertical" class="{{ $cls }}" {{ attrs `class` }}></div>{{ else if .Props.label }}<div role="separator" class="{{ $cls }}" {{ attrs `class` }}>{{ .Props.label }}</div>{{ else }}<hr class="{{ $cls }}" {{ attrs `class` }}>{{ end }}

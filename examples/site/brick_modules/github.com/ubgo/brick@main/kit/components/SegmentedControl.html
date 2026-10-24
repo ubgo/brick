@@ -1,0 +1,43 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  name: {type: string, required: true}
+  options: {type: list, required: true}
+  value: {type: string, default: ""}
+  label: {type: string, default: ""}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  full: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+SegmentedControl: a one-of-N toggle made of native radio buttons, so it
+submits with its form, answers arrow keys and fires a native change event
+with no JavaScript at all.
+
+  <SegmentedControl name="view" :options="list `List` `Board` `Calendar`" value="Board" />
+  <SegmentedControl name="range" label="Range" :options=".Params.ranges" value="30d" full />
+  options: [{value: list, label: List, icon: list}, {value: grid, label: Grid, icon: grid, hideLabel: true}]
+
+An option is a string (value and label at once) or a map with value, label,
+icon, hideLabel and disabled. With hideLabel only the icon shows and the
+label becomes the accessible name and tooltip. value picks the checked option; none checked when it
+matches nothing.
+*/}}
+<brick:style>
+.bk-segmented { --bk-seg-h: var(--bk-h-md); display: inline-flex; gap: 2px; margin: 0; padding: 3px; border: 0; border-radius: calc(var(--bk-radius) + 3px); background: var(--bk-muted); font-size: var(--bk-text-sm); min-inline-size: 0; }
+.bk-segmented--sm { --bk-seg-h: var(--bk-h-sm); font-size: var(--bk-text-xs); }
+.bk-segmented--lg { --bk-seg-h: var(--bk-h-lg); font-size: var(--bk-text-base); }
+.bk-segmented--full { display: flex; }
+.bk-segmented--full .bk-segmented__opt { flex: 1 1 0; }
+.bk-segmented__legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.bk-segmented__opt { position: relative; display: flex; }
+.bk-segmented__input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.bk-segmented__input:disabled { cursor: not-allowed; }
+.bk-segmented__label { display: inline-flex; flex: 1; align-items: center; justify-content: center; gap: .4em; height: max(var(--bk-h-sm), calc(var(--bk-seg-h) - 6px)); padding: 0 .75rem; border-radius: var(--bk-radius); color: var(--bk-muted-fg); font-weight: 500; white-space: nowrap; pointer-events: none; transition: background var(--bk-duration), color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-segmented__opt:hover .bk-segmented__label { color: var(--bk-fg); }
+.bk-segmented__input:checked + .bk-segmented__label { background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow); }
+.bk-segmented__input:focus-visible + .bk-segmented__label { outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+.bk-segmented__input:disabled + .bk-segmented__label { opacity: .45; }
+</brick:style>
+<fieldset class="{{ cx `bk-segmented` (cond (ne .Props.size `md`) (print `bk-segmented--` .Props.size) ``) (cond .Props.full `bk-segmented--full` ``) .Attrs.class }}"{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` }}>{{ with .Props.label }}<legend class="bk-segmented__legend">{{ . }}</legend>{{ end }}{{ range $i, $o := .Props.options }}{{ $v := $o }}{{ $l := $o }}{{ $ic := "" }}{{ $off := false }}{{ $hide := false }}{{ if ne (printf "%T" $o) "string" }}{{ $v = index $o "value" }}{{ $l = default $v (index $o "label") }}{{ $ic = default "" (index $o "icon") }}{{ $off = index $o "disabled" }}{{ $hide = index $o "hideLabel" }}{{ end }}<label class="bk-segmented__opt"{{ if $hide }} title="{{ $l }}"{{ end }}><input class="bk-segmented__input" type="radio" name="{{ $.Props.name }}" value="{{ $v }}"{{ if eq (print $v) $.Props.value }} checked{{ end }}{{ if $off }} disabled{{ end }}{{ if $hide }} aria-label="{{ $l }}"{{ end }}><span class="bk-segmented__label">{{ with $ic }}<Icon :name="." :size="14" />{{ end }}{{ if not $hide }}{{ $l }}{{ end }}</span></label>{{ end }}</fieldset>

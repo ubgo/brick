@@ -1,0 +1,8 @@
+---
+load: recent
+---
+<brick:script>
+def recent(input):
+    fail("the posts database is down")
+</brick:script>
+<ul>{{ range .Props.items }}<li>{{ . }}</li>{{ end }}</ul>

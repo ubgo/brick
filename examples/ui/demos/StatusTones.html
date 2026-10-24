@@ -1,0 +1,14 @@
+<div style="display: grid; gap: .75rem">
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem">
+    <Status tone="info" pulse>Deploying</Status>
+    <Status tone="success">Operational</Status>
+    <Status tone="warning" pulse>Degraded</Status>
+    <Status tone="danger">Outage</Status>
+    <Status tone="muted">Paused</Status>
+  </div>
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; font-size: var(--bk-text-sm)">
+    <span style="display: inline-flex; align-items: center; gap: .4rem"><Status dot />Ada Lovelace</span>
+    <span style="display: inline-flex; align-items: center; gap: .4rem"><Status status="busy" dot />Grace Hopper</span>
+    <span style="display: inline-flex; align-items: center; gap: .4rem"><Status status="offline" dot />Alan Turing</span>
+  </div>
+</div>

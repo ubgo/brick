@@ -1,0 +1,51 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  label: {type: string, required: true}
+  value: {type: string, required: true}
+  delta: {type: string, default: ""}
+  trend: {type: string, default: "", oneof: ["", up, down, flat]}
+  invert: {type: bool, default: false}
+  description: {type: string, default: ""}
+  icon: {type: string, default: ""}
+  href: {type: string, default: ""}
+---
+{{/*
+Stat: one headline number with its label, change and context.
+
+  <Stat label="Revenue" value="$48,210" delta="+12.5%" description="vs. last month" />
+  <Stat label="Churn" value="2.1%" delta="-0.4%" invert icon="users" />
+  <Stat label="Open tickets" value="18" delta="3" trend="up" invert />
+
+trend is read from delta when omitted: a leading "-" means down, anything
+else up. Up is good (green) and down bad (red) unless invert, for numbers
+where less is better (churn, latency, errors). The arrow and colour repeat
+what delta already says in text, so they are hidden from screen readers.
+Put several in <Stats> for a row of cards; alone, a Stat is a card itself.
+*/}}
+<brick:style>
+.bk-stat { position: relative; display: flex; flex-direction: column; gap: .2rem; min-width: 0; padding: .85rem 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); }
+.bk-stat__head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); font-weight: 500; }
+.bk-stat__icon { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: var(--bk-radius); background: var(--bk-muted); color: var(--bk-muted-fg); }
+.bk-stat__value { font-size: var(--bk-text-2xl); font-weight: 650; letter-spacing: -.02em; line-height: 1.2; font-variant-numeric: tabular-nums; color: var(--bk-fg); }
+.bk-stat__foot { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: var(--bk-text-xs); color: var(--bk-muted-fg); }
+.bk-stat__delta { display: inline-flex; align-items: center; gap: .15rem; padding: .05rem .3rem; border-radius: var(--bk-radius-sm); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bk-stat__delta--good { color: var(--bk-success-text); background: color-mix(in oklab, var(--bk-success) 12%, transparent); }
+.bk-stat__delta--bad { color: var(--bk-danger-text); background: color-mix(in oklab, var(--bk-danger) 12%, transparent); }
+.bk-stat__delta--flat { color: var(--bk-muted-fg); background: var(--bk-muted); }
+.bk-stat__link { color: inherit; text-decoration: none; }
+.bk-stat__link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+.bk-stat:has(.bk-stat__link:hover) { border-color: var(--bk-input); }
+.bk-stat:has(.bk-stat__link:focus-visible) { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-stat__link:focus-visible { outline: none; }
+</brick:style>
+{{- $trend := .Props.trend -}}
+{{- if and (not $trend) .Props.delta }}{{ $trend = cond (hasPrefix "-" .Props.delta) "down" "up" }}{{ end -}}
+{{- $mood := cond (eq $trend "flat") "flat" (cond (eq (eq $trend "up") (not .Props.invert)) "good" "bad") -}}
+<div class="{{ cx `bk-stat` .Attrs.class }}" {{ attrs `class` }}>
+  <div class="bk-stat__head"><span>{{ if .Props.href }}<a class="bk-stat__link" href="{{ .Props.href }}">{{ .Props.label }}</a>{{ else }}{{ .Props.label }}{{ end }}</span>{{ with .Props.icon }}<span class="bk-stat__icon"><Icon :name="." :size="15" /></span>{{ end }}</div>
+  <div class="bk-stat__value">{{ .Props.value }}</div>
+  {{ if or .Props.delta .Props.description }}<div class="bk-stat__foot">{{ with .Props.delta }}<span class="bk-stat__delta bk-stat__delta--{{ $mood }}">{{ if eq $trend "up" }}<Icon name="trending-up" :size="12" />{{ else if eq $trend "down" }}<Icon name="trending-down" :size="12" />{{ end }}{{ . }}</span>{{ end }}{{ with .Props.description }}<span>{{ . }}</span>{{ end }}</div>{{ end }}
+  {{ children }}
+</div>

@@ -1,0 +1,87 @@
+---
+props:
+  label: {type: string, default: Menu}
+---
+{{/*
+Menubar: a desktop app's menu bar — File, Edit, View — as a row of
+<DropdownMenu>s that behave as one WAI-ARIA menubar.
+
+  <Menubar label="Editor">
+    <DropdownMenu label="File">
+      <MenuItem icon="plus" shortcut="⌘N">New file</MenuItem>
+      <MenuItem icon="download" shortcut="⌘S">Save</MenuItem>
+    </DropdownMenu>
+    <DropdownMenu label="Edit">…</DropdownMenu>
+    <DropdownMenu label="View">…</DropdownMenu>
+  </Menubar>
+
+The bar is one tab stop. ArrowLeft/Right move between the menu names (and
+wrap); with a menu open they close it and open the neighbour on its first
+item; ArrowDown, Enter or Space open the focused one; Home/End jump to the
+first and last name. While one menu is open, pointing at another name
+opens that one, as desktop menubars do. Inside a menu the keys are
+DropdownMenu's. The bar styles its DropdownMenus as flat menu names, so
+write them with just a label.
+
+Without JavaScript it is a row of <details> menus that open on click, each
+working on its own.
+*/}}
+<brick:client>
+brick.mount("Menubar", (el) => {
+  const menus = () => [...el.querySelectorAll(":scope > .bk-dropdown")];
+  const summaries = () => menus().map((m) => m.querySelector(":scope > summary"));
+  const openMenu = () => menus().find((m) => m.open);
+  summaries().forEach((s, i) => { s.setAttribute("role", "menuitem"); s.tabIndex = i === 0 ? 0 : -1; });
+  const focusName = (i, open) => {
+    const all = summaries();
+    const n = (i + all.length) % all.length;
+    const wasOpen = openMenu();
+    all.forEach((s, j) => { s.tabIndex = j === n ? 0 : -1; });
+    if (wasOpen && wasOpen !== menus()[n]) wasOpen.open = false;
+    all[n].focus();
+    if (open) menus()[n].open = true;
+  };
+  const indexOf = (node) => menus().findIndex((m) => m.contains(node));
+  const key = (e) => {
+    const i = indexOf(e.target);
+    if (i < 0) return;
+    const onName = e.target.parentElement && e.target.parentElement.parentElement === el && e.target.tagName === "SUMMARY";
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      const step = e.key === "ArrowRight" ? 1 : -1;
+      focusName(i + step, Boolean(openMenu()) || !onName);
+    } else if (onName && (e.key === "Home" || e.key === "End")) {
+      e.preventDefault();
+      focusName(e.key === "Home" ? 0 : -1, false);
+    }
+  };
+  const hover = (e) => {
+    const s = e.target.closest("summary");
+    if (!s || s.parentElement.parentElement !== el) return;
+    const current = openMenu();
+    if (current && current !== s.parentElement) focusName(menus().indexOf(s.parentElement), true);
+  };
+  const toggled = (e) => {
+    const m = e.target;
+    if (!m.open || !m.matches(".bk-dropdown")) return;
+    menus().forEach((o) => { if (o !== m && o.open) o.open = false; });
+    const i = menus().indexOf(m);
+    summaries().forEach((s, j) => { s.tabIndex = j === i ? 0 : -1; });
+  };
+  el.addEventListener("keydown", key);
+  el.addEventListener("pointerover", hover);
+  el.addEventListener("toggle", toggled, true);
+  return () => {
+    el.removeEventListener("keydown", key);
+    el.removeEventListener("pointerover", hover);
+    el.removeEventListener("toggle", toggled, true);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-menubar { display: inline-flex; align-items: center; gap: .125rem; padding: .2rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); }
+.bk-menubar > .bk-dropdown > .bk-dropdown__trigger { height: var(--bk-h-sm); padding: 0 .65rem; border-color: transparent; background: transparent; color: var(--bk-fg); box-shadow: none; font-weight: 500; }
+.bk-menubar > .bk-dropdown > .bk-dropdown__trigger:hover, .bk-menubar > .bk-dropdown[open] > .bk-dropdown__trigger { background: var(--bk-accent); color: var(--bk-accent-fg); }
+.bk-menubar > .bk-dropdown > .bk-dropdown__trigger > .bk-dropdown__caret { display: none; }
+</brick:style>
+<div class="{{ cx `bk-menubar` .Attrs.class }}" role="menubar" aria-label="{{ .Props.label }}" aria-orientation="horizontal" {{ attrs `class` }}>{{ children }}</div>

@@ -1,0 +1,12 @@
+# Items for the Menu demo: section headings, links with icons, a badge,
+# keyboard hints and a divider.
+items:
+  - {section: Account}
+  - {label: Profile, href: /settings/, icon: user}
+  - {label: Billing, href: /settings/billing/, icon: credit-card, badge: New}
+  - {label: Notifications, href: /settings/notifications/, icon: bell}
+  - {section: Workspace}
+  - {label: Members, href: /settings/members/, icon: users}
+  - {label: Security, href: /settings/security/, icon: shield}
+  - {divider: true}
+  - {label: Sign out, icon: log-out, kbd: ⇧⌘Q}

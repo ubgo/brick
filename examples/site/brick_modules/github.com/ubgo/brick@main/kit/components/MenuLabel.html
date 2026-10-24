@@ -1,0 +1,11 @@
+{{/*
+MenuLabel: a small heading over a group of items in a <DropdownMenu>. It
+is not an item: the arrow keys and typeahead skip it.
+
+  <MenuLabel>My account</MenuLabel>
+  <MenuItem href="/profile/">Profile</MenuItem>
+*/}}
+<brick:style>
+.bk-menu-label { padding: .35rem .5rem .2rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; }
+</brick:style>
+<div class="{{ cx `bk-menu-label` .Attrs.class }}" role="presentation" {{ attrs `class` }}>{{ children }}</div>

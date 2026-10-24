@@ -1,0 +1,6 @@
+---
+raw: true
+props:
+  lang: {type: string, default: text}
+---
+<pre><code class="language-{{ .Props.lang }}">{{ .Raw }}</code></pre>

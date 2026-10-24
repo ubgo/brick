@@ -1,0 +1,8 @@
+---
+use:
+  posts: ~/lib/posts.star
+  helpers: ~/lib/text.star
+load: posts.one
+---
+<h1>{{ .Params.title }}</h1>
+<p>{{ .Params.by }} · {{ helpers.shout "read on" }}</p>

@@ -1,0 +1,33 @@
+---
+props:
+  size: {type: string, default: md, oneof: [xs, sm, md, lg, xl]}
+  tone: {type: string, default: current, oneof: [current, primary, muted, success, warning, danger, info]}
+  label: {type: string, default: Loading}
+---
+{{/*
+Spinner: an indeterminate loading indicator, a ring that turns. It takes
+the colour of the text around it unless tone says otherwise.
+
+  <Spinner />
+  <Spinner size="lg" tone="primary" />
+  <Spinner label="Saving draft" />
+
+It is role="status" with label as its accessible name, so a screen reader
+announces "Loading" (or your label) when it appears. With reduced motion
+it keeps turning, slower: a spinner that stops reads as a hang.
+*/}}
+<brick:style>
+.bk-spinner { --bk-spinner-s: 1.1rem; display: inline-block; flex: none; width: var(--bk-spinner-s); height: var(--bk-spinner-s); border: 2px solid color-mix(in oklab, currentColor 18%, transparent); border-top-color: currentColor; border-radius: var(--bk-radius-full); vertical-align: middle; animation: bk-spin .7s linear infinite; }
+.bk-spinner--xs { --bk-spinner-s: .75rem; border-width: 1.5px; }
+.bk-spinner--sm { --bk-spinner-s: .9rem; }
+.bk-spinner--lg { --bk-spinner-s: 1.6rem; border-width: 2.5px; }
+.bk-spinner--xl { --bk-spinner-s: 2.25rem; border-width: 3px; }
+.bk-spinner--primary { color: var(--bk-primary); }
+.bk-spinner--muted { color: var(--bk-muted-fg); }
+.bk-spinner--success { color: var(--bk-success); }
+.bk-spinner--warning { color: var(--bk-warning); }
+.bk-spinner--danger { color: var(--bk-danger); }
+.bk-spinner--info { color: var(--bk-info); }
+@media (prefers-reduced-motion: reduce) { .bk-spinner { animation-duration: 1.6s; } }
+</brick:style>
+<span class="{{ cx `bk-spinner` (print `bk-spinner--` .Props.size) (cond (ne .Props.tone `current`) (print `bk-spinner--` .Props.tone) ``) .Attrs.class }}" role="status" aria-label="{{ .Props.label }}" {{ attrs `class` }}></span>

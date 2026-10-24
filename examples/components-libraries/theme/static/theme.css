@@ -1,0 +1,2 @@
+/* Re-theme the kit by overriding its tokens; no component is edited. */
+:root { --bk-primary: #0f766e; --bk-radius: .25rem; }

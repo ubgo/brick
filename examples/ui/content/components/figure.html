@@ -1,0 +1,19 @@
+---
+title: Figure
+category: Data display
+description: "An image or any content with a caption, cropped to a ratio or framed."
+api:
+  - {name: src, type: string, desc: "The image. Children replace it."}
+  - {name: alt, type: string, desc: "The image's alternative text."}
+  - {name: caption, type: string, desc: "A plain-text caption."}
+  - {name: ratio, type: "auto | 16/9 | 4/3 | 3/2 | 1/1", default: auto, desc: "Crops the image to a shape."}
+  - {name: framed, type: bool, desc: "A padded frame around the media."}
+  - {name: align, type: "start | center", default: start, desc: "Centres the media and caption."}
+  - {name: "captionContent (block)", type: markup, desc: "A caption with markup."}
+---
+<h1>Figure</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Basic" block><FigureBasic /><brick:prop name="code"><Source src="~/demos/FigureBasic.html" /></brick:prop></Example>
+<Example title="Cropped, framed, and any content" block><FigureFramed /><brick:prop name="code"><Source src="~/demos/FigureFramed.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

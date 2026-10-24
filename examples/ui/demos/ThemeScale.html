@@ -1,0 +1,18 @@
+---
+text: [xs, sm, base, lg, xl, 2xl, 3xl]
+heights: [xs, sm, md, lg, xl]
+radii: [radius-sm, radius, radius-lg, radius-full]
+---
+<brick:style>
+.theme-scale { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1.5rem; width: 100%; }
+.theme-scale h3 { margin: 0 0 .6rem; font-size: var(--bk-text-xs); font-weight: 600; color: var(--bk-muted-fg); text-transform: uppercase; letter-spacing: .05em; }
+.theme-scale__row { display: flex; align-items: baseline; gap: .75rem; padding: .2rem 0; }
+.theme-scale__row code { width: 3.5rem; flex: none; font-size: var(--bk-text-xs); color: var(--bk-muted-fg); }
+.theme-scale__bar { height: var(--h); width: 5rem; border-radius: var(--bk-radius-sm); background: color-mix(in oklab, var(--bk-primary) 18%, transparent); border: 1px solid color-mix(in oklab, var(--bk-primary) 35%, transparent); }
+.theme-scale__box { width: 3rem; height: 3rem; background: var(--bk-muted); border: 1px solid var(--bk-input); }
+</brick:style>
+<div class="theme-scale">
+  <div><h3>Type</h3>{{ range .Params.text }}<div class="theme-scale__row"><code>{{ . }}</code><span style="font-size: var(--bk-text-{{ . }})">Ag</span></div>{{ end }}</div>
+  <div><h3>Control heights</h3>{{ range .Params.heights }}<div class="theme-scale__row" style="align-items: center"><code>h-{{ . }}</code><span class="theme-scale__bar" style="--h: var(--bk-h-{{ . }})"></span></div>{{ end }}</div>
+  <div><h3>Radii</h3><div class="theme-scale__row" style="align-items: center; gap: 1rem">{{ range .Params.radii }}<span class="theme-scale__box" style="border-radius: var(--bk-{{ . }})" title="--bk-{{ . }}"></span>{{ end }}</div></div>
+</div>

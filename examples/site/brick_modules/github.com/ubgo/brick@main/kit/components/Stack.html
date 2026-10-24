@@ -1,0 +1,43 @@
+---
+props:
+  direction: {type: string, default: col, oneof: [col, row]}
+  gap: {type: string, default: md, oneof: [none, xs, sm, md, lg, xl]}
+  align: {type: string, default: auto, oneof: [auto, start, center, end, stretch, baseline]}
+  justify: {type: string, default: start, oneof: [start, center, end, between, around]}
+  wrap: {type: bool, default: false}
+  inline: {type: bool, default: false}
+---
+{{/*
+Stack: lays its children out in a column or a row with even spacing — the
+one layout primitive most screens need.
+
+  <Stack>…</Stack>                                   a column, 1rem apart
+  <Stack direction="row" gap="sm" align="center">…</Stack>
+  <Stack direction="row" justify="between" wrap>…</Stack>
+
+Gaps: none · xs .25rem · sm .5rem · md 1rem · lg 1.5rem · xl 2rem. align
+auto centres a row and stretches a column.
+*/}}
+<brick:style>
+.bk-stack { display: flex; flex-direction: column; gap: var(--bk-space-4); min-width: 0; }
+.bk-stack--inline { display: inline-flex; }
+.bk-stack--row { flex-direction: row; align-items: center; }
+.bk-stack--wrap { flex-wrap: wrap; }
+.bk-stack--gap-none { gap: 0; }
+.bk-stack--gap-xs { gap: var(--bk-space-1); }
+.bk-stack--gap-sm { gap: var(--bk-space-2); }
+.bk-stack--gap-lg { gap: var(--bk-space-6); }
+.bk-stack--gap-xl { gap: var(--bk-space-8); }
+.bk-stack.bk-stack--align-start { align-items: flex-start; }
+.bk-stack.bk-stack--align-center { align-items: center; }
+.bk-stack.bk-stack--align-end { align-items: flex-end; }
+.bk-stack.bk-stack--align-stretch { align-items: stretch; }
+.bk-stack.bk-stack--align-baseline { align-items: baseline; }
+.bk-stack--justify-center { justify-content: center; }
+.bk-stack--justify-end { justify-content: flex-end; }
+.bk-stack--justify-between { justify-content: space-between; }
+.bk-stack--justify-around { justify-content: space-around; }
+</brick:style>
+{{ $p := .Props }}
+{{ $row := eq $p.direction "row" }}
+<div class="{{ cx `bk-stack` (cond $row `bk-stack--row` ``) (cond $p.inline `bk-stack--inline` ``) (cond $p.wrap `bk-stack--wrap` ``) (cond (ne $p.gap `md`) (print `bk-stack--gap-` $p.gap) ``) (cond (ne $p.align `auto`) (print `bk-stack--align-` $p.align) ``) (cond (ne $p.justify `start`) (print `bk-stack--justify-` $p.justify) ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</div>

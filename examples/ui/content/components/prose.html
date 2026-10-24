@@ -1,0 +1,14 @@
+---
+title: Prose
+category: Foundations
+description: Typography for HTML you did not write element by element — rendered markdown, a CMS body, a changelog.
+api:
+  - {name: size, type: "sm | base | lg", default: base, desc: The base size; everything inside scales with it.}
+---
+<h1>Prose</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="An article" block><ProseArticle /><brick:prop name="code"><Source src="~/demos/ProseArticle.html" /></brick:prop></Example>
+<Example title="Sizes" block><ProseSizes /><brick:prop name="code"><Source src="~/demos/ProseSizes.html" /></brick:prop></Example>
+<Prose><p>Prose styles use <code>:where()</code>, so they have no specificity: any class you add to an element inside still wins. The width is capped at about 70 characters for comfortable reading; <code>class="bk-prose--wide"</code> lifts the cap.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

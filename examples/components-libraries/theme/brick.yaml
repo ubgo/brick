@@ -1,0 +1,11 @@
+# Three kinds of component library, in precedence order (earlier wins a
+# name, and the project's own components/ folder beats all of them).
+libraries:
+  # A folder inside the project. prefix keeps its tags apart from others.
+  - {from: "~/ui", prefix: Team}
+  # A library the Go program offers by name: here the embedded UI kit, cut
+  # down to the two components this site uses.
+  - {from: brick-kit, only: [Badge, Button]}
+  # A remote library: `brick vendor` copies it into brick_modules/ and pins
+  # it in brick.lock; the engine only ever reads the copy.
+  - {from: github.com/acme/ui@v1.2.0, prefix: Acme}

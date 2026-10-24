@@ -1,0 +1,28 @@
+---
+title: Chat
+layout: app
+description: A Slack-style chat built only from kit components — channels and direct messages with unread counts, a live conversation over SQLite, a composer with emoji and attachments, and a details drawer.
+---
+<brick:style>
+.chat-top { margin-left: auto; display: flex; gap: .5rem; }
+</brick:style>
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/chat/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Chat`)" />
+    <div class="chat-top"><ThemeToggle /></div>
+  </brick:prop>
+  <ChatApp />
+</AppShell>
+
+<AppSource app="Chat">
+  <Tabs label="Chat files" size="sm">
+    <Tab title="chat.html"><CodeView file="content/apps/chat.html"><Source src="~/content/apps/chat.html" /></CodeView></Tab>
+    <Tab title="ChatApp.html"><CodeView file="apps/chat/ChatApp.html"><Source src="~/apps/chat/ChatApp.html" /></CodeView></Tab>
+    <Tab title="ChatFile.html"><CodeView file="apps/chat/ChatFile.html"><Source src="~/apps/chat/ChatFile.html" /></CodeView></Tab>
+    <Tab title="ChatFiles.html"><CodeView file="apps/chat/ChatFiles.html"><Source src="~/apps/chat/ChatFiles.html" /></CodeView></Tab>
+    <Tab title="chat.star"><CodeView file="apps/chat/chat.star"><Source src="~/apps/chat/chat.star" /></CodeView></Tab>
+    <Tab title="db_chat.go"><CodeView file="demodb/db_chat.go"><Source src="~/demodb/db_chat.go" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

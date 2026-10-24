@@ -1,0 +1,72 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  page: {type: int, default: 1}
+  total: {type: int, required: true}
+  perPage: {type: int, default: 20}
+  href: {type: string, default: "?page=%d"}
+  siblings: {type: int, default: 1}
+  edges: {type: bool, default: false}
+  summary: {type: bool, default: true}
+  size: {type: string, default: md, oneof: [sm, md]}
+  label: {type: string, default: Pagination}
+  action: {type: string, default: ""}
+---
+{{/*
+Pagination: server-side page links for a list of total items, perPage at a
+time. Every control is a real link, so it needs no JavaScript and every
+page has a URL.
+
+  <Pagination :page=".Params.page" :total=".Params.count" />          ?page=3
+  <Pagination :page="3" total="312" perPage="20" href="/orders/page/%d/" />
+  <Pagination :page="1" total="312" href="/search?q=go" edges />      /search?q=go&page=2
+  <Pagination :page=".State.page" :total="64" :perPage="10" action="goto" />   inside a stateful component
+
+href is a pattern: %d is replaced by the page number. Without %d the page
+is added as a query parameter (?page=N, or &page=N when href already has a
+query). The window shows the first and last page, the current page with
+siblings pages either side, and "…" for the gaps; a gap of a single page
+shows that page instead. action names a server action of the stateful
+component around the pager: every page link also gets
+brick:click="<action>(N)", so a click calls it with the page number instead
+of navigating, and the href still works without JavaScript. page is clamped to the valid range, and total=0
+renders "No results" with both arrows disabled. The summary reads "1–20 of
+312".
+*/}}
+<brick:style>
+.bk-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem 1rem; font-size: var(--bk-text-sm); }
+.bk-pagination__summary { color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; }
+.bk-pagination__summary b { color: var(--bk-fg); font-weight: 600; }
+.bk-pagination__list { display: flex; align-items: center; gap: .2rem; margin: 0; padding: 0; list-style: none; }
+.bk-pagination__item { display: inline-flex; align-items: center; justify-content: center; gap: .25rem; min-width: var(--bk-h-md); height: var(--bk-h-md); padding: 0 .5rem; border: 1px solid transparent; border-radius: var(--bk-radius); color: var(--bk-fg); font-weight: 500; font-variant-numeric: tabular-nums; text-decoration: none; transition: background var(--bk-duration); }
+a.bk-pagination__item:hover { background: var(--bk-accent); }
+.bk-pagination__item[aria-current=page] { border-color: var(--bk-input); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); }
+.bk-pagination__item[aria-disabled=true] { opacity: .4; cursor: default; }
+.bk-pagination__gap { display: inline-grid; place-items: center; min-width: 1.5rem; color: var(--bk-muted-fg); }
+.bk-pagination--sm .bk-pagination__item { min-width: var(--bk-h-sm); height: var(--bk-h-sm); padding: 0 .4rem; }
+.bk-pagination--sm { font-size: var(--bk-text-xs); }
+@media (max-width: 640px) { .bk-pagination__text { display: none; } }
+</brick:style>
+{{- $per := max 1 .Props.perPage -}}
+{{- $pages := div (add .Props.total (sub $per 1)) $per -}}
+{{- $page := min (max 1 .Props.page) (max 1 $pages) -}}
+{{- $sib := max 0 .Props.siblings -}}
+{{- $pat := cond (contains "%d" .Props.href) .Props.href (print .Props.href (cond (contains "?" .Props.href) "&" "?") "page=%d") -}}
+{{- $from := add (mul (sub $page 1) $per) 1 -}}
+{{- $to := min (mul $page $per) .Props.total -}}
+<nav class="{{ cx `bk-pagination` (cond (eq .Props.size `sm`) `bk-pagination--sm` ``) .Attrs.class }}" aria-label="{{ .Props.label }}" {{ attrs `class` }}>
+  {{ if .Props.summary }}<p class="bk-pagination__summary">{{ if .Props.total }}<b>{{ numberFormat $from }}</b>–<b>{{ numberFormat $to }}</b> of <b>{{ numberFormat .Props.total }}</b>{{ else }}No results{{ end }}</p>{{ end }}
+  <ul class="bk-pagination__list">
+    {{ if .Props.edges }}<li>{{ if gt $page 1 }}<a class="bk-pagination__item" href="{{ printf $pat 1 }}"{{ with $.Props.action }} brick:click="{{ . }}({{ 1 }})"{{ end }} aria-label="First page"><Icon name="chevrons-left" :size="14" /></a>{{ else }}<span class="bk-pagination__item" aria-disabled="true" aria-label="First page"><Icon name="chevrons-left" :size="14" /></span>{{ end }}</li>{{ end }}
+    <li>{{ if gt $page 1 }}<a class="bk-pagination__item" href="{{ printf $pat (sub $page 1) }}"{{ with $.Props.action }} brick:click="{{ . }}({{ (sub $page 1) }})"{{ end }} rel="prev" aria-label="Previous page"><Icon name="chevron-left" :size="14" /><span class="bk-pagination__text">Previous</span></a>{{ else }}<span class="bk-pagination__item" aria-disabled="true"><Icon name="chevron-left" :size="14" /><span class="bk-pagination__text">Previous</span></span>{{ end }}</li>
+    {{- $gap := false }}
+    {{- range $i := $pages }}{{ $n := add $i 1 }}
+      {{- $near := or (eq $n 1) (eq $n $pages) (and (ge $n (sub $page $sib)) (le $n (add $page $sib))) (and (eq $n 2) (eq (sub $page $sib) 3)) (and (eq $n (sub $pages 1)) (eq (add $page $sib) (sub $pages 2))) }}
+      {{- if $near }}{{ $gap = false }}<li><a class="bk-pagination__item" href="{{ printf $pat $n }}"{{ with $.Props.action }} brick:click="{{ . }}({{ $n }})"{{ end }}{{ if eq $n $page }} aria-current="page"{{ end }}>{{ $n }}</a></li>
+      {{- else if not $gap }}{{ $gap = true }}<li class="bk-pagination__gap" aria-hidden="true">…</li>{{ end }}
+    {{- end }}
+    <li>{{ if lt $page $pages }}<a class="bk-pagination__item" href="{{ printf $pat (add $page 1) }}"{{ with $.Props.action }} brick:click="{{ . }}({{ (add $page 1) }})"{{ end }} rel="next" aria-label="Next page"><span class="bk-pagination__text">Next</span><Icon name="chevron-right" :size="14" /></a>{{ else }}<span class="bk-pagination__item" aria-disabled="true"><span class="bk-pagination__text">Next</span><Icon name="chevron-right" :size="14" /></span>{{ end }}</li>
+    {{ if .Props.edges }}<li>{{ if lt $page $pages }}<a class="bk-pagination__item" href="{{ printf $pat $pages }}"{{ with $.Props.action }} brick:click="{{ . }}({{ $pages }})"{{ end }} aria-label="Last page"><Icon name="chevrons-right" :size="14" /></a>{{ else }}<span class="bk-pagination__item" aria-disabled="true" aria-label="Last page"><Icon name="chevrons-right" :size="14" /></span>{{ end }}</li>{{ end }}
+  </ul>
+</nav>

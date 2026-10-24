@@ -1,0 +1,17 @@
+---
+state:
+  last: {}
+---
+<brick:script>
+def where(state, props, details):
+    return dict(state, last = details)
+</brick:script>
+{{/*
+brick:click.details passes the click's modifier keys, button, count and
+position as the action's last argument; without .details nothing about
+the click is sent.
+*/}}
+<div style="display: grid; gap: .6rem">
+  <div id="v22-pad" brick:click.details="where" style="height: 6rem; border: 1px dashed var(--bk-border); border-radius: var(--bk-radius); display: grid; place-items: center; cursor: crosshair; user-select: none">Click here (try with Shift or Alt held)</div>
+  <code id="v22-details" style="font-size: var(--bk-text-sm)">{{ if .State.last }}x={{ .State.last.x }} y={{ .State.last.y }} shift={{ .State.last.shift }} alt={{ .State.last.alt }} ctrl={{ .State.last.ctrl }} meta={{ .State.last.meta }} count={{ .State.last.count }}{{ else }}no click yet{{ end }}</code>
+</div>

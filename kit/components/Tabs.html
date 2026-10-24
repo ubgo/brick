@@ -1,0 +1,136 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  label: {type: string, default: Tabs}
+  variant: {type: string, default: underline, oneof: [underline, pills, boxed, segmented]}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  selected: {type: int, default: 0}
+  current: {type: string, default: ""}
+  full: {type: bool, default: false}
+---
+{{/*
+Tabs: a tab set built from <Tab> children. The tab bar is drawn from the
+children's props before any panel renders (.Children), so a Tab must be
+written literally, not produced by a {{ range }}.
+
+  <Tabs label="Install"><Tab title="Go">go get …</Tab><Tab title="CLI">…</Tab></Tabs>
+  <Tabs variant="segmented" :selected="1" full>…</Tabs>
+  <Tab title="Inbox" icon="inbox" badge="12">…</Tab>
+  <Tabs current="/settings/team/">
+    <Tab title="Profile" href="/settings/">…</Tab>
+    <Tab title="Team" href="/settings/team/">…</Tab>
+  </Tabs>
+
+Panel mode: the selected panel is shown and the others carry hidden. With
+JavaScript, clicks and arrow keys, Home and End switch panels (a roving
+tabindex, disabled tabs skipped); with it off, a <noscript> rule shows
+every panel under its own title. Link mode (any Tab has href): a <nav> of
+real links, the one whose href equals current (else index selected) gets
+aria-current="page", and only its body renders — tabs across pages with no
+JavaScript at all. In both modes a tab bar too wide for its box scrolls
+sideways; with JavaScript the hidden side fades and the current tab is
+scrolled into view.
+*/}}
+<brick:client>
+brick.mount("Tabs", (el) => {
+  // A tab bar wider than its box scrolls sideways; data-fade marks which
+  // edge still hides tabs, so the CSS fades that side (both modes).
+  const bar = el.querySelector(":scope > .bk-tabs__list");
+  const fade = () => {
+    const max = bar.scrollWidth - bar.clientWidth, x = Math.abs(bar.scrollLeft);
+    // One pixel of slack: scrollLeft is fractional on zoomed pages and never
+    // quite reaches 0 or max. It is negative in right-to-left layouts, hence abs.
+    const f = max <= 1 ? "" : x <= 1 ? "end" : x >= max - 1 ? "start" : "both";
+    if (f) bar.dataset.fade = f; else delete bar.dataset.fade;
+  };
+  const ro = typeof ResizeObserver === "function" ? new ResizeObserver(fade) : null;
+  if (ro) ro.observe(bar);
+  bar.addEventListener("scroll", fade, { passive: true });
+  const current = bar.querySelector("[aria-selected=true], [aria-current=page]");
+  if (current && bar.scrollWidth > bar.clientWidth) bar.scrollLeft = current.offsetLeft - bar.clientWidth / 2 + current.offsetWidth / 2;
+  fade();
+  const stop = () => { bar.removeEventListener("scroll", fade); if (ro) ro.disconnect(); };
+  const list = el.querySelector(":scope > .bk-tabs__list[role=tablist]");
+  if (!list) return stop;
+  const tabs = [...list.querySelectorAll(":scope > [role=tab]")];
+  const panels = [...el.querySelectorAll(":scope > .bk-tabs__panels > [role=tabpanel]")];
+  const select = (i, focus) => {
+    tabs.forEach((t, j) => {
+      t.setAttribute("aria-selected", String(i === j));
+      t.tabIndex = i === j ? 0 : -1;
+      if (panels[j]) panels[j].hidden = i !== j;
+    });
+    if (focus) tabs[i].focus();
+  };
+  const enabled = tabs.filter((t) => !t.disabled);
+  const onClick = (e) => { const t = e.target.closest("[role=tab]"); const i = tabs.indexOf(t); if (i >= 0 && !t.disabled) select(i, false); };
+  const onKey = (e) => {
+    const k = enabled.indexOf(document.activeElement);
+    if (k < 0) return;
+    const next = { ArrowRight: k + 1, ArrowLeft: k - 1, Home: 0, End: enabled.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    select(tabs.indexOf(enabled[(next + enabled.length) % enabled.length]), true);
+  };
+  const start = tabs.findIndex((t) => t.getAttribute("aria-selected") === "true");
+  list.addEventListener("click", onClick);
+  list.addEventListener("keydown", onKey);
+  el.classList.add("bk-tabs--js");
+  select(start < 0 ? 0 : start, false);
+  return () => { stop(); list.removeEventListener("click", onClick); list.removeEventListener("keydown", onKey); };
+})
+</brick:client>
+<brick:style>
+.bk-tabs { --bk-tabs-h: var(--bk-h-md); font-size: var(--bk-text-sm); }
+.bk-tabs--sm { --bk-tabs-h: var(--bk-h-sm); }
+.bk-tabs--lg { --bk-tabs-h: var(--bk-h-lg); font-size: var(--bk-text-base); }
+.bk-tabs__list { display: flex; align-items: center; gap: .25rem; overflow-x: auto; scrollbar-width: none; }
+.bk-tabs__list[data-fade=end] { mask-image: linear-gradient(to right, black calc(100% - 2rem), transparent); }
+.bk-tabs__list[data-fade=start] { mask-image: linear-gradient(to left, black calc(100% - 2rem), transparent); }
+.bk-tabs__list[data-fade=both] { mask-image: linear-gradient(to right, transparent, black 2rem, black calc(100% - 2rem), transparent); }
+.bk-tabs__tab { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: .4rem; height: var(--bk-tabs-h); padding: 0 .75rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-muted-fg); font: 500 1em/1 var(--bk-font); white-space: nowrap; text-decoration: none; cursor: pointer; transition: color var(--bk-duration), background var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-tabs__tab:hover { color: var(--bk-fg); }
+.bk-tabs__tab:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.bk-tabs__tab:disabled { opacity: .45; cursor: not-allowed; }
+.bk-tabs__tab[aria-selected=true], .bk-tabs__tab[aria-current=page] { color: var(--bk-fg); }
+.bk-tabs__badge { display: inline-grid; place-items: center; min-width: 1.15rem; height: 1.15rem; padding: 0 .3rem; border-radius: var(--bk-radius-full); background: var(--bk-muted); color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bk-tabs__tab[aria-selected=true] .bk-tabs__badge, .bk-tabs__tab[aria-current=page] .bk-tabs__badge { background: color-mix(in oklab, var(--bk-primary) 14%, transparent); color: var(--bk-fg); }
+.bk-tabs--full .bk-tabs__list { display: flex; }
+.bk-tabs--full .bk-tabs__tab { flex: 1 1 0; }
+
+.bk-tabs--underline .bk-tabs__list { gap: 0; border-bottom: 1px solid var(--bk-border); }
+.bk-tabs--underline .bk-tabs__tab { border-radius: 0; margin-bottom: -1px; }
+.bk-tabs--underline .bk-tabs__tab::after { content: ""; position: absolute; left: .5rem; right: .5rem; bottom: 0; height: 2px; border-radius: 2px 2px 0 0; background: transparent; transition: background var(--bk-duration); }
+.bk-tabs--underline .bk-tabs__tab[aria-selected=true]::after, .bk-tabs--underline .bk-tabs__tab[aria-current=page]::after { background: var(--bk-primary); }
+
+.bk-tabs--pills .bk-tabs__tab { border-radius: var(--bk-radius-full); }
+.bk-tabs--pills .bk-tabs__tab:hover { background: var(--bk-accent); }
+.bk-tabs--pills .bk-tabs__tab[aria-selected=true], .bk-tabs--pills .bk-tabs__tab[aria-current=page] { background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); }
+
+.bk-tabs--boxed .bk-tabs__list { gap: 0; border-bottom: 1px solid var(--bk-border); overflow: visible; }
+.bk-tabs--boxed .bk-tabs__tab { margin-bottom: -1px; border: 1px solid transparent; border-radius: var(--bk-radius) var(--bk-radius) 0 0; }
+.bk-tabs--boxed .bk-tabs__tab[aria-selected=true], .bk-tabs--boxed .bk-tabs__tab[aria-current=page] { border-color: var(--bk-border); border-bottom-color: var(--bk-surface); background: var(--bk-surface); }
+.bk-tabs--boxed > .bk-tabs__panels { padding: .9rem 1rem; border: 1px solid var(--bk-border); border-top: 0; border-radius: 0 0 var(--bk-radius) var(--bk-radius); background: var(--bk-surface); }
+
+.bk-tabs--segmented .bk-tabs__list { display: inline-flex; gap: 2px; padding: 3px; border-radius: calc(var(--bk-radius) + 3px); background: var(--bk-muted); }
+.bk-tabs--segmented.bk-tabs--full .bk-tabs__list { display: flex; }
+.bk-tabs--segmented .bk-tabs__tab { height: max(var(--bk-h-sm), calc(var(--bk-tabs-h) - 6px)); }
+.bk-tabs--segmented .bk-tabs__tab[aria-selected=true], .bk-tabs--segmented .bk-tabs__tab[aria-current=page] { background: var(--bk-surface); box-shadow: var(--bk-shadow); }
+
+.bk-tabs__panels { padding-top: .9rem; }
+.bk-tabs__panel:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; border-radius: var(--bk-radius-sm); }
+.bk-tabs__panel[hidden] { display: none; }
+.bk-tabs__ptitle { display: none; margin: 0 0 .35rem; font-size: var(--bk-text-sm); font-weight: 600; }
+.bk-tabs--nav > .bk-tabs__panels:empty { display: none; }
+</brick:style>
+{{ $nav := false }}{{ $sel := .Props.selected }}
+{{ range $i, $c := .Children }}{{ with index $c.Props "href" }}{{ $nav = true }}{{ if and $.Props.current (eq . $.Props.current) }}{{ $sel = $i }}{{ end }}{{ end }}{{ end }}
+{{ $cls := cx "bk-tabs" (print "bk-tabs--" .Props.variant) (cond (ne .Props.size "md") (print "bk-tabs--" .Props.size) "") (cond .Props.full "bk-tabs--full" "") (cond $nav "bk-tabs--nav" "") .Attrs.class }}
+<div class="{{ $cls }}" {{ attrs `class` }}>
+  {{ if $nav }}<nav class="bk-tabs__list" aria-label="{{ .Props.label }}">{{ range $i, $c := .Children }}<a class="bk-tabs__tab" href="{{ index $c.Props `href` }}"{{ with index $c.Props "prefetch" }} brick:prefetch{{ if eq (print .) "visible" }}="visible"{{ end }}{{ end }}{{ if eq $i $sel }} aria-current="page"{{ end }}>{{ with index $c.Props "icon" }}<Icon :name="." :size="14" />{{ end }}{{ $c.Props.title }}{{ with index $c.Props "badge" }}<span class="bk-tabs__badge">{{ . }}</span>{{ end }}</a>{{ end }}</nav>
+  <div class="bk-tabs__panels">{{ range $i, $c := .Children }}{{ if eq $i $sel }}{{ child $c }}{{ end }}{{ end }}</div>
+  {{ else }}<div class="bk-tabs__list" role="tablist" aria-label="{{ .Props.label }}">{{ range $i, $c := .Children }}<button role="tab" type="button" class="bk-tabs__tab" id="{{ $.ID }}-t{{ $i }}" aria-controls="{{ $.ID }}-p{{ $i }}" aria-selected="{{ eq $i $sel }}" tabindex="{{ cond (eq $i $sel) 0 -1 }}"{{ if index $c.Props "disabled" }} disabled{{ end }}>{{ with index $c.Props "icon" }}<Icon :name="." :size="14" />{{ end }}{{ $c.Props.title }}{{ with index $c.Props "badge" }}<span class="bk-tabs__badge">{{ . }}</span>{{ end }}</button>{{ end }}</div>
+  <div class="bk-tabs__panels">{{ range $i, $c := .Children }}<div role="tabpanel" class="bk-tabs__panel" id="{{ $.ID }}-p{{ $i }}" aria-labelledby="{{ $.ID }}-t{{ $i }}" tabindex="0"{{ if ne $i $sel }} hidden{{ end }}><h3 class="bk-tabs__ptitle">{{ $c.Props.title }}</h3>{{ child $c }}</div>{{ end }}</div>
+  <noscript><style>.bk-tabs:not(.bk-tabs--js) > .bk-tabs__list { display: none; } .bk-tabs:not(.bk-tabs--js) > .bk-tabs__panels > .bk-tabs__panel { display: block; margin-bottom: 1rem; } .bk-tabs:not(.bk-tabs--js) .bk-tabs__ptitle { display: block; }</style></noscript>{{ end }}
+</div>

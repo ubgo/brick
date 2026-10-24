@@ -1,0 +1,11 @@
+---
+blocks:
+  - {type: Hero, title: Welcome}
+  - {type: Quote, text: "Less, but better."}
+---
+{{ range .Params.blocks }}<brick:render :name=".type" :props="omit . `type`" />
+{{ end }}
+<brick:boundary>
+  <RecentPosts />
+  <brick:prop name="fallback"><p class="fallback">Recent posts are unavailable. ({{ .Slot.Message }})</p></brick:prop>
+</brick:boundary>

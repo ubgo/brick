@@ -1,0 +1,89 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  text: {type: string, default: "", client: true}
+  target: {type: string, default: "", client: true}
+  label: {type: string, default: Copy}
+  copiedLabel: {type: string, default: Copied, client: true}
+  showLabel: {type: bool, default: false}
+  variant: {type: string, default: ghost, oneof: [ghost, outline, secondary]}
+  size: {type: string, default: sm, oneof: [xs, sm, md]}
+---
+{{/*
+CopyButton: copies text to the clipboard and shows a check for two
+seconds. The text is the text prop, or the text of the element the target
+selector names.
+
+  <CopyButton text="go get github.com/ubgo/brick" />
+  <pre id="install">npm i brick</pre> <CopyButton target="#install" />
+  <CopyButton text="sk_live_…" showLabel variant="outline" label="Copy key" />
+
+Copying needs JavaScript, so without it the button is hidden rather than
+dead. The result is announced to screen readers through a polite live
+region; label is the accessible name, and the visible text when showLabel.
+*/}}
+<brick:client>
+// FEEDBACK_MS is how long the copied label and announcement stay.
+const FEEDBACK_MS = 2000;
+
+brick.mount("CopyButton", (el, props) => {
+  const live = el.querySelector(".bk-copy-button__live");
+  const text = el.querySelector(".bk-copy-button__text");
+  const idle = text ? text.textContent : "";
+  let timer;
+  const source = () => {
+    if (props.text) return props.text;
+    const t = props.target && document.querySelector(props.target);
+    return t ? (("value" in t && t.value) || t.textContent || "").trim() : "";
+  };
+  // fallback copies through a hidden textarea and execCommand, for browsers
+  // (or insecure origins) without the async Clipboard API.
+  const fallback = (s) => {
+    const ta = document.createElement("textarea");
+    ta.value = s;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } finally { ta.remove(); }
+  };
+  const click = async () => {
+    const s = source();
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) await navigator.clipboard.writeText(s);
+      else fallback(s);
+    } catch (err) { fallback(s); }
+    el.dataset.copied = "";
+    if (text) text.textContent = props.copiedLabel;
+    live.textContent = props.copiedLabel;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      delete el.dataset.copied;
+      if (text) text.textContent = idle;
+      live.textContent = "";
+    }, FEEDBACK_MS);
+  };
+  el.hidden = false;
+  el.addEventListener("click", click);
+  return () => { clearTimeout(timer); el.removeEventListener("click", click); };
+})
+</brick:client>
+<brick:style>
+.bk-copy-button { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; height: var(--bk-h-sm); min-width: var(--bk-h-sm); padding: 0 .45rem; border: 1px solid transparent; border-radius: var(--bk-radius); background: transparent; color: var(--bk-muted-fg); font: 500 var(--bk-text-xs)/1 var(--bk-font); cursor: pointer; transition: background var(--bk-duration), color var(--bk-duration), border-color var(--bk-duration); }
+.bk-copy-button[hidden] { display: none; }
+.bk-copy-button:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-copy-button:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-copy-button--outline { border-color: var(--bk-input); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-sm); }
+.bk-copy-button--secondary { background: var(--bk-muted); color: var(--bk-fg); }
+.bk-copy-button--xs { height: var(--bk-h-xs); min-width: var(--bk-h-xs); padding: 0 .3rem; border-radius: var(--bk-radius-sm); }
+.bk-copy-button--md { height: var(--bk-h-md); min-width: var(--bk-h-md); padding: 0 .65rem; font-size: var(--bk-text-sm); }
+.bk-copy-button__icons { display: inline-grid; }
+.bk-copy-button__icons > .bk-icon { grid-area: 1 / 1; transition: opacity var(--bk-duration), transform var(--bk-duration); }
+.bk-copy-button__check { opacity: 0; transform: scale(.6); color: var(--bk-success); }
+.bk-copy-button[data-copied] .bk-copy-button__copy { opacity: 0; transform: scale(.6); }
+.bk-copy-button[data-copied] .bk-copy-button__check { opacity: 1; transform: none; }
+</brick:style>
+{{ $isize := cond (eq .Props.size "md") 15 13 }}
+<button type="button" class="{{ cx `bk-copy-button` (cond (ne .Props.variant `ghost`) (print `bk-copy-button--` .Props.variant) ``) (cond (ne .Props.size `sm`) (print `bk-copy-button--` .Props.size) ``) .Attrs.class }}"{{ if not .Props.showLabel }} aria-label="{{ .Props.label }}" title="{{ .Props.label }}"{{ end }} hidden {{ attrs `class` }}><span class="bk-copy-button__icons"><Icon name="copy" :size="$isize" class="bk-copy-button__copy" /><Icon name="check" :size="$isize" class="bk-copy-button__check" /></span>{{ if .Props.showLabel }}<span class="bk-copy-button__text">{{ .Props.label }}</span>{{ end }}<span class="bk-sr-only bk-copy-button__live" aria-live="polite"></span></button>

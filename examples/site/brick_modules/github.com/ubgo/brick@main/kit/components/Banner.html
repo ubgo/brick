@@ -1,0 +1,76 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  variant: {type: string, default: primary, oneof: [primary, neutral, info, success, warning, danger]}
+  icon: {type: string, default: ""}
+  dismissible: {type: bool, default: false}
+  label: {type: string, default: Dismiss}
+  regionLabel: {type: string, default: Announcement}
+---
+{{/*
+Banner: a full-width announcement bar across the top of a page or app —
+a release, a maintenance window, a trial ending. Children are the message;
+an actions block adds a link or button after it.
+
+  <Banner>brick v2 is out.</Banner>
+  <Banner variant="warning" icon="alert-triangle">Maintenance on Sunday.</Banner>
+  <Banner id="launch-2026" dismissible>
+    We launched! <brick:prop name="actions"><a href="/blog/">Read more</a></brick:prop>
+  </Banner>
+
+A dismissible banner needs an id: JavaScript shows the close button and
+remembers the dismissal in localStorage under "bk-banner:<id>", so the
+banner stays gone on later visits. Change the id to show a new
+announcement to everyone again. Without JavaScript the close button stays
+hidden and the banner always shows.
+
+The bar is a region landmark named regionLabel ("Announcement"); give
+each banner on a page its own name (regionLabel="Maintenance notice"), so
+assistive technology can tell the landmarks apart. label names the close
+button.
+*/}}
+<brick:client>
+// DISMISSED_PREFIX + the banner's id is the localStorage key that remembers
+// a dismissal; a banner without an id cannot be remembered.
+const DISMISSED_PREFIX = "bk-banner:";
+
+brick.mount("Banner", (el) => {
+  const key = el.id ? DISMISSED_PREFIX + el.id : "";
+  let gone = false;
+  try { gone = key !== "" && localStorage.getItem(key) === "1"; } catch (e) {}
+  if (gone) { el.hidden = true; return; }
+  const btn = el.querySelector(".bk-banner__close");
+  if (!btn) return;
+  btn.hidden = false;
+  const dismiss = () => {
+    el.hidden = true;
+    if (key) { try { localStorage.setItem(key, "1"); } catch (e) {} }
+    brick.emit("banner:dismiss", { id: el.id });
+  };
+  btn.addEventListener("click", dismiss);
+  return () => btn.removeEventListener("click", dismiss);
+})
+</brick:client>
+<brick:style>
+.bk-banner { --bk-banner-bg: var(--bk-primary); --bk-banner-fg: var(--bk-primary-fg); display: flex; align-items: center; justify-content: center; gap: .6rem; min-height: var(--bk-h-lg); padding: .4rem 2.75rem; background: var(--bk-banner-bg); color: var(--bk-banner-fg); font-size: var(--bk-text-sm); line-height: 1.4; text-align: center; position: relative; animation: bk-fade-in var(--bk-duration); }
+.bk-banner[hidden] { display: none; }
+.bk-banner--neutral { --bk-banner-bg: var(--bk-neutral); --bk-banner-fg: var(--bk-neutral-fg); }
+.bk-banner--info { --bk-banner-bg: var(--bk-info); --bk-banner-fg: var(--bk-info-fg); }
+.bk-banner--success { --bk-banner-bg: var(--bk-success); --bk-banner-fg: var(--bk-success-fg); }
+.bk-banner--warning { --bk-banner-bg: var(--bk-warning); --bk-banner-fg: var(--bk-warning-fg); }
+.bk-banner--danger { --bk-banner-bg: var(--bk-danger); --bk-banner-fg: var(--bk-danger-fg); }
+.bk-banner__icon { flex: none; opacity: .9; }
+.bk-banner__actions { display: inline-flex; align-items: center; gap: .5rem; font-weight: 600; }
+.bk-banner__actions a { color: inherit; text-underline-offset: 2px; }
+.bk-banner__close { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%); display: inline-grid; place-items: center; width: var(--bk-h-sm); height: var(--bk-h-sm); border: 0; border-radius: var(--bk-radius-sm); background: transparent; color: inherit; opacity: .8; cursor: pointer; }
+.bk-banner__close[hidden] { display: none; }
+.bk-banner__close:hover { opacity: 1; background: color-mix(in oklab, var(--bk-banner-fg) 16%, transparent); }
+.bk-banner__close:focus-visible { outline: 2px solid var(--bk-banner-fg); outline-offset: 1px; }
+</brick:style>
+<div class="{{ cx `bk-banner` (print `bk-banner--` .Props.variant) .Attrs.class }}" role="region" aria-label="{{ .Props.regionLabel }}" {{ attrs `class` }}>
+  {{ with .Props.icon }}<Icon :name="." class="bk-banner__icon" />{{ end }}
+  <span class="bk-banner__text">{{ children }}</span>
+  {{ if hasNode "actions" }}<span class="bk-banner__actions">{{ node "actions" }}</span>{{ end }}
+  {{ if .Props.dismissible }}<button type="button" class="bk-banner__close" aria-label="{{ .Props.label }}" hidden><Icon name="x" :size="14" /></button>{{ end }}
+</div>

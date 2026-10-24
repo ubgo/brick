@@ -1,0 +1,42 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  tone: {type: string, default: neutral, oneof: [neutral, primary, info, success, warning, danger]}
+  variant: {type: string, default: soft, oneof: [soft, outline]}
+  title: {type: string, default: ""}
+  icon: {type: string, default: auto}
+---
+{{/*
+Callout: a highlighted block of content in the page's flow — a tip, a
+note beside a form, a "heads up" before a destructive setting. Unlike an
+Alert it is not announced when it appears and cannot be dismissed: it is
+part of the page, read in order.
+
+  <Callout title="Heads up" tone="warning">Deleting a project cannot be undone.</Callout>
+  <Callout tone="info" icon="sparkles" title="New: brick 0.3">Islands, actions and the kit.
+    <brick:prop name="actions"><Button size="sm" variant="outline">What's new</Button></brick:prop>
+  </Callout>
+  <Callout variant="outline">A plain note with no title.</Callout>
+
+Each tone has a default icon (info, check-circle, alert-triangle,
+alert-circle; neutral and primary use info); icon names another, and
+icon="" hides it.
+*/}}
+<brick:style>
+.bk-callout { --bk-c: var(--bk-muted-fg); display: flex; gap: .75rem; padding: .85rem 1rem; border: 1px solid transparent; border-radius: var(--bk-radius-lg); background: color-mix(in oklab, var(--bk-c) 9%, var(--bk-surface)); color: var(--bk-fg); font-size: var(--bk-text-sm); line-height: 1.5; }
+.bk-callout--primary { --bk-c: var(--bk-primary); }
+.bk-callout--info { --bk-c: var(--bk-info); }
+.bk-callout--success { --bk-c: var(--bk-success); }
+.bk-callout--warning { --bk-c: var(--bk-warning); }
+.bk-callout--danger { --bk-c: var(--bk-danger); }
+.bk-callout--outline { background: var(--bk-surface); border-color: color-mix(in oklab, var(--bk-c) 35%, var(--bk-border)); }
+.bk-callout--neutral.bk-callout--soft { background: var(--bk-muted); }
+.bk-callout__icon { flex: none; margin-top: .15rem; color: var(--bk-c); }
+.bk-callout__body { display: grid; gap: .2rem; min-width: 0; flex: 1; }
+.bk-callout__title { margin: 0; font-size: var(--bk-text-sm); font-weight: 600; }
+.bk-callout__text { color: color-mix(in oklab, var(--bk-fg) 80%, var(--bk-muted-fg)); }
+.bk-callout__actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+</brick:style>
+{{ $icon := .Props.icon }}{{ if eq $icon "auto" }}{{ $icon = index (dict "neutral" "info" "primary" "info" "info" "info" "success" "check-circle" "warning" "alert-triangle" "danger" "alert-circle") .Props.tone }}{{ end }}
+<div class="{{ cx `bk-callout` (print `bk-callout--` .Props.tone) (print `bk-callout--` .Props.variant) .Attrs.class }}" {{ attrs `class` }}>{{ with $icon }}<Icon :name="." :size="16" class="bk-callout__icon" />{{ end }}<div class="bk-callout__body">{{ with .Props.title }}<p class="bk-callout__title">{{ . }}</p>{{ end }}{{ if hasNode "children" }}<div class="bk-callout__text">{{ children }}</div>{{ end }}{{ if hasNode "actions" }}<div class="bk-callout__actions">{{ node "actions" }}</div>{{ end }}</div></div>

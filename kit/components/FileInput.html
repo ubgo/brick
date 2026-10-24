@@ -1,0 +1,35 @@
+---
+inject:
+  bkField: {default: {}}
+props:
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+FileInput: a styled native file input — the browser's own picker, file
+name and drag target, with the kit's button and box.
+
+  <FileInput name="avatar" accept="image/*" />
+  <FileInput name="docs" multiple size="sm" />
+
+The root IS the <input type="file">, so every attribute (name, accept,
+multiple, capture …) lands on it; the form needs
+enctype="multipart/form-data". For a large drop area with a file list, use
+<Dropzone>.
+*/}}
+<brick:style>
+.bk-file { display: block; width: 100%; height: var(--bk-h-md); padding: 0; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-muted-fg); font: var(--bk-text-sm)/calc(var(--bk-h-md) - 2px) var(--bk-font); box-shadow: var(--bk-shadow-sm); cursor: pointer; transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-file::file-selector-button { height: 100%; margin: 0 .75rem 0 0; padding: 0 .8rem; border: 0; border-right: 1px solid var(--bk-input); background: var(--bk-surface-2); color: var(--bk-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); cursor: pointer; transition: background var(--bk-duration); }
+.bk-file:hover::file-selector-button { background: var(--bk-accent); }
+.bk-file:hover { border-color: color-mix(in oklab, var(--bk-input), var(--bk-fg) 15%); }
+.bk-file:focus-visible { outline: none; border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-file:disabled { opacity: .6; cursor: not-allowed; background: var(--bk-muted); }
+.bk-file--sm { height: var(--bk-h-sm); line-height: calc(var(--bk-h-sm) - 2px); }
+.bk-file--lg { height: var(--bk-h-lg); line-height: calc(var(--bk-h-lg) - 2px); font-size: var(--bk-text-base); }
+.bk-file--invalid { border-color: var(--bk-danger); }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $invalid := or .Props.invalid (index $f "invalid") }}
+<input type="file" class="{{ cx `bk-file` (cond (ne .Props.size `md`) (print `bk-file--` .Props.size) ``) (cond $invalid `bk-file--invalid` ``) .Attrs.class }}"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if or .Props.required (index $f "required") }} required{{ end }}{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` `id` }}>

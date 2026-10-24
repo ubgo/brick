@@ -1,0 +1,13 @@
+<brick:style>
+.copy-snippet { display: flex; align-items: center; gap: .5rem; width: 100%; max-width: 30rem; padding: .35rem .4rem .35rem .85rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface-2); font: var(--bk-text-sm) var(--bk-mono); }
+.copy-snippet code { flex: 1; overflow-x: auto; white-space: nowrap; }
+.copy-snippet code::before { content: "$ "; color: var(--bk-muted-fg); }
+</brick:style>
+<div class="copy-snippet">
+  <code id="install-cmd">go install github.com/ubgo/brick/cmd/brick@latest</code>
+  <CopyButton target="#install-cmd" label="Copy install command" />
+</div>
+<div class="copy-snippet">
+  <code id="invite-link">https://acme.test/join/7f3a-91c2</code>
+  <CopyButton target="#invite-link" showLabel variant="outline" size="xs" label="Copy link" copiedLabel="Link copied" />
+</div>

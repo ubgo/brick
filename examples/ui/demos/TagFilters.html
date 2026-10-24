@@ -1,0 +1,8 @@
+---
+filters: [{key: status, value: active}, {key: team, value: Platform}, {key: role, value: Engineer}]
+---
+<div style="display: flex; flex-wrap: wrap; align-items: center; gap: .4rem">
+  <span style="font-size: var(--bk-text-sm); color: var(--bk-muted-fg)">Filters:</span>
+  {{ range .Params.filters }}<Tag :removeHref="print `?drop=` .key">{{ .key }}: {{ .value }}</Tag>{{ end }}
+  <a href="?" style="font-size: var(--bk-text-sm); color: var(--bk-primary-text)">Clear all</a>
+</div>

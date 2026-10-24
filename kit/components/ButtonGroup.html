@@ -1,0 +1,38 @@
+---
+props:
+  orientation: {type: string, default: horizontal, oneof: [horizontal, vertical]}
+  label: {type: string, default: ""}
+---
+{{/*
+ButtonGroup: buttons joined into one control — a segmented toolbar, a
+split button, pagination. Children are usually <Button>s; any element
+works, and each keeps its own behaviour.
+
+  <ButtonGroup label="Text style">
+    <Button variant="outline" icon="bold" square label="Bold" />
+    <Button variant="outline" icon="italic" square label="Italic" />
+  </ButtonGroup>
+  <ButtonGroup orientation="vertical">…</ButtonGroup>
+
+The root is role="group"; give it a label when the buttons alone do not say
+what the group is for. A child with aria-pressed="true" or aria-current is
+drawn selected, for segmented controls and pagination.
+*/}}
+<brick:style>
+.bk-button-group { display: inline-flex; isolation: isolate; vertical-align: middle; }
+.bk-button-group > * { position: relative; border-radius: 0; box-shadow: none; }
+.bk-button-group > :hover, .bk-button-group > :focus-visible { z-index: 1; }
+.bk-button-group:not(.bk-button-group--vertical) > :first-child { border-top-left-radius: var(--bk-radius); border-bottom-left-radius: var(--bk-radius); }
+.bk-button-group:not(.bk-button-group--vertical) > :last-child { border-top-right-radius: var(--bk-radius); border-bottom-right-radius: var(--bk-radius); }
+.bk-button-group:not(.bk-button-group--vertical) > * + * { margin-left: -1px; }
+.bk-button-group--vertical { flex-direction: column; }
+.bk-button-group--vertical > :first-child { border-top-left-radius: var(--bk-radius); border-top-right-radius: var(--bk-radius); }
+.bk-button-group--vertical > :last-child { border-bottom-left-radius: var(--bk-radius); border-bottom-right-radius: var(--bk-radius); }
+.bk-button-group--vertical > * + * { margin-top: -1px; }
+.bk-button-group:has(> .bk-btn--outline) { border-radius: var(--bk-radius); box-shadow: var(--bk-shadow-sm); }
+.bk-button-group:not(.bk-button-group--vertical) > :is(.bk-btn--primary, .bk-btn--danger) + :is(.bk-btn--primary, .bk-btn--danger) { border-left-color: color-mix(in oklab, var(--bk-primary-fg) 28%, transparent); }
+.bk-button-group--vertical > :is(.bk-btn--primary, .bk-btn--danger) + :is(.bk-btn--primary, .bk-btn--danger) { border-top-color: color-mix(in oklab, var(--bk-primary-fg) 28%, transparent); }
+.bk-button-group:not(.bk-button-group--vertical) > :is(.bk-btn--secondary, .bk-btn--soft) + :is(.bk-btn--secondary, .bk-btn--soft) { border-left-color: color-mix(in oklab, var(--bk-fg) 10%, transparent); }
+.bk-button-group > .bk-btn[aria-pressed=true], .bk-button-group > .bk-btn[aria-current] { z-index: 1; background: color-mix(in oklab, var(--bk-primary) 10%, var(--bk-surface)); color: var(--bk-primary-text); }
+</brick:style>
+<div class="{{ cx `bk-button-group` (cond (eq .Props.orientation `vertical`) `bk-button-group--vertical` ``) .Attrs.class }}" role="group"{{ with .Props.label }} aria-label="{{ . }}"{{ end }} {{ attrs `class` }}>{{ children }}</div>

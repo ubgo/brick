@@ -1,0 +1,5 @@
+<div style="width: 100%; max-width: 40rem">
+  <Field label="Plan" hint="You can change plans at any time.">
+    <RadioGroup name="plan" variant="card" :columns="3" value="pro" :options="list (dict `value` `hobby` `label` `Hobby` `description` `Free forever, 1 site`) (dict `value` `pro` `label` `Pro` `description` `$12 / month, 10 sites`) (dict `value` `team` `label` `Team` `description` `$49 / month, unlimited`)" />
+  </Field>
+</div>

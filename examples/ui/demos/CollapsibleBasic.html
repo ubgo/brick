@@ -1,0 +1,9 @@
+<div style="display: grid; gap: .75rem; width: 100%; max-width: 26rem">
+  <Field label="Project name"><Input name="project" value="brick-kit" /></Field>
+  <Collapsible title="Advanced options">
+    <div style="display: grid; gap: .75rem">
+      <Field label="Build command" hint="Leave empty for no build."><Input name="build" placeholder="task build" /></Field>
+      <Checkbox name="preview" label="Deploy a preview for every branch" checked />
+    </div>
+  </Collapsible>
+</div>

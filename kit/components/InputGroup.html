@@ -1,0 +1,32 @@
+---
+props:
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+---
+{{/*
+InputGroup: joins controls and text addons into one bar — shared borders,
+square inner corners.
+
+  <InputGroup><Input name="q" placeholder="Search" /><Button variant="outline">Go</Button></InputGroup>
+  <InputGroup><span class="bk-input-group__text">https://</span><Input name="domain" /><Select name="tld" :options="list `.com` `.dev`" /></InputGroup>
+  <InputGroup><Select name="cur" :options="list `USD` `EUR`" /><NumberInput name="amount" value="10" /></InputGroup>
+
+Children are any kit controls (Input, Select, NumberInput, Button …) and
+<span class="bk-input-group__text"> for static text. Inputs and selects
+stretch; buttons and text keep their width. A focused control is raised
+so its ring is never covered by a neighbour.
+*/}}
+<brick:style>
+.bk-input-group { display: flex; align-items: stretch; width: 100%; }
+.bk-input-group > :is(.bk-input, .bk-select, .bk-number, .bk-password, .bk-search, .bk-combobox, .bk-datepicker, .bk-btn, .bk-input-group__text) { position: relative; flex: none; width: auto; margin: 0; }
+.bk-input-group > :is(.bk-input, .bk-number, .bk-password, .bk-search, .bk-combobox, .bk-datepicker) { flex: 1 1 auto; min-width: 0; }
+.bk-input-group > * + * { margin-left: -1px; }
+.bk-input-group :is(.bk-input, .bk-select__control, .bk-combobox__box), .bk-input-group > :is(.bk-btn, .bk-input-group__text) { border-radius: 0; box-shadow: none; }
+.bk-input-group > :first-child:is(.bk-btn, .bk-input-group__text), .bk-input-group > :first-child :is(.bk-input, .bk-select__control, .bk-combobox__box), .bk-input-group > .bk-input:first-child { border-top-left-radius: var(--bk-radius); border-bottom-left-radius: var(--bk-radius); }
+.bk-input-group > :last-child:is(.bk-btn, .bk-input-group__text), .bk-input-group > :last-child :is(.bk-input, .bk-select__control, .bk-combobox__box), .bk-input-group > .bk-input:last-child { border-top-right-radius: var(--bk-radius); border-bottom-right-radius: var(--bk-radius); }
+.bk-input-group > .bk-btn { height: auto; min-height: var(--bk-h-md); }
+.bk-input-group > :focus-within, .bk-input-group > .bk-btn:focus-visible { z-index: 1; }
+.bk-input-group__text { display: flex; align-items: center; padding: 0 .7rem; border: 1px solid var(--bk-input); background: var(--bk-surface-2); color: var(--bk-muted-fg); font: var(--bk-text-sm)/1 var(--bk-font); white-space: nowrap; }
+.bk-input-group--sm > * { min-height: var(--bk-h-sm); }
+.bk-input-group--lg > * { min-height: var(--bk-h-lg); }
+</brick:style>
+<div role="group" class="{{ cx `bk-input-group` (cond (ne .Props.size `md`) (print `bk-input-group--` .Props.size) ``) .Attrs.class }}" {{ attrs `class` }}>{{ children }}</div>

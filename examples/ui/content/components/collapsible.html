@@ -1,0 +1,16 @@
+---
+title: Collapsible
+category: Data display
+description: "One region that shows and hides under a trigger — no box, a native details, with the height animated where the browser can."
+api:
+  - {name: title, type: string, desc: "The trigger text; a trigger block replaces it with markup."}
+  - {name: open, type: bool, desc: "Starts open."}
+  - {name: name, type: string, desc: "Groups collapsibles so one opens at a time."}
+  - {name: chevron, type: bool, default: "true", desc: "The turning arrow before the trigger."}
+---
+<h1>Collapsible</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Advanced options in a form" block><CollapsibleBasic /><brick:prop name="code"><Source src="~/demos/CollapsibleBasic.html" /></brick:prop></Example>
+<Example title="A custom trigger" block><CollapsibleRepos /><brick:prop name="code"><Source src="~/demos/CollapsibleRepos.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

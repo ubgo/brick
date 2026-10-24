@@ -1,0 +1,195 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  items: {type: list, required: true}
+  current: {type: string, default: ""}
+  label: {type: string, default: Main}
+---
+{{/*
+NavigationMenu: a site header's top-level links, where some open a rich
+panel — a mega menu of links, each with an icon and a line of description.
+
+  <NavigationMenu :items=".Data.site.nav" current="{{ .Page.URL }}" />
+
+  items:
+    - label: Products
+      columns: 2
+      description: Everything you need to ship a site.
+      links:
+        - {label: Kit, href: /kit/, icon: grid, description: 100 components, no build step.}
+        - {label: Actions, href: /actions/, icon: zap, description: Server state from a click.}
+    - {label: Pricing, href: /pricing/}
+
+An item with links opens a panel (columns 1–3, default 2); one with href is
+a plain link. current marks the link (or the panel holding it) with
+aria-current. It is a list of disclosure buttons (the WAI-ARIA disclosure
+navigation pattern), not a menu, so Tab walks every link.
+
+Without JavaScript each panel is a native <details> that opens on click,
+and the details share a name, so opening one closes the others. With
+JavaScript a panel also opens when the pointer rests on its name (hover
+intent: a short delay to open and to close, so crossing the bar does not
+flicker), ArrowDown opens it on the first link, ArrowUp/Down move between
+its links, ArrowLeft/Right move between the top-level names, Escape closes
+it and returns focus, and a click outside or leaving the bar with Tab
+closes it. A panel is kept inside the viewport.
+*/}}
+<brick:client>
+// OPEN_DELAY keeps a pointer passing over the bar from opening every panel
+// it crosses; CLOSE_DELAY lets the pointer travel from a trigger to its
+// panel (or cut a corner) without the panel closing; EDGE is the margin a
+// panel keeps from the viewport's right edge when it is shifted to fit.
+// HOVER_CLICK_GRACE is how long after a hover opened a panel a click on
+// its trigger is taken as part of the same gesture, not a "close" toggle.
+const OPEN_DELAY = 120, CLOSE_DELAY = 280, EDGE = 8, HOVER_CLICK_GRACE = 400;
+
+brick.mount("NavigationMenu", (el) => {
+  const entries = () => [...el.querySelectorAll(".bk-navmenu__details")];
+  const triggers = () => [...el.querySelectorAll(".bk-navmenu__trigger")];
+  const timers = new WeakMap(); // details -> its pending open/close timeout
+  const pending = new Set(); // every timeout id still scheduled, for the cleanup
+  const hoverOpened = new WeakMap();
+  const later = (d, fn, ms) => {
+    clearTimeout(timers.get(d));
+    const id = setTimeout(() => { pending.delete(id); fn(); }, ms);
+    pending.add(id);
+    timers.set(d, id);
+  };
+  const setOpen = (d, open) => {
+    clearTimeout(timers.get(d));
+    if (d.open !== open) d.open = open;
+  };
+  const place = (d) => {
+    const panel = d.querySelector(".bk-navmenu__panel");
+    panel.style.translate = "";
+    const r = panel.getBoundingClientRect();
+    const over = r.right - (window.innerWidth - EDGE);
+    const shift = over > 0 ? -Math.min(over, r.left - EDGE) : 0;
+    if (shift) panel.style.translate = shift + "px 0";
+  };
+  const toggled = (e) => {
+    const d = e.target;
+    if (!d.classList || !d.classList.contains("bk-navmenu__details")) return;
+    d.querySelector("summary").setAttribute("aria-expanded", String(d.open));
+    if (!d.open) return;
+    entries().forEach((o) => { if (o !== d && o.open) setOpen(o, false); });
+    place(d);
+  };
+  const enter = (e) => {
+    if (e.pointerType !== "mouse") return;
+    const d = e.target.closest(".bk-navmenu__details");
+    if (!d) return;
+    if (d.open) { clearTimeout(timers.get(d)); return; }
+    later(d, () => { hoverOpened.set(d, Date.now()); setOpen(d, true); }, entries().some((o) => o.open) ? 0 : OPEN_DELAY);
+  };
+  const leave = (e) => {
+    if (e.pointerType !== "mouse") return;
+    const d = e.target.closest(".bk-navmenu__details");
+    if (!d || d.contains(e.relatedTarget)) return;
+    if (!d.open) { clearTimeout(timers.get(d)); return; }
+    later(d, () => { if (!d.matches(":hover")) setOpen(d, false); }, CLOSE_DELAY);
+  };
+  const click = (e) => {
+    const s = e.target.closest("summary");
+    if (!s) return;
+    const d = s.parentElement;
+    // A click right after hover opened the panel would close it again.
+    if (d.open && Date.now() - (hoverOpened.get(d) || 0) < HOVER_CLICK_GRACE) e.preventDefault();
+  };
+  const links = (d) => [...d.querySelectorAll(".bk-navmenu__link")];
+  const key = (e) => {
+    const d = e.target.closest(".bk-navmenu__details");
+    const onTrigger = e.target.classList.contains("bk-navmenu__trigger");
+    if (e.key === "Escape" && d && d.open) {
+      e.preventDefault();
+      setOpen(d, false);
+      d.querySelector("summary").focus();
+    } else if (onTrigger && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
+      e.preventDefault();
+      const all = triggers(), i = all.indexOf(e.target);
+      all[(i + (e.key === "ArrowRight" ? 1 : -1) + all.length) % all.length].focus();
+    } else if (onTrigger && d && e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(d, true);
+      const first = links(d)[0];
+      if (first) first.focus();
+    } else if (d && !onTrigger && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      e.preventDefault();
+      const all = links(d), i = all.indexOf(document.activeElement);
+      if (i < 0) return;
+      if (e.key === "ArrowUp" && i === 0) { d.querySelector("summary").focus(); return; }
+      all[Math.min(all.length - 1, i + (e.key === "ArrowDown" ? 1 : -1))].focus();
+    }
+  };
+  const outside = (e) => { if (!el.contains(e.target)) entries().forEach((d) => setOpen(d, false)); };
+  const focusout = (e) => { if (!el.contains(e.relatedTarget)) entries().forEach((d) => { if (d.open && !d.matches(":hover")) setOpen(d, false); }); };
+  entries().forEach((d) => d.querySelector("summary").setAttribute("aria-expanded", String(d.open)));
+  el.addEventListener("toggle", toggled, true);
+  el.addEventListener("pointerover", enter);
+  el.addEventListener("pointerout", leave);
+  el.addEventListener("click", click);
+  el.addEventListener("keydown", key);
+  el.addEventListener("focusout", focusout);
+  document.addEventListener("click", outside);
+  return () => {
+    pending.forEach((id) => clearTimeout(id));
+    pending.clear();
+    el.removeEventListener("toggle", toggled, true);
+    el.removeEventListener("pointerover", enter);
+    el.removeEventListener("pointerout", leave);
+    el.removeEventListener("click", click);
+    el.removeEventListener("keydown", key);
+    el.removeEventListener("focusout", focusout);
+    document.removeEventListener("click", outside);
+  };
+})
+</brick:client>
+<brick:style>
+.bk-navmenu { position: relative; font-size: var(--bk-text-sm); }
+.bk-navmenu__list { display: flex; flex-wrap: wrap; align-items: center; gap: .125rem; margin: 0; padding: 0; list-style: none; }
+.bk-navmenu__entry { position: relative; }
+.bk-navmenu__details > summary { list-style: none; }
+.bk-navmenu__details > summary::-webkit-details-marker { display: none; }
+.bk-navmenu__trigger { display: inline-flex; align-items: center; gap: .3rem; height: var(--bk-h-md); padding: 0 .75rem; border-radius: var(--bk-radius); color: var(--bk-fg); font-weight: 500; text-decoration: none; cursor: pointer; user-select: none; transition: background var(--bk-duration), color var(--bk-duration); }
+.bk-navmenu__trigger:hover, .bk-navmenu__details[open] > .bk-navmenu__trigger { background: var(--bk-accent); color: var(--bk-accent-fg); }
+.bk-navmenu__trigger:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-navmenu__trigger[aria-current] { color: var(--bk-primary-text); }
+.bk-navmenu__caret { opacity: .6; transition: transform var(--bk-duration); }
+.bk-navmenu__details[open] .bk-navmenu__caret { transform: rotate(180deg); }
+.bk-navmenu__panel { position: absolute; top: calc(100% + 6px); left: 0; z-index: var(--bk-z-dropdown); box-sizing: border-box; width: max-content; max-width: min(44rem, calc(100vw - 1rem)); padding: .5rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); animation: bk-pop-in var(--bk-duration) ease; }
+.bk-navmenu .bk-navmenu__panel *, .bk-navmenu .bk-navmenu__panel *::before, .bk-navmenu .bk-navmenu__panel *::after { box-sizing: border-box; }
+.bk-navmenu__panel::before { content: ""; position: absolute; left: 0; right: 0; top: -8px; height: 8px; }
+.bk-navmenu__intro { margin: .35rem .5rem .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); max-width: 32rem; }
+.bk-navmenu__grid { display: grid; grid-template-columns: repeat(var(--bk-navmenu-cols, 2), minmax(13rem, 1fr)); gap: .125rem; margin: 0; padding: 0; list-style: none; }
+.bk-navmenu__link { display: flex; align-items: flex-start; gap: .65rem; padding: .55rem .6rem; border-radius: var(--bk-radius); color: var(--bk-fg); text-decoration: none; outline: none; transition: background var(--bk-duration); }
+.bk-navmenu__link:hover, .bk-navmenu__link:focus-visible { background: var(--bk-accent); }
+.bk-navmenu__link:focus-visible { box-shadow: inset 0 0 0 2px var(--bk-ring); }
+.bk-navmenu__link[aria-current] { background: color-mix(in oklab, var(--bk-primary) 8%, transparent); }
+.bk-navmenu__icon { flex: none; display: grid; place-items: center; width: 2rem; height: 2rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface-2); color: var(--bk-muted-fg); }
+.bk-navmenu__link:hover .bk-navmenu__icon { color: var(--bk-primary-text); }
+.bk-navmenu__text { display: flex; flex-direction: column; gap: .1rem; min-width: 0; line-height: 1.35; }
+.bk-navmenu__label { font-weight: 500; }
+.bk-navmenu__desc { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); white-space: normal; }
+@media (max-width: 640px) { .bk-navmenu__grid { grid-template-columns: minmax(0, 1fr); } .bk-navmenu__panel { width: calc(100vw - 1rem); } }
+@media (prefers-reduced-motion: reduce) { .bk-navmenu__panel { animation: none; } }
+</brick:style>
+{{ $group := print .ID `-nav` }}
+{{ $cur := .Props.current }}
+<nav class="{{ cx `bk-navmenu` .Attrs.class }}" aria-label="{{ .Props.label }}" {{ attrs `class` }}>
+  <ul class="bk-navmenu__list">
+    {{ range .Props.items }}{{ $it := . }}
+    <li class="bk-navmenu__entry">
+      {{ if $it.links }}{{ $here := false }}{{ range $it.links }}{{ if and $cur (eq .href $cur) }}{{ $here = true }}{{ end }}{{ end }}
+      <details class="bk-navmenu__details" name="{{ $group }}">
+        <summary class="bk-navmenu__trigger"{{ if $here }} aria-current="true"{{ end }}>{{ $it.label }}<Icon name="chevron-down" :size="14" class="bk-navmenu__caret" /></summary>
+        <div class="bk-navmenu__panel" style="--bk-navmenu-cols: {{ default 2 $it.columns }}">
+          {{ with $it.description }}<p class="bk-navmenu__intro">{{ . }}</p>{{ end }}
+          <ul class="bk-navmenu__grid">{{ range $it.links }}<li><a class="bk-navmenu__link" href="{{ .href }}"{{ if and $cur (eq .href $cur) }} aria-current="page"{{ end }}>{{ with .icon }}<span class="bk-navmenu__icon"><Icon :name="." :size="16" /></span>{{ end }}<span class="bk-navmenu__text"><span class="bk-navmenu__label">{{ .label }}</span>{{ with .description }}<span class="bk-navmenu__desc">{{ . }}</span>{{ end }}</span></a></li>{{ end }}</ul>
+        </div>
+      </details>
+      {{ else }}<a class="bk-navmenu__trigger" href="{{ $it.href }}"{{ if and $cur (eq $it.href $cur) }} aria-current="page"{{ end }}>{{ $it.label }}</a>{{ end }}
+    </li>
+    {{ end }}
+  </ul>
+</nav>

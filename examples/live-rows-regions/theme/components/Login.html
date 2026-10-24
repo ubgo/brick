@@ -1,0 +1,13 @@
+---
+state: {email: ""}
+---
+<brick:script>
+def sign_in(state, props):
+    brick.flash("Signing you in…")
+    brick.submit("login")
+    return state
+</brick:script>
+<form brick:ref="login" method="post" action="/session" brick:submit="sign_in">
+  <input name="email" type="email" brick:model="email">
+  <button>Sign in</button>
+</form>

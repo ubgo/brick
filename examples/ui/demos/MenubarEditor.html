@@ -1,0 +1,31 @@
+<div style="min-height: 17rem">
+  <Menubar label="Editor">
+    <DropdownMenu label="File">
+      <MenuItem icon="plus" shortcut="⌘N">New file</MenuItem>
+      <MenuItem icon="folder" shortcut="⌘O">Open…</MenuItem>
+      <MenuSeparator />
+      <MenuItem icon="download" shortcut="⌘S">Save</MenuItem>
+      <MenuItem shortcut="⇧⌘S">Save as…</MenuItem>
+      <MenuSeparator />
+      <MenuItem icon="log-out" danger>Close window</MenuItem>
+    </DropdownMenu>
+    <DropdownMenu label="Edit">
+      <MenuItem shortcut="⌘Z">Undo</MenuItem>
+      <MenuItem shortcut="⇧⌘Z">Redo</MenuItem>
+      <MenuSeparator />
+      <MenuItem icon="copy" shortcut="⌘C">Copy</MenuItem>
+      <MenuItem shortcut="⌘V">Paste</MenuItem>
+      <MenuItem icon="search" shortcut="⌘F">Find…</MenuItem>
+    </DropdownMenu>
+    <DropdownMenu label="View">
+      <MenuLabel>Appearance</MenuLabel>
+      <MenuItem icon="panel-left" shortcut="⌘B">Toggle sidebar</MenuItem>
+      <MenuItem icon="moon">Dark theme</MenuItem>
+      <MenuItem icon="zap" disabled>Zen mode</MenuItem>
+    </DropdownMenu>
+    <DropdownMenu label="Help">
+      <MenuItem icon="help-circle" href="/components/menubar/">Documentation</MenuItem>
+      <MenuItem icon="command" shortcut="⌘K">Command palette</MenuItem>
+    </DropdownMenu>
+  </Menubar>
+</div>

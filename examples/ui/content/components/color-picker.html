@@ -1,0 +1,18 @@
+---
+title: ColorPicker
+category: Forms
+description: "Colour swatches as native radios, with an optional custom colour from the browser's picker."
+api:
+  - {name: name, type: "string", desc: "The radios' name (required)."}
+  - {name: colors, type: "list", desc: "CSS colours, or maps {value, label}."}
+  - {name: value, type: "string", desc: "The chosen colour."}
+  - {name: custom, type: "bool", desc: "Adds a custom-colour swatch."}
+  - {name: size, type: "sm | md | lg", default: "md", desc: "Swatch size."}
+  - {name: label, type: "string", default: "Colour", desc: "The accessible name outside a Field."}
+  - {name: customLabel, type: "string", default: "Custom colour", desc: "The custom swatch's name."}
+---
+<h1>ColorPicker</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Swatches" block><ColorPickerBasic /><brick:prop name="code"><Source src="~/demos/ColorPickerBasic.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

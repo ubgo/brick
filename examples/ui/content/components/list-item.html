@@ -1,0 +1,21 @@
+---
+title: ListItem
+category: Data display
+description: "One row of a List: an avatar or icon, a title and description, and trailing meta or actions. With href the whole row is a link."
+api:
+  - {name: title, type: string, desc: "The main text."}
+  - {name: description, type: string, desc: "A muted second line."}
+  - {name: href, type: string, desc: "Makes the row a link. The title is the <a>, stretched over the row, so buttons in trailing stay separate."}
+  - {name: avatar, type: string, desc: "A name for a leading Avatar."}
+  - {name: avatarSrc, type: string, desc: "The avatar's picture."}
+  - {name: icon, type: string, desc: "A leading icon (when there is no avatar)."}
+  - {name: meta, type: string, desc: "Trailing muted text."}
+  - {name: current, type: bool, desc: "Marks the row the page shows (aria-current)."}
+  - {name: "leading, trailing (blocks)", type: markup, desc: "Replace the avatar/icon and the meta."}
+  - {name: children, type: markup, desc: "Extra content under the description."}
+---
+<h1>ListItem</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Leading, trailing and extra content" block><ListItemAnatomy /><brick:prop name="code"><Source src="~/demos/ListItemAnatomy.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

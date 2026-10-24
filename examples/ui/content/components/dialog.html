@@ -1,0 +1,26 @@
+---
+title: Dialog
+category: Overlays
+description: "A modal window on the native <dialog>: title, description, body and footer; opened by a trigger, data-bk-open, commandfor or the server; focus trapped and returned."
+api:
+  - {name: title, type: string, desc: "The heading; names the dialog (aria-labelledby)."}
+  - {name: description, type: string, desc: "Muted text under the title (aria-describedby)."}
+  - {name: size, type: "sm | md | lg | xl | full", default: md, desc: "The width: 24, 32, 42, 56 rem, or the whole screen."}
+  - {name: open, type: bool, desc: "Rendered open: modal with JavaScript, in place without. For a form re-rendered by an action."}
+  - {name: closable, type: bool, default: "true", desc: "The close button (a form method=dialog, so it works without JavaScript)."}
+  - {name: dismissible, type: bool, default: "true", desc: "A click on the backdrop closes it. Escape always does."}
+  - {name: label, type: string, default: Close, desc: "The close button's accessible name."}
+  - {name: trigger, type: "block", desc: "Rendered before the dialog; a click in it opens the dialog (JavaScript)."}
+  - {name: footer, type: "block", desc: "Buttons along the bottom. data-bk-close on any element inside closes the dialog."}
+  - {name: id, type: attribute, desc: "The dialog's id, for data-bk-open or commandfor elsewhere. The caller's attributes land on the <dialog>."}
+---
+<h1>Dialog</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Trigger, body and footer"><DialogBasic /><brick:prop name="code"><Source src="~/demos/DialogBasic.html" /></brick:prop></Example>
+<Example title="A form validated by a server action"><DialogForm /><brick:prop name="code"><Source src="~/demos/DialogForm.html" /></brick:prop></Example>
+<p style="margin: -.5rem 0 1.25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)"><b>Edit profile</b> runs an action that re-renders the dialog with <code>open</code>; saving with errors keeps it open with the messages, and a valid save closes it and renders a toast.</p>
+<Example title="Opening from anywhere"><DialogOpeners /><brick:prop name="code"><Source src="~/demos/DialogOpeners.html" /></brick:prop></Example>
+<Example title="Sizes"><DialogSizes /><brick:prop name="code"><Source src="~/demos/DialogSizes.html" /></brick:prop></Example>
+<Toaster />
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

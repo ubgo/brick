@@ -1,0 +1,3 @@
+# brick-kit is built into the brick CLI: every kit component (<Button>,
+# <Card>, <Dialog>, …) is usable by name, with no copy and no vendoring.
+libraries: [brick-kit]

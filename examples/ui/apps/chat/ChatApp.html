@@ -1,0 +1,201 @@
+---
+use:
+  chat: ~/apps/chat/chat.star
+state:
+  channel: general
+  q: ""
+---
+{{/*
+ChatApp: the Chat demo as one stateful component — channels and direct
+messages with unread counts, the open conversation and the composer, over
+the chat tables (apps/chat/chat.star, demodb/db_chat.go).
+
+  <ChatApp />
+
+State is {channel, q}. Opening a channel marks it read; sending inserts a
+row and re-renders; brick:poll refreshes every 5 seconds, which is how a
+Brickbot reply (queued by the send) shows up. The client module adds the
+chat keyboard: Enter sends, Shift+Enter is a newline; it inserts emoji at
+the cursor, clears the box after a send and keeps the conversation scrolled
+to the newest message. Without JavaScript the composer is a normal form
+with a Send button, and polling does not run.
+*/}}
+<brick:client>
+brick.mount("ChatApp", (el) => {
+  const box = () => el.querySelector(".chat__composer textarea");
+  const scroller = () => el.querySelector(".chat__scroll");
+  let near = true;
+  const toBottom = () => { const s = scroller(); if (s) s.scrollTop = s.scrollHeight; };
+  const onScroll = (e) => {
+    const s = e.target;
+    if (s.classList && s.classList.contains("chat__scroll")) near = s.scrollHeight - s.scrollTop - s.clientHeight < 96;
+  };
+  const onKey = (e) => {
+    if (e.key !== "Enter" || e.shiftKey || e.isComposing || !e.target.matches(".chat__composer textarea")) return;
+    e.preventDefault();
+    if (!e.target.value.trim()) return;
+    e.target.form.requestSubmit();
+    clear();
+  };
+  // The runtime reads the fields while the submit event dispatches, and
+  // stops that event before it bubbles here, so the box is cleared from
+  // what caused the submit: Enter above, or the Send button below (its
+  // click submits the form as its default action, before this timeout).
+  const clear = () => setTimeout(() => {
+    const ta = box();
+    ta.value = "";
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    near = true;
+  }, 0);
+  const onClick = (e) => {
+    if (e.target.closest(".chat__composer [type=submit]") && box().value.trim()) { clear(); return; }
+    const b = e.target.closest("[data-emoji]");
+    if (!b || !el.contains(b)) return;
+    const ta = box();
+    const at = ta.selectionStart ?? ta.value.length;
+    ta.value = ta.value.slice(0, at) + b.dataset.emoji + ta.value.slice(ta.selectionEnd ?? at);
+    ta.selectionStart = ta.selectionEnd = at + b.dataset.emoji.length;
+    const pop = b.closest("[popover]");
+    if (pop && pop.hidePopover) pop.hidePopover();
+    ta.focus();
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+  const mo = new MutationObserver(() => { if (near) toBottom(); });
+  mo.observe(el, { childList: true, subtree: true });
+  el.addEventListener("scroll", onScroll, true);
+  el.addEventListener("keydown", onKey);
+  el.addEventListener("click", onClick);
+  el.classList.add("chat--js");
+  toBottom();
+  return () => {
+    mo.disconnect();
+    el.removeEventListener("scroll", onScroll, true);
+    el.removeEventListener("keydown", onKey);
+    el.removeEventListener("click", onClick);
+  };
+})
+</brick:client>
+<brick:style>
+.chat { display: grid; grid-template-columns: 16.5rem minmax(0, 1fr); height: calc(100dvh - 5.25rem); min-height: 30rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); overflow: hidden; }
+.chat__side { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--bk-border); background: var(--bk-surface-2); }
+.chat__side-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .85rem .9rem .6rem; }
+.chat__side-head h2 { font-size: var(--bk-text-lg); letter-spacing: -.02em; }
+.chat__search { padding: 0 .75rem .6rem; }
+.chat__nav { flex: 1; min-height: 0; overflow-y: auto; padding: 0 .5rem 1rem; }
+.chat__group { display: flex; align-items: center; justify-content: space-between; margin: .9rem .5rem .3rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+.chat__item { display: flex; align-items: center; gap: .55rem; width: 100%; height: 2.1rem; padding: 0 .55rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-muted-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); text-align: left; cursor: pointer; }
+.chat__item:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.chat__item:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.chat__item[aria-current=true] { background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); font-weight: 600; }
+.chat__item--unread { color: var(--bk-fg); font-weight: 650; }
+.chat__item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chat__item .bk-icon { flex: none; opacity: .75; }
+.chat__none { padding: .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); }
+.chat__main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.chat__head { display: flex; align-items: center; gap: .75rem; min-height: 3.5rem; padding: .5rem .75rem .5rem 1.1rem; border-bottom: 1px solid var(--bk-border); }
+.chat__title { flex: 1; min-width: 0; line-height: 1.3; }
+.chat__title h1 { display: flex; align-items: center; gap: .35rem; font-size: var(--bk-text-base); font-weight: 650; }
+.chat__title p { overflow: hidden; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-overflow: ellipsis; white-space: nowrap; }
+.chat__scroll { flex: 1; min-height: 0; overflow-y: auto; padding: .5rem 1.25rem 1rem; scroll-behavior: smooth; }
+.chat__day { position: sticky; top: 0; z-index: 1; padding: .35rem 0; background: linear-gradient(var(--bk-surface) 70%, transparent); }
+.chat__day .bk-separator { margin: .25rem 0; }
+.chat__run { display: flex; flex-direction: column; gap: .2rem; margin: .7rem 0; }
+.chat__typing { display: flex; align-items: center; gap: .5rem; margin: .75rem 0 .25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.chat__dots { display: inline-flex; gap: 3px; padding: .5rem .65rem; border-radius: var(--bk-radius-lg); background: var(--bk-muted); }
+.chat__dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--bk-muted-fg); animation: bk-pulse 1.2s infinite; }
+.chat__dots i:nth-child(2) { animation-delay: .2s; }
+.chat__dots i:nth-child(3) { animation-delay: .4s; }
+.chat__composer { margin: 0 1rem 1rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.chat__composer:focus-within { border-color: var(--bk-primary); box-shadow: 0 0 0 3px var(--bk-ring); }
+.chat__composer .bk-textarea { border: 0; box-shadow: none; background: none; }
+.chat__composer textarea { max-height: 12rem; padding: .7rem .85rem .2rem; border: 0; outline: 0; box-shadow: none; background: none; }
+.chat__tools { display: flex; align-items: center; gap: .15rem; padding: .3rem .4rem .4rem; }
+.chat__hint { flex: 1; padding-right: .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-align: right; }
+.chat__error { margin: -.6rem 1rem .75rem; color: var(--bk-danger); font-size: var(--bk-text-xs); }
+.chat__emoji { display: grid; grid-template-columns: repeat(4, 2.25rem); gap: .2rem; }
+.chat__emoji button { height: 2.25rem; border: 0; border-radius: var(--bk-radius); background: none; font-size: 1.25rem; cursor: pointer; }
+.chat__emoji button:hover { background: var(--bk-accent); }
+.chat__attach { display: grid; gap: .15rem; min-width: 15rem; }
+.chat__attach p { margin: 0 .5rem .3rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.chat__attach button { display: flex; align-items: center; gap: .55rem; height: 2rem; padding: 0 .5rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-fg); font: var(--bk-text-sm) var(--bk-font); text-align: left; cursor: pointer; }
+.chat__attach button:hover { background: var(--bk-accent); }
+.chat__details { display: grid; gap: 1.5rem; }
+.chat__details h3 { margin-bottom: .5rem; font-size: var(--bk-text-sm); }
+.chat:not(.chat--js) .chat__hint { visibility: hidden; }
+@media (max-width: 860px) {
+  .chat { display: flex; flex-direction: column; height: calc(100dvh - 4.5rem); border-radius: var(--bk-radius); }
+  .chat__side { flex: none; border-right: 0; border-bottom: 1px solid var(--bk-border); }
+  .chat__side-head, .chat__search, .chat__group { display: none; }
+  .chat__nav { display: flex; gap: .25rem; padding: .5rem; overflow-x: auto; scrollbar-width: none; }
+  .chat__item { flex: none; width: auto; }
+  .chat__scroll { padding: .5rem .75rem 1rem; }
+  .chat__composer { margin: 0 .5rem .5rem; }
+  .chat__head .bk-avatar-group { display: none; }
+  .chat__hint { visibility: hidden; }
+}
+</brick:style>
+{{- $side := chat.sidebar .State -}}
+{{- $c := chat.channel .State -}}
+{{- $days := chat.conversation .State -}}
+{{- $typing := chat.typing .State -}}
+<div class="chat" brick:poll="5s">
+  <aside class="chat__side" aria-label="Conversations">
+    <div class="chat__side-head"><h2>Brickyard</h2>{{ if $side.total }}<Badge tone="primary" size="sm" pill :aria-label="print $side.total ` unread`">{{ $side.total }}</Badge>{{ end }}</div>
+    <div class="chat__search"><SearchInput size="sm" value="{{ .State.q }}" placeholder="Find a conversation" aria-label="Find a conversation" brick:change="chat.search" /></div>
+    <nav class="chat__nav" aria-label="Channels and direct messages">
+      <div class="chat__group">Channels</div>
+      {{ range $side.channels }}<button type="button" class="{{ cx `chat__item` (cond .unread `chat__item--unread` ``) }}" brick:click="chat.open_channel({{ .id }})"{{ if .on }} aria-current="true"{{ end }}><Icon name="hash" :size="15" /><span class="chat__item-name">{{ .name }}</span>{{ if .unread }}<Badge tone="primary" variant="solid" size="sm" pill :aria-label="print .unread ` unread`">{{ .unread }}</Badge>{{ end }}</button>{{ end }}
+      <div class="chat__group">Direct messages</div>
+      {{ range $side.dms }}<button type="button" class="{{ cx `chat__item` (cond .unread `chat__item--unread` ``) }}" brick:click="chat.open_channel({{ .id }})"{{ if .on }} aria-current="true"{{ end }}><Avatar :name=".name" size="xs" :status=".presence" /><span class="chat__item-name">{{ .name }}</span>{{ if .unread }}<Badge tone="primary" variant="solid" size="sm" pill :aria-label="print .unread ` unread`">{{ .unread }}</Badge>{{ end }}</button>{{ end }}
+      {{ if not (or $side.channels $side.dms) }}<p class="chat__none">No conversation matches “{{ .State.q }}”. <Button variant="link" size="sm" brick:click="chat.clear_search">Clear</Button></p>{{ end }}
+    </nav>
+  </aside>
+
+  <section class="chat__main" aria-label="{{ cond (eq $c.kind `dm`) $c.name (print `#` $c.name) }}">
+    <header class="chat__head">
+      {{ if eq $c.kind "dm" }}<Avatar :name="$c.name" size="sm" :status="$c.presence" />{{ end }}
+      <div class="chat__title">
+        <h1>{{ if eq $c.kind "channel" }}<Icon name="hash" :size="16" />{{ end }}{{ $c.name }}</h1>
+        <p>{{ $c.topic }}</p>
+      </div>
+      <AvatarGroup :items="$c.others" :max="3" size="xs" :label="print (len $c.members) ` members`" />
+      <Drawer :title="cond (eq $c.kind `dm`) $c.name (print `#` $c.name)" :description="$c.topic" size="sm">
+        <brick:prop name="trigger"><Button variant="ghost" size="sm" square icon="info" label="Conversation details" /></brick:prop>
+        <div class="chat__details">
+          <section><h3>Members · {{ len $c.members }}</h3><List variant="bordered" size="sm">{{ range $c.members }}<ListItem :title=".name" :avatar=".name" :meta=".role" />{{ end }}</List></section>
+          <section><h3>Shared files</h3><ChatFiles :files="$c.files" /></section>
+        </div>
+      </Drawer>
+    </header>
+
+    <div class="chat__scroll" role="log" aria-live="polite" aria-label="Messages">
+      {{ range $days }}
+      <div class="chat__day"><Separator :label=".label" spacing="none" /></div>
+      {{ range .runs }}{{ $run := . }}
+      <div class="chat__run">
+        {{ range $i, $m := .items }}<ChatBubble :side="cond $run.mine `end` `start`" :name="cond (or $i $run.mine) `` $run.sender" :avatar="cond (or $i $run.mine) `` $run.sender" :indent="and (not $run.mine) (gt $i 0)" :time="$m.time" :datetime="print $m.day `T` $m.time" :status="$m.status" :tone="cond $run.bot `info` ``">{{ $m.body }}<ChatFile :name="$m.attachment" /></ChatBubble>{{ end }}
+      </div>
+      {{ end }}
+      {{ end }}
+      {{ if $typing }}<div class="chat__typing"><span class="chat__dots" aria-hidden="true"><i></i><i></i><i></i></span>{{ $c.name }} is typing…</div>{{ end }}
+    </div>
+
+    <form class="chat__composer" brick:submit="chat.send" novalidate>
+      <Textarea name="body" :rows="1" autosize resize="none" :maxlength="2000" :placeholder="print `Message ` (cond (eq $c.kind `dm`) $c.name (print `#` $c.name))" aria-label="Message" :invalid="has .Errors `body`" />
+      <div class="chat__tools">
+        <Popover variant="ghost" size="sm" side="top" title="Attach a file">
+          <brick:prop name="trigger"><Icon name="paperclip" :size="16" /><span class="bk-sr-only">Attach a file</span></brick:prop>
+          <div class="chat__attach"><p>Share a file</p>{{ range $i, $f := chat.files }}<button type="button" brick:click="chat.share({{ $i }})"><Icon name="file" :size="15" />{{ $f }}</button>{{ end }}</div>
+        </Popover>
+        <Popover variant="ghost" size="sm" side="top" title="Emoji">
+          <brick:prop name="trigger"><Icon name="smile" :size="16" /><span class="bk-sr-only">Insert emoji</span></brick:prop>
+          <div class="chat__emoji">{{ range chat.emoji }}<button type="button" data-emoji="{{ . }}" aria-label="Insert {{ . }}">{{ . }}</button>{{ end }}</div>
+        </Popover>
+        <span class="chat__hint"><Kbd size="sm">Enter</Kbd> to send · <Kbd size="sm">Shift</Kbd> + <Kbd size="sm">Enter</Kbd> for a new line</span>
+        <Button type="submit" size="sm" icon="send" square label="Send" />
+      </div>
+    </form>
+    {{ with .Errors.body }}<p class="chat__error" role="alert">{{ . }}</p>{{ end }}
+  </section>
+</div>
+{{- chat.deliver .State -}}

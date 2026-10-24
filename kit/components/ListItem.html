@@ -1,0 +1,61 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Avatar: ~/components/Avatar.html
+props:
+  title: {type: string, default: ""}
+  description: {type: string, default: ""}
+  href: {type: string, default: ""}
+  avatar: {type: string, default: ""}
+  avatarSrc: {type: string, default: ""}
+  icon: {type: string, default: ""}
+  meta: {type: string, default: ""}
+  current: {type: bool, default: false}
+---
+{{/*
+ListItem: one row of a <List>: something leading (an avatar or an icon), a
+title and description, and something trailing (meta text or actions).
+
+  <ListItem title="Maya Chen" description="maya@acme.com" avatar="Maya Chen" meta="2h ago" />
+  <ListItem title="Q3 report.pdf" description="2.4 MB" icon="file-text" href="/files/7" />
+  <ListItem title="Two-factor auth" description="Adds a code at sign-in.">
+    <brick:prop name="trailing"><Button size="sm" variant="outline">Enable</Button></brick:prop>
+  </ListItem>
+
+Blocks: "leading" replaces the avatar/icon, "trailing" replaces meta, and
+children render under the description. With href the whole row is
+clickable, yet buttons in "trailing" stay separate controls: the link is
+the title, stretched over the row, rather than an <a> around the row
+(interactive elements must not nest). current marks the row the page is
+showing (aria-current).
+*/}}
+<brick:style>
+.bk-list-item { position: relative; display: flex; align-items: center; gap: .75rem; padding: .65rem 0; min-width: 0; }
+.bk-list-item__lead { flex: none; display: flex; }
+.bk-list-item__icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--bk-radius); background: var(--bk-muted); color: var(--bk-muted-fg); }
+.bk-list-item__body { flex: 1; min-width: 0; }
+.bk-list-item__title { display: block; overflow: hidden; color: var(--bk-fg); font-size: var(--bk-text-sm); font-weight: 550; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.bk-list-item__desc { overflow: hidden; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-overflow: ellipsis; white-space: nowrap; }
+.bk-list-item__extra { margin-top: .35rem; font-size: var(--bk-text-sm); color: var(--bk-fg); }
+.bk-list-item__trail { flex: none; display: flex; align-items: center; gap: .4rem; position: relative; z-index: 1; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+a.bk-list-item__title::after { content: ""; position: absolute; inset: 0; }
+a.bk-list-item__title:focus-visible { outline: none; }
+.bk-list-item--link { transition: background var(--bk-duration); }
+.bk-list-item--link:hover, .bk-list-item--current { background: color-mix(in oklab, var(--bk-muted) 70%, transparent); }
+.bk-list-item--link:has(.bk-list-item__title:focus-visible) { outline: 2px solid var(--bk-ring); outline-offset: -2px; border-radius: var(--bk-radius); }
+.bk-list-item--link .bk-list-item__chev { color: var(--bk-muted-fg); }
+.bk-list-item--current .bk-list-item__title { color: var(--bk-primary-text); }
+.bk-list--plain > .bk-list-item--link, .bk-list--divided > .bk-list-item--link { margin: 0 -.5rem; padding-left: .5rem; padding-right: .5rem; border-radius: var(--bk-radius); }
+</brick:style>
+<li class="{{ cx `bk-list-item` (cond .Props.href `bk-list-item--link` ``) (cond .Props.current `bk-list-item--current` ``) .Attrs.class }}" {{ attrs `class` }}>
+  {{- if hasNode "leading" }}<div class="bk-list-item__lead">{{ node "leading" }}</div>
+  {{- else if .Props.avatar }}<div class="bk-list-item__lead"><Avatar :name=".Props.avatar" :src=".Props.avatarSrc" /></div>
+  {{- else if .Props.icon }}<div class="bk-list-item__lead"><span class="bk-list-item__icon"><Icon :name=".Props.icon" :size="16" /></span></div>{{ end }}
+  <div class="bk-list-item__body">
+    {{- if .Props.href }}<a class="bk-list-item__title" href="{{ .Props.href }}"{{ if .Props.current }} aria-current="page"{{ end }}>{{ .Props.title }}</a>{{ else if .Props.title }}<span class="bk-list-item__title">{{ .Props.title }}</span>{{ end }}
+    {{- with .Props.description }}<div class="bk-list-item__desc">{{ . }}</div>{{ end }}
+    {{- if hasNode "children" }}<div class="bk-list-item__extra">{{ children }}</div>{{ end -}}
+  </div>
+  {{- if hasNode "trailing" }}<div class="bk-list-item__trail">{{ node "trailing" }}</div>
+  {{- else if or .Props.meta .Props.href }}<div class="bk-list-item__trail">{{ .Props.meta }}{{ if and .Props.href (not .Props.meta) }}<Icon name="chevron-right" :size="16" class="bk-list-item__chev" />{{ end }}</div>{{ end }}
+</li>

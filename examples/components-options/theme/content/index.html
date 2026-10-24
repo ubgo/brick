@@ -1,0 +1,15 @@
+---
+use:
+  colors: ~/data/colors.kv
+---
+<Heading level="1">Options</Heading>
+<Note>From the second root.</Note>
+<Pre>
+  keeps
+    its indentation
+</Pre>
+<Dedented>
+  loses
+    the common indent
+</Dedented>
+<p>brand {{ .Data.colors.brand }}, accent {{ .Data.colors.accent }}</p>

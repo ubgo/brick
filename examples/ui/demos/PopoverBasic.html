@@ -1,0 +1,14 @@
+<div style="display: flex; flex-wrap: wrap; gap: .5rem">
+  <Popover label="Share" icon="send" title="Share this page">
+    <div style="display: grid; gap: .6rem; width: 18rem">
+      <Input value="https://brick.dev/kit/popover" readonly size="sm" aria-label="Page link" />
+      <div style="display: flex; gap: .4rem"><Button size="sm" icon="copy">Copy link</Button><Button size="sm" variant="outline" icon="mail">E-mail</Button></div>
+    </div>
+  </Popover>
+  <Popover label="Dimensions" icon="settings" title="Dimensions">
+    <div style="display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .5rem .75rem; width: 16rem; font-size: var(--bk-text-sm)">
+      <label for="demo-w">Width</label><Input id="demo-w" value="100%" size="sm" />
+      <label for="demo-h">Height</label><Input id="demo-h" value="25px" size="sm" />
+    </div>
+  </Popover>
+</div>

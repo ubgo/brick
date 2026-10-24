@@ -1,0 +1,45 @@
+---
+state:
+  items: [1, 2, 3]
+  query: ""
+  open: true
+  focused: 0
+  blurred: 0
+---
+<brick:script>
+def remove(state, props, id):
+    return dict(state, items = [i for i in state["items"] if i != id])
+def save(state, props):
+    return state
+def download(state, props):
+    return state
+def winfocus(state, props):
+    return dict(state, focused = state["focused"] + 1)
+def winblur(state, props):
+    return dict(state, blurred = state["blurred"] + 1)
+def notify(state, props):
+    brick.flash("One", "info")
+    brick.flash("Two", "warning")
+    return state
+def clearwarn(state, props):
+    brick.clear_flash("warning")
+    return state
+def clearall(state, props):
+    brick.clear_flash()
+    return state
+</brick:script>
+<div id="v21" brick:focus.window="winfocus" brick:blur.window="winblur">
+  <p>focus <span id="focused">{{ .State.focused }}</span> blur <span id="blurred">{{ .State.blurred }}</span></p>
+  <ul>{{ range .State.items }}<li id="row-{{ . }}"><button class="rm" brick:click="remove({{ . }})">x{{ . }}</button><span class="spin" hidden brick:loading="remove({{ . }})">removing</span></li>{{ end }}</ul>
+  <span id="rm2" hidden brick:loading="remove(2)">rm2</span>
+  <input id="q" brick:model="query" value="{{ .State.query }}">
+  <span id="qload" hidden brick:loading='$set("query")'>typing</span>
+  <span id="except" hidden brick:loading.except="download">not-download</span>
+  <button id="save" brick:click="save" brick:disable-with>Save</button>
+  <button id="dl" brick:click="download">dl</button>
+  <label><input type="checkbox" id="open" brick:model="open" {{ if .State.open }}checked{{ end }}> open</label>
+  <div id="panel" class="panel" brick:show="open" brick:leave="fadeout" brick:enter="fadeout" {{ if not .State.open }}hidden{{ end }}>panel</div>
+  <button id="notify" brick:click="notify">notify</button>
+  <button id="clearwarn" brick:click="clearwarn">clearwarn</button>
+  <button id="clearall" brick:click="clearall">clearall</button>
+</div>

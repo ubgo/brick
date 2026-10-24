@@ -1,0 +1,14 @@
+---
+props:
+  open: {type: bool, default: true, client: true}
+  secret: {type: string, default: "server only"}
+---
+<brick:client>
+brick.mount("Accordion", (el, props) => {
+  const toggle = () => el.toggleAttribute("open")
+  if (!props.open) el.removeAttribute("open")
+  el.addEventListener("toggle", toggle)
+  return () => el.removeEventListener("toggle", toggle)
+})
+</brick:client>
+<details class="accordion" open><summary>More</summary>{{ children }}</details>

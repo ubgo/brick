@@ -1,0 +1,11 @@
+---
+state:
+  items: 0
+brick:
+  store: cart
+---
+<brick:script>
+def put(state, props):
+    return dict(state, items = state["items"] + 1)
+</brick:script>
+<div class="cart"><button brick:click="put">Add to cart</button> {{ .State.items }} items</div>

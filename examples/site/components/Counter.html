@@ -1,0 +1,17 @@
+---
+props:
+  start: {type: int, default: 0, client: true}
+---
+<brick:client>
+customElements.define("x-counter", class extends HTMLElement {
+  connectedCallback() {
+    const props = JSON.parse(this.closest("[data-brick-props]").dataset.brickProps)
+    let n = props.start
+    this.querySelector("button").onclick = () => { n++; this.querySelector("output").textContent = n }
+  }
+})
+</brick:client>
+<brick:style scoped>
+button { font-weight: 600 }
+</brick:style>
+<div class="counter"><x-counter><output>{{ .Props.start }}</output> <button>+1</button></x-counter></div>

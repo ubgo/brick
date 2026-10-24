@@ -1,0 +1,9 @@
+---
+use:
+  users: ~/lib/users.star
+brick:
+  load_many: users.cards
+props:
+  id: {type: string, required: true}
+---
+<li>{{ .Props.name }}</li>

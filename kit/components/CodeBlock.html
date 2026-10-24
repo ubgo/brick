@@ -1,0 +1,86 @@
+---
+raw: true
+use:
+  Icon: ~/components/Icon.html
+props:
+  lang: {type: string, default: ""}
+  title: {type: string, default: ""}
+  lineNumbers: {type: bool, default: false}
+  highlight: {type: string, default: ""}
+  copy: {type: bool, default: true}
+  wrap: {type: bool, default: false}
+  height: {type: string, default: ""}
+---
+{{/*
+CodeBlock: code shown exactly as written, with a header, optional line
+numbers and highlighted lines, and a copy button.
+
+  <CodeBlock lang="go" title="main.go">
+  func main() { fmt.Println("{{ not a template }}") }
+  </CodeBlock>
+  <CodeBlock lang="go" src="~/examples/main.go" lineNumbers highlight="3,7,8" />
+
+The body is raw (raw: true): nothing between the tags is interpreted, and
+it is dedented. src= reads a file instead, written literally and inside the
+project, so the example is a real file that can be compiled and tested.
+highlight lists line numbers separated by commas (no ranges). There is no
+syntax colouring: the kit adds no highlighter; lang is shown as a label and
+set as class="language-<lang>" on the <code>, where a client-side
+highlighter looks for it. The copy button needs JavaScript and is not
+rendered visible without it; it copies the text without line numbers.
+*/}}
+<brick:client>
+// FEEDBACK_MS is how long the "Copied" check and announcement stay.
+const FEEDBACK_MS = 1500;
+
+brick.mount("CodeBlock", (el) => {
+  const btn = el.querySelector(".bk-code-block__copy");
+  const code = el.querySelector("code");
+  const status = el.querySelector(".bk-code-block__status");
+  if (!btn || !code) return;
+  let timer = 0;
+  const copy = async () => {
+    const text = [...code.querySelectorAll(".bk-code-block__line")].map((l) => l.textContent).join("\n");
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.dataset.copied = "true";
+      status.textContent = "Copied";
+    } catch (e) {
+      status.textContent = "Copy failed";
+    }
+    clearTimeout(timer);
+    timer = setTimeout(() => { delete btn.dataset.copied; status.textContent = ""; }, FEEDBACK_MS);
+  };
+  btn.hidden = false;
+  btn.addEventListener("click", copy);
+  return () => { clearTimeout(timer); btn.removeEventListener("click", copy); };
+})
+</brick:client>
+<brick:style>
+.bk-code-block { position: relative; overflow: hidden; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface-2); font-size: var(--bk-text-sm); }
+.bk-code-block__head { display: flex; align-items: center; gap: .5rem; height: 2.25rem; padding: 0 .4rem 0 .8rem; border-bottom: 1px solid var(--bk-border); background: var(--bk-surface); }
+.bk-code-block__title { flex: 1; min-width: 0; overflow: hidden; color: var(--bk-fg); font: 500 var(--bk-text-xs)/1 var(--bk-mono); text-overflow: ellipsis; white-space: nowrap; }
+.bk-code-block__lang { padding: .1rem .4rem; border-radius: var(--bk-radius-sm); background: var(--bk-muted); color: var(--bk-muted-fg); font-size: .6875rem; font-weight: 500; text-transform: lowercase; }
+.bk-code-block__copy { display: inline-grid; place-items: center; width: var(--bk-h-sm); height: var(--bk-h-sm); padding: 0; border: 1px solid transparent; border-radius: var(--bk-radius); background: none; color: var(--bk-muted-fg); cursor: pointer; transition: background var(--bk-duration), color var(--bk-duration); }
+.bk-code-block__copy:hover { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-code-block__copy[hidden] { display: none; }
+.bk-code-block__copy .bk-code-block__check, .bk-code-block__copy[data-copied] .bk-code-block__clip { display: none; }
+.bk-code-block__copy[data-copied] .bk-code-block__check { display: inline; color: var(--bk-success); }
+.bk-code-block--bare .bk-code-block__copy { position: absolute; top: .4rem; right: .4rem; z-index: 1; background: var(--bk-surface); border-color: var(--bk-border); }
+.bk-code-block__pre { margin: 0; padding: .75rem 0; overflow: auto; font: var(--bk-text-sm)/1.65 var(--bk-mono); color: var(--bk-fg); tab-size: 4; }
+.bk-code-block__pre code { display: block; min-width: max-content; font: inherit; counter-reset: bk-line; }
+.bk-code-block__line { display: inline-block; min-width: 100%; padding: 0 1rem; }
+.bk-code-block--numbers .bk-code-block__line { padding-left: 0; }
+.bk-code-block--numbers .bk-code-block__line::before { counter-increment: bk-line; content: counter(bk-line); display: inline-block; width: 2.5rem; margin-right: 1rem; padding-right: .5rem; text-align: right; color: var(--bk-muted-fg); opacity: .6; user-select: none; }
+.bk-code-block__line--hl { background: color-mix(in oklab, var(--bk-primary) 10%, transparent); box-shadow: inset 2px 0 0 var(--bk-primary); }
+.bk-code-block--wrap .bk-code-block__pre code { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+</brick:style>
+{{- $hl := print "," (replace " " "" .Props.highlight) "," -}}
+{{- $lines := split "\n" (trimSuffix "\n" .Raw) -}}
+{{- $head := or .Props.title .Props.lang -}}
+<div class="{{ cx `bk-code-block` (cond .Props.lineNumbers `bk-code-block--numbers` ``) (cond .Props.wrap `bk-code-block--wrap` ``) (cond $head `` `bk-code-block--bare`) .Attrs.class }}" {{ attrs `class` }}>
+  {{- if $head }}<div class="bk-code-block__head"><span class="bk-code-block__title">{{ .Props.title }}</span>{{ with .Props.lang }}<span class="bk-code-block__lang">{{ . }}</span>{{ end }}{{ end }}
+  {{- if .Props.copy }}<button type="button" class="bk-code-block__copy" aria-label="Copy code" hidden><Icon name="copy" :size="14" class="bk-code-block__clip" /><Icon name="check" :size="14" class="bk-code-block__check" /></button><span class="bk-sr-only bk-code-block__status" aria-live="polite"></span>{{ end }}
+  {{- if $head }}</div>{{ end }}
+  <pre class="bk-code-block__pre"{{ with .Props.height }} style="max-height: {{ . }}"{{ end }} tabindex="0"><code{{ with .Props.lang }} class="language-{{ . }}"{{ end }}>{{ range $i, $l := $lines }}{{ if $i }}{{ "\n" }}{{ end }}<span class="bk-code-block__line{{ if contains (print "," (add $i 1) ",") $hl }} bk-code-block__line--hl{{ end }}">{{ $l }}</span>{{ end }}</code></pre>
+</div>

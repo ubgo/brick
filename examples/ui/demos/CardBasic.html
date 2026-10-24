@@ -1,0 +1,8 @@
+<Card title="Invite your team" description="Collaborators can edit every page in this workspace." style="width: 100%; max-width: 26rem">
+  <Stack direction="row" gap="sm">
+    <input type="email" placeholder="ada@example.com" aria-label="Email" style="flex: 1; height: var(--bk-h-md); padding: 0 .65rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: inherit">
+    <Button icon="send">Invite</Button>
+  </Stack>
+  <brick:prop name="footer"><Icon name="users" :size="14" />&nbsp;4 of 5 seats used</brick:prop>
+  <brick:prop name="actions"><Button variant="link" size="sm" href="#">Manage seats</Button></brick:prop>
+</Card>

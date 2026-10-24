@@ -1,0 +1,49 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  items: {type: list, default: []}
+  separator: {type: string, default: chevron, oneof: [chevron, slash, dot]}
+  max: {type: int, default: 0}
+  label: {type: string, default: Breadcrumb}
+---
+{{/*
+Breadcrumbs: where the page sits in the site, as an ordered list of links.
+The last item is the current page: it is not a link and carries
+aria-current="page".
+
+  <Breadcrumbs :items="list (dict `label` `Home` `href` `/` `icon` `home`) (dict `label` `Docs` `href` `/docs/`) (dict `label` `Tabs`)" />
+  <Breadcrumbs :items=".Params.crumbs" separator="slash" :max="4" />
+  <Breadcrumbs><li><a href="/">Home</a></li><li aria-current="page">Here</li></Breadcrumbs>
+
+An item is {label, href, icon, prefetch}; prefetch (true or "visible")
+writes brick:prefetch on its link. With max above zero and more items than
+that, the middle collapses into a "…" <details> menu listing the hidden
+links, so the trail stays one line and every link stays reachable without
+JavaScript: the first item and the last max-1 stay visible. Without items,
+the children are the list: write <li> elements; separators are CSS, so they
+appear either way.
+*/}}
+<brick:style>
+.bk-breadcrumbs { font-size: var(--bk-text-sm); color: var(--bk-muted-fg); }
+.bk-breadcrumbs > ol { display: flex; flex-wrap: wrap; align-items: center; gap: .15rem .5rem; margin: 0; padding: 0; list-style: none; }
+.bk-breadcrumbs li { display: inline-flex; align-items: center; gap: .5rem; min-width: 0; }
+.bk-breadcrumbs li + li::before { content: ""; flex: none; width: .38em; height: .38em; border: solid color-mix(in oklab, var(--bk-muted-fg) 70%, transparent); border-width: 1.5px 1.5px 0 0; transform: rotate(45deg); margin-right: .15em; }
+.bk-breadcrumbs--slash li + li::before { content: "/"; width: auto; height: auto; border: 0; transform: none; margin: 0; color: color-mix(in oklab, var(--bk-muted-fg) 70%, transparent); }
+.bk-breadcrumbs--dot li + li::before { width: 3px; height: 3px; border: 0; border-radius: 50%; transform: none; margin: 0; background: color-mix(in oklab, var(--bk-muted-fg) 70%, transparent); }
+.bk-breadcrumbs a { display: inline-flex; align-items: center; gap: .35rem; color: inherit; text-decoration: none; border-radius: var(--bk-radius-sm); transition: color var(--bk-duration); }
+.bk-breadcrumbs a:hover { color: var(--bk-fg); }
+.bk-breadcrumbs a:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-breadcrumbs [aria-current=page] { color: var(--bk-fg); font-weight: 500; }
+.bk-breadcrumbs__more { position: relative; }
+.bk-breadcrumbs__more > summary { display: grid; place-items: center; width: 1.5rem; height: 1.25rem; border-radius: var(--bk-radius-sm); cursor: pointer; list-style: none; }
+.bk-breadcrumbs__more > summary::-webkit-details-marker { display: none; }
+.bk-breadcrumbs__more > summary:hover, .bk-breadcrumbs__more[open] > summary { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-breadcrumbs__menu { position: absolute; top: calc(100% + .35rem); left: 0; z-index: var(--bk-z-dropdown); display: grid; min-width: 10rem; padding: .25rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); box-shadow: var(--bk-shadow-lg); animation: bk-pop-in var(--bk-duration) ease-out; }
+.bk-breadcrumbs__menu a { padding: .3rem .5rem; color: var(--bk-fg); }
+.bk-breadcrumbs__menu a:hover { background: var(--bk-accent); }
+</brick:style>
+{{ $n := len .Props.items }}{{ $cut := 0 }}{{ if and (gt .Props.max 0) (gt $n .Props.max) }}{{ $cut = sub $n .Props.max }}{{ end }}
+<nav class="{{ cx `bk-breadcrumbs` (cond (ne .Props.separator `chevron`) (print `bk-breadcrumbs--` .Props.separator) ``) .Attrs.class }}" aria-label="{{ .Props.label }}" {{ attrs `class` }}>
+  <ol>{{ if $n }}{{ range $i, $it := .Props.items }}{{ if and (gt $i 0) (le $i $cut) }}{{ if eq $i 1 }}<li><details class="bk-breadcrumbs__more"><summary aria-label="Show {{ $cut }} more">…</summary><div class="bk-breadcrumbs__menu">{{ range $j, $h := $.Props.items }}{{ if and (gt $j 0) (le $j $cut) }}<a href="{{ $h.href }}">{{ $h.label }}</a>{{ end }}{{ end }}</div></details></li>{{ end }}{{ else if eq $i (sub $n 1) }}<li aria-current="page">{{ with $it.icon }}<Icon :name="." :size="14" />{{ end }}{{ $it.label }}</li>{{ else }}<li><a href="{{ $it.href }}"{{ with $it.prefetch }} brick:prefetch{{ if eq (print .) "visible" }}="visible"{{ end }}{{ end }}>{{ with $it.icon }}<Icon :name="." :size="14" />{{ end }}{{ $it.label }}</a></li>{{ end }}{{ end }}{{ else }}{{ children }}{{ end }}</ol>
+</nav>

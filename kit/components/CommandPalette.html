@@ -1,0 +1,212 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  groups: {type: list, required: true}
+  label: {type: string, default: Search}
+  placeholder: {type: string, default: Type a command or search…}
+  empty: {type: string, default: No results.}
+  hotkey: {type: bool, default: true}
+  trigger: {type: bool, default: true}
+  href: {type: string, default: ""}
+---
+{{/*
+CommandPalette: the ⌘K / Ctrl+K launcher — a search box over grouped
+links and commands, filtered as you type, driven by the keyboard.
+
+  groups (in frontmatter):
+    - label: Pages
+      items:
+        - {label: Dashboard, href: /apps/dashboard/, icon: layout-dashboard, keywords: home stats}
+        - {label: Contacts, href: /apps/contacts/, icon: users, shortcut: G C}
+    - label: Actions
+      items:
+        - {label: Toggle theme, value: theme, icon: moon}
+
+  <CommandPalette :groups=".Params.groups" />
+  <CommandPalette :groups=".Params.groups" :trigger="false" href="/sitemap/" />
+
+An item with href is a link: Enter or a click follows it (through brick
+navigation when it is on). An item without href is a command: choosing it
+emits brick.emit("command", {value, label}) for client code to act on.
+Typing filters by label, keywords and group; ArrowUp/Down move, Enter
+chooses, Escape closes, and ⌘K / Ctrl+K opens it from anywhere (hotkey:
+false turns that off). When a page has several palettes, the first one
+mounted owns the hotkey.
+
+It is a modal <dialog> on Dialog's code (import from "brick:Dialog"), so
+data-bk-open="<its id>" opens it too. The trigger is a search-style
+button showing the hotkey. Without JavaScript the trigger opens the
+dialog through commandfor where the browser supports invoker commands,
+and the dialog lists every item as a plain link; with href the trigger
+is instead a link to that page (a sitemap or search page), which
+JavaScript intercepts to open the palette.
+*/}}
+<brick:client>
+import { open, close, enhance } from "brick:Dialog";
+
+// HIDDEN_TIER sorts options the query filtered out after every match (see
+// tier below: 0, 1 and 2 are matches).
+const HIDDEN_TIER = 3;
+
+// One palette owns ⌘K: the first mounted with hotkey on, so a layout's
+// palette and a page's never both open.
+let hot = null;
+
+brick.mount("CommandPalette", (el) => {
+  const dialog = el.querySelector(":scope > dialog");
+  const input = dialog && dialog.querySelector(".bk-cmdk__input");
+  if (!input) return;
+  const opts = [...dialog.querySelectorAll("[role=option]")];
+  const groups = [...dialog.querySelectorAll(".bk-cmdk__group")];
+  const empty = dialog.querySelector(".bk-cmdk__empty");
+  const labelOf = (o) => (o.querySelector(":scope > span") || o).textContent.trim();
+  const text = new Map(opts.map((o) => [o, (labelOf(o) + " " + (o.dataset.keywords || "") + " " + (o.closest(".bk-cmdk__group")?.dataset.group || "")).toLowerCase()]));
+  let sel = -1;
+  opts.forEach((o) => { o.tabIndex = -1; });
+  // visible is the shown options in on-screen order, which filter's ranking
+  // may have changed from the server's.
+  const visible = () => [...dialog.querySelectorAll("[role=option]")].filter((o) => !o.hidden);
+  const list = dialog.querySelector(".bk-cmdk__list");
+  const itemsOf = new Map(groups.map((g) => [g, [...g.querySelectorAll(":scope > [role=option]")]]));
+  // tier ranks a matching option: 0 when its label starts with the query
+  // (spaces ignored, so "data tab" ranks DataTable), 1 when every word is
+  // in its label, 2 when a word matched only its keywords or group.
+  const tier = (o, words) => {
+    if (!words.length) return 0;
+    const label = labelOf(o).toLowerCase();
+    if (label.startsWith(words.join(" ")) || label.replace(/\s+/g, "").startsWith(words.join(""))) return 0;
+    return words.every((w) => label.includes(w)) ? 1 : 2;
+  };
+  // rank orders the options of each group by tier, then the groups by their
+  // best option, stable within a tier; an empty query restores the server's
+  // order.
+  const rank = (words) => {
+    const best = new Map();
+    for (const g of groups) {
+      const items = itemsOf.get(g).map((o, i) => ({ o, i, t: o.hidden ? HIDDEN_TIER : tier(o, words) }));
+      items.sort((a, b) => a.t - b.t || a.i - b.i);
+      items.forEach(({ o }) => g.append(o));
+      best.set(g, items.length ? items[0].t : HIDDEN_TIER);
+    }
+    const order = groups.map((g, i) => ({ g, i })).sort((a, b) => best.get(a.g) - best.get(b.g) || a.i - b.i);
+    order.forEach(({ g }) => list.insertBefore(g, empty && empty.parentNode === list ? empty : null));
+  };
+  const select = (o) => {
+    opts.forEach((x) => x.setAttribute("aria-selected", String(x === o)));
+    sel = o ? visible().indexOf(o) : -1;
+    if (o) { input.setAttribute("aria-activedescendant", o.id); if (o.scrollIntoView) o.scrollIntoView({ block: "nearest" }); }
+    else input.removeAttribute("aria-activedescendant");
+  };
+  const filter = () => {
+    const words = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+    opts.forEach((o) => { o.hidden = !words.every((w) => text.get(o).includes(w)); });
+    groups.forEach((g) => { g.hidden = !g.querySelector("[role=option]:not([hidden])"); });
+    if (list) rank(words);
+    const v = visible();
+    if (empty) empty.hidden = v.length > 0;
+    select(v[0]);
+  };
+  const choose = (o) => {
+    if (!o) return;
+    close(dialog);
+    if (o.hasAttribute("href")) o.click();
+    else brick.emit("command", { value: o.dataset.value || "", label: labelOf(o) });
+  };
+  const key = (e) => {
+    const v = visible();
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (v.length) select(v[(sel + (e.key === "ArrowDown" ? 1 : -1) + v.length) % v.length]);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      choose(v[sel]);
+    }
+  };
+  const pick = (e) => {
+    const o = e.target.closest("[role=option]");
+    if (!o) return;
+    if (o.hasAttribute("href")) { close(dialog); return; }
+    e.preventDefault();
+    choose(o);
+  };
+  const hover = (e) => { const o = e.target.closest("[role=option]"); if (o && o.getAttribute("aria-selected") !== "true") select(o); };
+  const reset = () => { input.value = ""; filter(); };
+  const hotkey = (e) => {
+    if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      if (dialog.open) close(dialog); else { reset(); open(dialog); input.focus(); }
+    }
+  };
+  const mac = /mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent || "");
+  if (!mac) el.querySelectorAll(".bk-cmdk__hotkey").forEach((k) => { k.textContent = "Ctrl K"; });
+  const trigger = el.querySelector(":scope > .bk-cmdk__trigger");
+  if (trigger && trigger.tagName === "A") trigger.setAttribute("data-bk-open", dialog.id);
+  const undo = enhance(dialog);
+  input.addEventListener("input", filter);
+  input.addEventListener("keydown", key);
+  dialog.addEventListener("click", pick);
+  dialog.addEventListener("mousemove", hover);
+  dialog.addEventListener("close", reset);
+  const ownsKey = el.dataset.hotkey === "true" && !(hot && hot.isConnected);
+  if (ownsKey) { hot = el; document.addEventListener("keydown", hotkey); }
+  filter();
+  return () => {
+    undo();
+    input.removeEventListener("input", filter);
+    input.removeEventListener("keydown", key);
+    dialog.removeEventListener("click", pick);
+    dialog.removeEventListener("mousemove", hover);
+    dialog.removeEventListener("close", reset);
+    document.removeEventListener("keydown", hotkey);
+    if (hot === el) hot = null;
+  };
+})
+</brick:client>
+<brick:style>
+.bk-cmdk { display: contents; }
+.bk-cmdk__trigger { display: inline-flex; align-items: center; gap: .5rem; width: 15rem; max-width: 100%; height: var(--bk-h-md); padding: 0 .4rem 0 .65rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-muted-fg); box-shadow: var(--bk-shadow-sm); font: var(--bk-text-sm)/1 var(--bk-font); text-decoration: none; cursor: pointer; transition: border-color var(--bk-duration), background var(--bk-duration); }
+.bk-cmdk__trigger:hover { background: var(--bk-accent); }
+.bk-cmdk__trigger:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-cmdk__trigger > span { flex: 1; text-align: left; }
+.bk-cmdk__kbd { display: inline-flex; align-items: center; height: 1.25rem; padding: 0 .35rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm); background: var(--bk-surface-2); color: var(--bk-muted-fg); font: 500 var(--bk-text-xs)/1 var(--bk-font); white-space: nowrap; }
+.bk-cmdk__dialog { width: min(calc(100vw - 2rem), 36rem); max-width: none; max-height: min(28rem, calc(100dvh - 6rem)); margin: 12vh auto auto; padding: 0; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); overflow: hidden; opacity: 0; transform: scale(.98); transition: opacity var(--bk-duration) ease, transform var(--bk-duration) ease, overlay var(--bk-duration) allow-discrete, display var(--bk-duration) allow-discrete; }
+.bk-cmdk__dialog[open] { display: flex; flex-direction: column; opacity: 1; transform: none; }
+@starting-style { .bk-cmdk__dialog[open] { opacity: 0; transform: scale(.98); } }
+.bk-cmdk__dialog::backdrop { background: var(--bk-backdrop, color-mix(in oklab, black 50%, transparent)); backdrop-filter: blur(2px); opacity: 0; transition: opacity var(--bk-duration) ease, overlay var(--bk-duration) allow-discrete, display var(--bk-duration) allow-discrete; }
+.bk-cmdk__dialog[open]::backdrop { opacity: 1; }
+@starting-style { .bk-cmdk__dialog[open]::backdrop { opacity: 0; } }
+.bk-cmdk__search { display: flex; align-items: center; gap: .6rem; flex: none; padding: 0 .85rem; border-bottom: 1px solid var(--bk-border); color: var(--bk-muted-fg); }
+.bk-cmdk__input { flex: 1; min-width: 0; height: 2.9rem; border: 0; background: transparent; color: var(--bk-fg); font: var(--bk-text-base) var(--bk-font); outline: none; }
+.bk-cmdk__input::placeholder { color: var(--bk-muted-fg); }
+.bk-cmdk__list { flex: 1; min-height: 0; overflow-y: auto; padding: .35rem; scroll-padding: .35rem; }
+.bk-cmdk__group[hidden], .bk-cmdk__item[hidden], .bk-cmdk__empty[hidden] { display: none; }
+.bk-cmdk__heading { padding: .5rem .5rem .25rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; }
+.bk-cmdk__item { display: flex; align-items: center; gap: .6rem; min-height: var(--bk-h-md); padding: .35rem .5rem; border-radius: var(--bk-radius-sm); color: var(--bk-fg); font-size: var(--bk-text-sm); text-decoration: none; cursor: pointer; outline: none; }
+.bk-cmdk__item > .bk-icon { flex: none; color: var(--bk-muted-fg); }
+.bk-cmdk__item > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-cmdk__item[aria-selected=true], .bk-cmdk__item:focus-visible { background: var(--bk-accent); color: var(--bk-accent-fg); }
+.bk-cmdk__item[aria-selected=true] > .bk-icon { color: var(--bk-fg); }
+.bk-cmdk__empty { margin: 0; padding: 1.5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); text-align: center; }
+.bk-cmdk__foot { display: flex; gap: 1rem; flex: none; padding: .45rem .85rem; border-top: 1px solid var(--bk-border); background: var(--bk-surface-2); color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.bk-cmdk__foot > span { display: inline-flex; align-items: center; gap: .3rem; }
+</brick:style>
+{{ $id := or .Attrs.id (print .ID `-cmdk`) }}
+<div class="bk-cmdk" data-hotkey="{{ .Props.hotkey }}">
+  {{ if .Props.trigger }}{{ if .Props.href }}<a class="bk-cmdk__trigger" href="{{ .Props.href }}">{{ else }}<button type="button" class="bk-cmdk__trigger" commandfor="{{ $id }}" command="show-modal" aria-haspopup="dialog">{{ end }}<Icon name="search" :size="14" /><span>{{ .Props.label }}…</span>{{ if .Props.hotkey }}<kbd class="bk-cmdk__kbd bk-cmdk__hotkey">⌘K</kbd>{{ end }}{{ if .Props.href }}</a>{{ else }}</button>{{ end }}{{ end }}
+  <dialog id="{{ $id }}" class="{{ cx `bk-cmdk__dialog` .Attrs.class }}" aria-label="{{ .Props.label }}" {{ attrs `class` `id` }}>
+    <div class="bk-cmdk__search">
+      <Icon name="search" />
+      <input class="bk-cmdk__input" type="text" role="combobox" aria-expanded="true" aria-controls="{{ $id }}-list" aria-autocomplete="list" aria-label="{{ .Props.label }}" placeholder="{{ .Props.placeholder }}" autocomplete="off" spellcheck="false" autofocus>
+      <kbd class="bk-cmdk__kbd">Esc</kbd>
+    </div>
+    <div class="bk-cmdk__list" id="{{ $id }}-list" role="listbox" aria-label="{{ .Props.label }}">
+      {{ range $gi, $g := .Props.groups }}<div class="bk-cmdk__group" role="group" aria-labelledby="{{ $id }}-g{{ $gi }}" data-group="{{ $g.label }}">
+        <div class="bk-cmdk__heading" id="{{ $id }}-g{{ $gi }}" role="presentation">{{ $g.label }}</div>
+        {{ range $ii, $it := $g.items }}{{ if $it.href }}<a class="bk-cmdk__item" role="option" aria-selected="false" id="{{ $id }}-o{{ $gi }}-{{ $ii }}" href="{{ $it.href }}"{{ with $it.keywords }} data-keywords="{{ . }}"{{ end }}>{{ else }}<div class="bk-cmdk__item" role="option" aria-selected="false" id="{{ $id }}-o{{ $gi }}-{{ $ii }}" data-value="{{ or $it.value $it.label }}"{{ with $it.keywords }} data-keywords="{{ . }}"{{ end }}>{{ end }}{{ with $it.icon }}<Icon :name="." />{{ end }}<span>{{ $it.label }}</span>{{ with $it.shortcut }}<kbd class="bk-cmdk__kbd">{{ . }}</kbd>{{ end }}{{ if $it.href }}</a>{{ else }}</div>{{ end }}{{ end }}
+      </div>{{ end }}
+      <p class="bk-cmdk__empty" hidden>{{ .Props.empty }}</p>
+    </div>
+    <footer class="bk-cmdk__foot" aria-hidden="true"><span><kbd class="bk-cmdk__kbd">↑</kbd><kbd class="bk-cmdk__kbd">↓</kbd> navigate</span><span><kbd class="bk-cmdk__kbd">↵</kbd> open</span><span><kbd class="bk-cmdk__kbd">esc</kbd> close</span></footer>
+  </dialog>
+</div>

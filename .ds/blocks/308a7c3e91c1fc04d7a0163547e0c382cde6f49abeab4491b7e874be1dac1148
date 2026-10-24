@@ -1,0 +1,12 @@
+type limits struct {
+	MaxComponents  int
+	MaxOutputBytes int
+	// MaxActionBytes caps an action request's JSON body; zero keeps the
+	// default (brick.DefaultMaxActionBytes).
+	MaxActionBytes int
+	// ScriptSteps and ScriptTimeout bound one script call (a loader or an
+	// action function); zero keeps the Starlark runtime's own defaults
+	// (scriptstarlark.DefaultSteps, DefaultTimeout).
+	ScriptSteps   uint64
+	ScriptTimeout time.Duration
+}

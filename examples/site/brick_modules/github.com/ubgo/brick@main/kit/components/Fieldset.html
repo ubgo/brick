@@ -1,0 +1,32 @@
+---
+props:
+  legend: {type: string, default: ""}
+  description: {type: string, default: ""}
+  variant: {type: string, default: plain, oneof: [plain, card]}
+  columns: {type: int, default: 1}
+  disabled: {type: bool, default: false}
+---
+{{/*
+Fieldset: a titled group of fields — a native <fieldset> and <legend>, so
+disabled turns off every control inside and screen readers announce the
+legend with each field.
+
+  <Fieldset legend="Profile" description="Shown on your public page."><Field label="Name"><Input name="name" /></Field></Fieldset>
+  <Fieldset legend="Address" variant="card" :columns="2">…fields…</Fieldset>
+  <Fieldset legend="Notify me about"><Checkbox name="n" value="a" label="Comments" /><Checkbox name="n" value="b" label="Mentions" /></Fieldset>
+
+columns lays the children out in a grid (one column on narrow screens); a
+child with class="bk-fieldset__wide" spans the whole row.
+*/}}
+<brick:style>
+.bk-fieldset { display: flex; flex-direction: column; gap: 1rem; min-width: 0; margin: 0; padding: 0; border: 0; }
+.bk-fieldset--card { padding: 1.25rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); box-shadow: var(--bk-shadow-sm); }
+.bk-fieldset__legend { float: left; width: 100%; padding: 0; font: 600 var(--bk-text-base)/1.4 var(--bk-font); color: var(--bk-fg); }
+.bk-fieldset__legend + * { clear: both; }
+.bk-fieldset__desc { margin: -.75rem 0 0; color: var(--bk-muted-fg); font-size: var(--bk-text-sm); line-height: 1.5; }
+.bk-fieldset__body { display: grid; grid-template-columns: repeat(var(--bk-cols, 1), minmax(0, 1fr)); gap: 1rem 1.25rem; }
+.bk-fieldset__wide { grid-column: 1 / -1; }
+.bk-fieldset:disabled { opacity: .65; }
+@media (max-width: 640px) { .bk-fieldset__body { grid-template-columns: minmax(0, 1fr); } }
+</brick:style>
+<fieldset class="{{ cx `bk-fieldset` (cond (eq .Props.variant `card`) `bk-fieldset--card` ``) .Attrs.class }}"{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` }}>{{ with .Props.legend }}<legend class="bk-fieldset__legend">{{ . }}</legend>{{ end }}{{ with .Props.description }}<p class="bk-fieldset__desc">{{ . }}</p>{{ end }}<div class="bk-fieldset__body"{{ if gt .Props.columns 1 }} style="--bk-cols: {{ .Props.columns }}"{{ end }}>{{ children }}</div></fieldset>

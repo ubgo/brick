@@ -1,0 +1,172 @@
+---
+use:
+  ChartLegend: ~/components/ChartLegend.html
+props:
+  data: {type: list, default: []}
+  series: {type: list, default: []}
+  x: {type: string, default: label}
+  y: {type: string, default: value}
+  name: {type: string, default: ""}
+  label: {type: string, default: Line chart}
+  height: {type: int, default: 240}
+  max: {type: float, default: 0}
+  ticks: {type: int, default: 4}
+  smooth: {type: bool, default: false}
+  area: {type: bool, default: false}
+  points: {type: bool, default: true}
+  legend: {type: bool, default: true}
+  prefix: {type: string, default: ""}
+  suffix: {type: string, default: ""}
+  empty: {type: string, default: No data}
+---
+{{/*
+LineChart: one or more series over an ordered x axis (months, days,
+releases) — trends rather than amounts. Server-rendered: the lines are an
+SVG path, the axes and points HTML, so text stays crisp at any width. With
+JavaScript a crosshair follows the pointer (or the arrow keys) and a
+tooltip lists every series at that x.
+
+  <LineChart :data=".Params.visits" x="day" y="visits" label="Visits per day" />
+  <LineChart :data="$rows" :series="list (dict `key` `web` `label` `Web`) (dict `key` `app` `label` `App`)" smooth area />
+  <LineChart :data="$rows" :points="false" prefix="$" />
+
+data, series, tones, the zero-based round-number value axis, height, label
+and the screen-reader table work exactly as in BarChart. smooth draws a
+Catmull-Rom curve through every point (it never misses one; between points
+it can bulge slightly past them), area washes the region under each line,
+points marks every value. Each x sits at the centre of its slot, so a
+LineChart and a BarChart over the same data line up.
+*/}}
+<brick:component name="BkChartNum">{{ $v := mul 1.0 .Props.v }}{{ $a := cond (lt $v 0.0) (mul -1.0 $v) $v }}{{ .Props.prefix }}{{ if ge $a 999999.5 }}{{ trimSuffix ".0" (printf "%.1f" (div $v 1000000.0)) }}M{{ else if ge $a 999.5 }}{{ trimSuffix ".0" (printf "%.1f" (div $v 1000.0)) }}k{{ else }}{{ trimSuffix "," (trimSuffix "." (trimSuffix "0" (trimSuffix "0" (numberFormat $v 2)))) }}{{ end }}{{ .Props.suffix }}</brick:component>
+<brick:client>
+// The tooltip: identical in BarChart, LineChart and DonutChart.
+// TIP_DX is the gap between the pointer and the tooltip's side, and TIP_DY
+// the gap above it: enough that the cursor never covers the text.
+const TIP_DX = 14, TIP_DY = 10;
+const tip = (el, sel) => {
+  const box = el.querySelector(":scope > .bk-chart__tip");
+  const plot = el.querySelector(".bk-chart__plot");
+  const marks = [...el.querySelectorAll(sel)];
+  if (!box || !plot || !marks.length) return () => {};
+  for (const m of marks) {
+    // The server's native tooltip — a title attribute, or an SVG <title> — becomes the rich one.
+    const t = m.querySelector(":scope > title");
+    if (t) { m.dataset.tip = t.textContent; t.remove(); }
+    else if (m.hasAttribute("title")) { m.dataset.tip = m.getAttribute("title"); m.removeAttribute("title"); }
+  }
+  let cur = -1;
+  const show = (i, x, y) => {
+    cur = i;
+    const m = marks[i];
+    marks.forEach((o) => o.classList.toggle("bk-chart--on", o === m));
+    const [head, ...rows] = m.dataset.tip.split("\n");
+    const tones = (m.dataset.tones || "").split(" ");
+    const h = document.createElement("div");
+    h.className = "bk-chart__tip-head";
+    h.textContent = head;
+    box.replaceChildren(h, ...rows.map((r, j) => {
+      const at = r.lastIndexOf(": ");
+      const row = document.createElement("div");
+      const key = document.createElement("i");
+      const val = document.createElement("b");
+      const name = document.createElement("span");
+      row.className = "bk-chart__tip-row";
+      key.dataset.tone = tones[j] || "";
+      val.textContent = at < 0 ? r : r.slice(at + 2);
+      name.textContent = at < 0 ? "" : r.slice(0, at);
+      row.append(key, val, name);
+      return row;
+    }));
+    box.hidden = false;
+    const fr = el.getBoundingClientRect(), mr = m.getBoundingClientRect();
+    if (x === undefined) { x = mr.left + mr.width / 2; y = mr.top + mr.height / 2; }
+    let left = x - fr.left + TIP_DX, top = y - fr.top - box.offsetHeight - TIP_DY;
+    if (left + box.offsetWidth > fr.width) left = x - fr.left - box.offsetWidth - TIP_DX;
+    box.style.left = Math.max(0, left) + "px";
+    box.style.top = Math.max(0, top) + "px";
+  };
+  const hide = () => { cur = -1; box.hidden = true; marks.forEach((o) => o.classList.remove("bk-chart--on")); };
+  const move = (e) => { const i = marks.indexOf(e.target.closest(sel)); if (i < 0) hide(); else show(i, e.clientX, e.clientY); };
+  const key = (e) => {
+    if (e.key === "Escape") return hide();
+    const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+    if (!d) return;
+    e.preventDefault();
+    show(cur < 0 ? (d > 0 ? 0 : marks.length - 1) : (cur + d + marks.length) % marks.length);
+  };
+  plot.tabIndex = 0;
+  plot.addEventListener("pointermove", move);
+  plot.addEventListener("pointerleave", hide);
+  plot.addEventListener("keydown", key);
+  plot.addEventListener("blur", hide);
+  return () => { plot.removeEventListener("pointermove", move); plot.removeEventListener("pointerleave", hide); plot.removeEventListener("keydown", key); plot.removeEventListener("blur", hide); };
+};
+brick.mount("LineChart", (el) => tip(el, ".bk-line-chart__col"))
+</brick:client>
+<brick:style>
+/* bk-chart base: the same in every chart component (kit_nav_test.go checks) */
+.bk-chart { --bk-chart-bg: var(--bk-surface); --bk-chart-grid: color-mix(in oklab, var(--bk-border) 70%, transparent); --bk-chart-gutter: 2.75rem; position: relative; margin: 0; min-width: 0; color: var(--bk-muted-fg); font-size: .6875rem; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.bk-chart [data-tone="1"] { --bk-c: var(--bk-chart-1); }
+.bk-chart [data-tone="2"] { --bk-c: var(--bk-chart-2); }
+.bk-chart [data-tone="3"] { --bk-c: var(--bk-chart-3); }
+.bk-chart [data-tone="4"] { --bk-c: var(--bk-chart-4); }
+.bk-chart [data-tone="5"] { --bk-c: var(--bk-chart-5); }
+.bk-chart [data-tone="6"] { --bk-c: var(--bk-chart-6); }
+.bk-chart [data-tone=primary] { --bk-c: var(--bk-primary); }
+.bk-chart [data-tone=success] { --bk-c: var(--bk-success); }
+.bk-chart [data-tone=warning] { --bk-c: var(--bk-warning); }
+.bk-chart [data-tone=danger] { --bk-c: var(--bk-danger); }
+.bk-chart [data-tone=info] { --bk-c: var(--bk-info); }
+.bk-chart [data-tone=neutral] { --bk-c: color-mix(in oklab, var(--bk-muted-fg) 70%, transparent); }
+.bk-chart__plot { position: relative; }
+.bk-chart__plot:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 4px; border-radius: var(--bk-radius-sm); }
+.bk-chart__gl { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--bk-chart-grid); }
+.bk-chart__gl:first-child { border-top-color: var(--bk-border); }
+.bk-chart__gl > span { position: absolute; right: calc(100% + .5rem); top: 0; transform: translateY(-50%); white-space: nowrap; }
+.bk-chart__xaxis { display: flex; margin: .45rem 0 0 var(--bk-chart-gutter); }
+.bk-chart__xaxis > span { display: flex; flex: 1 1 0; justify-content: center; min-width: 0; white-space: nowrap; }
+.bk-chart__xaxis > .bk-chart__skip { visibility: hidden; }
+@container (max-width: 520px) { .bk-chart__xaxis > .bk-chart__x2 { visibility: hidden; } }
+@container (max-width: 300px) { .bk-chart__xaxis > .bk-chart__x4 { visibility: hidden; } }
+.bk-chart__tip { position: absolute; z-index: var(--bk-z-tooltip); min-width: 8rem; padding: .4rem .55rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); box-shadow: var(--bk-shadow-lg); pointer-events: none; font-size: var(--bk-text-xs); }
+.bk-chart__tip-head { margin-bottom: .2rem; color: var(--bk-muted-fg); font-weight: 500; }
+.bk-chart__tip-row { display: flex; align-items: center; gap: .45rem; line-height: 1.5; }
+.bk-chart__tip-row > i { flex: none; width: .7rem; height: 2px; border-radius: 1px; background: var(--bk-c, var(--bk-muted-fg)); }
+.bk-chart__tip-row > b { font-weight: 600; }
+.bk-chart__tip-row > span { color: var(--bk-muted-fg); }
+.bk-chart__empty { display: grid; place-items: center; min-height: 8rem; border: 1px dashed var(--bk-border); border-radius: var(--bk-radius); font-size: var(--bk-text-sm); }
+.bk-chart .bk-chart-legend { margin-top: .75rem; }
+/* end bk-chart base */
+.bk-line-chart { container-type: inline-size; }
+.bk-line-chart .bk-chart__plot { height: var(--bk-chart-h); margin: .5rem 0 0 var(--bk-chart-gutter); }
+.bk-line-chart__ygrid, .bk-line-chart__svg, .bk-line-chart__cols { position: absolute; inset: 0; }
+.bk-line-chart__svg { width: 100%; height: 100%; overflow: visible; }
+.bk-line-chart__line { fill: none; stroke: var(--bk-c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.bk-line-chart__area { stroke: none; }
+.bk-line-chart__stop { stop-color: var(--bk-c); }
+.bk-line-chart__cols { display: flex; }
+.bk-line-chart__col { position: relative; flex: 1 1 0; min-width: 0; }
+.bk-line-chart__col::before { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--bk-input); opacity: 0; transition: opacity var(--bk-duration); }
+.bk-line-chart__col:hover::before, .bk-line-chart__col.bk-chart--on::before { opacity: 1; }
+.bk-line-chart__pt { position: absolute; left: 50%; width: 7px; height: 7px; border: 2px solid var(--bk-chart-bg); border-radius: 50%; background: var(--bk-c); box-sizing: content-box; transform: translate(-50%, 50%); transition: transform var(--bk-duration); }
+.bk-line-chart--nopoints .bk-line-chart__pt { opacity: 0; }
+.bk-line-chart__col:hover .bk-line-chart__pt, .bk-line-chart__col.bk-chart--on .bk-line-chart__pt { opacity: 1; transform: translate(-50%, 50%) scale(1.25); }
+</brick:style>
+{{ $data := .Props.data }}{{ $n := len $data }}{{ $x := .Props.x }}
+{{ $series := .Props.series }}{{ if not $series }}{{ $series = list (dict "key" .Props.y "label" (default .Props.y .Props.name)) }}{{ end }}{{ $ns := len $series }}
+{{ $max := 0.0 }}{{ range $row := $data }}{{ range $s := $series }}{{ $max = max $max (mul 1.0 (default 0 (index $row $s.key))) }}{{ end }}{{ end }}
+{{ if gt (mul 1.0 .Props.max) 0.0 }}{{ $max = mul 1.0 .Props.max }}{{ end }}
+{{ $step := 1.0 }}{{ $k := 1 }}{{ if gt $max 0.0 }}{{ $raw := div $max (mul 1.0 (add (max 1 .Props.ticks) 1)) }}{{ $found := false }}{{ range $mag := list 0.001 0.01 0.1 1.0 10.0 100.0 1000.0 10000.0 100000.0 1000000.0 10000000.0 100000000.0 1000000000.0 }}{{ range $m := list 1.0 2.0 2.5 5.0 }}{{ if and (not $found) (ge (mul $mag $m) (mul $raw 0.9999)) }}{{ $step = mul $mag $m }}{{ $found = true }}{{ end }}{{ end }}{{ end }}{{ $kf := false }}{{ range $i := seq 1 60 }}{{ if and (not $kf) (ge (mul $step (mul 1.0 $i)) (mul $max 0.9999)) }}{{ $k = $i }}{{ $kf = true }}{{ end }}{{ end }}{{ end }}
+{{ $top := mul $step (mul 1.0 $k) }}{{ $every := 1 }}{{ if gt $n 12 }}{{ $every = div (add $n 11) 12 }}{{ end }}
+{{ $w := div 1000.0 (mul 1.0 (max 1 $n)) }}
+<figure class="{{ cx `bk-chart` `bk-line-chart` (cond .Props.points `` `bk-line-chart--nopoints`) .Attrs.class }}" style="--bk-chart-h: {{ .Props.height }}px" {{ attrs `class` }}>
+  {{ if not $n }}<div class="bk-chart__empty">{{ .Props.empty }}</div>{{ else }}<div class="bk-chart__plot" role="img" aria-label="{{ .Props.label }}">
+    <div class="bk-line-chart__ygrid" aria-hidden="true">{{ range $i := seq 0 $k }}<div class="bk-chart__gl" style="bottom: {{ printf `%.2f` (mul 100.0 (div (mul 1.0 $i) (mul 1.0 $k))) }}%"><span><BkChartNum :v="mul $step (mul 1.0 $i)" :prefix="$.Props.prefix" :suffix="$.Props.suffix" /></span></div>{{ end }}</div>
+    <svg class="bk-line-chart__svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false">{{ range $pass := cond .Props.area (list "area" "line") (list "line") }}{{ range $si, $s := $series }}{{ $d := "" }}{{ range $i, $row := $data }}{{ $cx := mul $w (add (mul 1.0 $i) 0.5) }}{{ $cy := sub 1000.0 (mul 1000.0 (div (min (max 0.0 (mul 1.0 (default 0 (index $row $s.key)))) $top) $top)) }}{{ if eq $i 0 }}{{ $d = printf "M%.1f %.1f" $cx $cy }}{{ else if $.Props.smooth }}{{ $a := max 0 (sub $i 2) }}{{ $b := sub $i 1 }}{{ $e := min (sub $n 1) (add $i 1) }}{{ $ya := sub 1000.0 (mul 1000.0 (div (min (max 0.0 (mul 1.0 (default 0 (index (index $data $a) $s.key)))) $top) $top)) }}{{ $yb := sub 1000.0 (mul 1000.0 (div (min (max 0.0 (mul 1.0 (default 0 (index (index $data $b) $s.key)))) $top) $top)) }}{{ $ye := sub 1000.0 (mul 1000.0 (div (min (max 0.0 (mul 1.0 (default 0 (index (index $data $e) $s.key)))) $top) $top)) }}{{ $xa := mul $w (add (mul 1.0 $a) 0.5) }}{{ $xb := mul $w (add (mul 1.0 $b) 0.5) }}{{ $xe := mul $w (add (mul 1.0 $e) 0.5) }}{{ $d = print $d (printf " C%.1f %.1f %.1f %.1f %.1f %.1f" (add $xb (div (sub $cx $xa) 6.0)) (min 1000.0 (max 0.0 (add $yb (div (sub $cy $ya) 6.0)))) (sub $cx (div (sub $xe $xb) 6.0)) (min 1000.0 (max 0.0 (sub $cy (div (sub $ye $yb) 6.0)))) $cx $cy) }}{{ else }}{{ $d = print $d (printf " L%.1f %.1f" $cx $cy) }}{{ end }}{{ end }}<g data-tone="{{ default (add (mod $si 6) 1) (index $s `tone`) }}">{{ if eq $pass "area" }}<defs><linearGradient id="{{ $.ID }}-g{{ $si }}" x1="0" y1="0" x2="0" y2="1"><stop class="bk-line-chart__stop" offset="0" stop-opacity=".16"/><stop class="bk-line-chart__stop" offset="1" stop-opacity="0"/></linearGradient></defs><path class="bk-line-chart__area" d="{{ $d }} L{{ printf `%.1f` (mul $w (sub (mul 1.0 $n) 0.5)) }} 1000 L{{ printf `%.1f` (div $w 2.0) }} 1000 Z" fill="url(#{{ $.ID }}-g{{ $si }})"/>{{ else }}<path class="bk-line-chart__line" d="{{ $d }}" vector-effect="non-scaling-stroke"/>{{ end }}</g>{{ end }}{{ end }}</svg>
+    <div class="bk-line-chart__cols">{{ range $ri, $row := $data }}<div class="bk-line-chart__col" title="{{ index $row $x }}{{ range $s := $series }}&#10;{{ default $s.key $s.label }}: {{ $v := mul 1.0 (default 0 (index $row $s.key)) }}{{ $.Props.prefix }}{{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $v 2)))) }}{{ $.Props.suffix }}{{ end }}" data-tones="{{ range $si, $s := $series }}{{ if $si }} {{ end }}{{ default (add (mod $si 6) 1) (index $s `tone`) }}{{ end }}">{{ range $si, $s := $series }}<i class="bk-line-chart__pt" data-tone="{{ default (add (mod $si 6) 1) (index $s `tone`) }}" style="bottom: {{ printf `%.2f` (mul 100.0 (div (min (max 0.0 (mul 1.0 (default 0 (index $row $s.key)))) $top) $top)) }}%"></i>{{ end }}</div>{{ end }}</div>
+  </div>
+  <div class="bk-chart__xaxis" aria-hidden="true">{{ range $ri, $row := $data }}<span class="{{ if mod $ri $every }}bk-chart__skip{{ else }}{{ $k := div $ri $every }}{{ if mod $k 2 }}bk-chart__x2 {{ end }}{{ if mod $k 4 }}bk-chart__x4{{ end }}{{ end }}">{{ index $row $x }}</span>{{ end }}</div>
+  <table class="bk-sr-only"><caption>{{ .Props.label }}</caption><thead><tr><th scope="col">{{ $x }}</th>{{ range $series }}<th scope="col">{{ default .key .label }}</th>{{ end }}</tr></thead><tbody>{{ range $row := $data }}<tr><th scope="row">{{ index $row $x }}</th>{{ range $s := $series }}{{ $v := mul 1.0 (default 0 (index $row $s.key)) }}<td>{{ $.Props.prefix }}{{ trimSuffix `,` (trimSuffix `.` (trimSuffix `0` (trimSuffix `0` (numberFormat $v 2)))) }}{{ $.Props.suffix }}</td>{{ end }}</tr>{{ end }}</tbody></table>
+  {{ if and .Props.legend (gt $ns 1) }}<ChartLegend :items="$series" marker="line" />{{ end }}
+  <div class="bk-chart__tip" hidden></div>{{ end }}
+</figure>

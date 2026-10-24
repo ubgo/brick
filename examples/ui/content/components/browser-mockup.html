@@ -1,0 +1,14 @@
+---
+title: Browser mockup
+category: Mockups
+description: "A browser window around a screenshot or live markup — traffic lights and an address bar."
+api:
+  - {name: url, type: "string", desc: "Shown in the address bar, and the figure’s caption."}
+  - {name: label, type: "string", desc: "The caption for screen readers when there is no url."}
+---
+<h1>Browser mockup</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="A landing page" block><BrowserMockupBasic /><brick:prop name="code"><Source src="~/demos/BrowserMockupBasic.html" /></brick:prop></Example>
+<Example title="A live chart" block><BrowserMockupChart /><brick:prop name="code"><Source src="~/demos/BrowserMockupChart.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

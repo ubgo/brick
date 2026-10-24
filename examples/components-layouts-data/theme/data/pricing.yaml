@@ -1,0 +1,3 @@
+plans:
+  - {name: Free, price: 0}
+  - {name: Pro, price: 12}

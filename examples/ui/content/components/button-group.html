@@ -1,0 +1,16 @@
+---
+title: ButtonGroup
+category: Actions
+description: Buttons joined into one control — a formatting toolbar, a segmented view switch, a split button, pagination.
+api:
+  - {name: orientation, type: "horizontal | vertical", default: horizontal, desc: The direction the buttons join in.}
+  - {name: label, type: string, desc: "The group's accessible name (role=\"group\")."}
+---
+<h1>ButtonGroup</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Toolbars"><ButtonGroupToolbar /><brick:prop name="code"><Source src="~/demos/ButtonGroupToolbar.html" /></brick:prop></Example>
+<Example title="Segmented, split and pagination"><ButtonGroupVariants /><brick:prop name="code"><Source src="~/demos/ButtonGroupVariants.html" /></brick:prop></Example>
+<Example title="Vertical"><ButtonGroupVertical /><brick:prop name="code"><Source src="~/demos/ButtonGroupVertical.html" /></brick:prop></Example>
+<Prose><p>A child with <code>aria-pressed="true"</code> or <code>aria-current</code> is drawn selected. Set it from the server, or toggle it in your own script; the group itself adds no behaviour.</p></Prose>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

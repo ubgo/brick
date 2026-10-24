@@ -1,0 +1,12 @@
+---
+title: Images
+---
+{{- with image "~/static/diagram.png" }}
+<img src="{{ .URL }}" srcset="{{ .SrcSet }}" sizes="(max-width: 800px) 100vw, 800px" width="{{ .Width }}" height="{{ .Height }}" alt="How it fits together" loading="lazy">
+{{- end }}
+{{- with image "~/static/diagram.png" 320 640 "jpeg" }}
+<img src="{{ .URL }}" srcset="{{ .SrcSet }}" width="{{ .Width }}" height="{{ .Height }}" alt="The same, as JPEG">
+{{- end }}
+{{- with image "~/static/diagram.png" 480 960 "webp" }}
+<img src="{{ .URL }}" srcset="{{ .SrcSet }}" width="{{ .Width }}" height="{{ .Height }}" alt="The same, as lossless WebP">
+{{- end }}

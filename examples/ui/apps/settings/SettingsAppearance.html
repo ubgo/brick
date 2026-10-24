@@ -1,0 +1,87 @@
+---
+state:
+  theme: system
+  density: default
+  motion: true
+  saves: 0
+  saved: false
+---
+{{/*
+SettingsAppearance: the Appearance section. The theme choice applies at
+once in the browser (the client module sets <html data-theme> and
+localStorage "bk-theme", exactly as ThemeToggle does) and is saved with
+the rest on submit; the accent is the kit's AccentPicker, which is
+browser-only by design. On mount the module checks the radio matching the
+theme the browser is actually showing, so the form never contradicts the
+page.
+*/}}
+<brick:script>
+THEMES = ["light", "dark", "system"]
+DENSITIES = ["compact", "default", "comfortable"]
+
+def save(state, props, fields):
+    theme = fields.get("theme", "")
+    density = fields.get("density", "")
+    new = dict(state, theme = theme, density = density, motion = fields.get("motion", "") == "on", saved = False)
+    errors = {}
+    if theme not in THEMES:
+        errors["theme"] = "Choose light, dark or system."
+    if density not in DENSITIES:
+        errors["density"] = "Choose a density."
+    if errors:
+        return [new, errors]
+    return dict(new, saved = True, saves = state["saves"] + 1)
+</brick:script>
+<brick:client>
+brick.mount("SettingsAppearance", (el) => {
+  const root = document.documentElement;
+  const apply = (v) => {
+    if (v === "system") delete root.dataset.theme; else root.dataset.theme = v;
+    try { if (v === "system") localStorage.removeItem("bk-theme"); else localStorage.setItem("bk-theme", v); } catch (e) {}
+  };
+  const current = root.dataset.theme || "system";
+  const radio = el.querySelector(`input[name=theme][value="${current}"]`);
+  if (radio) radio.checked = true;
+  const change = (e) => { if (e.target.name === "theme") apply(e.target.value); };
+  el.addEventListener("change", change);
+  return () => el.removeEventListener("change", change);
+})
+</brick:client>
+<form brick:submit="save" novalidate class="settings-form">
+  <Card :level="2" title="Appearance" description="Make the app look the way you like. Theme and accent apply instantly." padding="lg">
+    <div class="settings-sections">
+      <Field label="Theme" :error=".Errors.theme">
+        <div role="radiogroup" aria-label="Theme" class="settings-themes">
+          <Radio name="theme" value="light" variant="card" :checked="eq .State.theme `light`"><span class="settings-preview settings-preview--light" aria-hidden="true"><i></i><i></i><i></i></span>Light</Radio>
+          <Radio name="theme" value="dark" variant="card" :checked="eq .State.theme `dark`"><span class="settings-preview settings-preview--dark" aria-hidden="true"><i></i><i></i><i></i></span>Dark</Radio>
+          <Radio name="theme" value="system" variant="card" :checked="eq .State.theme `system`"><span class="settings-preview settings-preview--system" aria-hidden="true"><i></i><i></i><i></i></span>System</Radio>
+        </div>
+      </Field>
+      <Field label="Accent colour" hint="Stored in this browser."><AccentPicker /></Field>
+      <Field label="Density" hint="How much fits on one screen." :error=".Errors.density"><SegmentedControl name="density" :value=".State.density" :options="list (dict `value` `compact` `label` `Compact`) (dict `value` `default` `label` `Default`) (dict `value` `comfortable` `label` `Comfortable`)" /></Field>
+      <div class="settings-switches"><div class="settings-switch"><label class="settings-switch__text" for="appearance-motion"><b>Animations</b><small>Turn off to reduce motion across the app.</small></label><Switch id="appearance-motion" name="motion" :checked=".State.motion" /></div></div>
+    </div>
+    <brick:prop name="footer"><span brick:loading hidden><span class="settings-busy"><Icon name="loader" :size="14" class="bk-btn__spin" />Saving…</span></span></brick:prop>
+    <brick:prop name="actions"><Button type="submit">Save appearance</Button></brick:prop>
+  </Card>
+  {{ if .State.saved }}<Toast variant="success" title="Appearance saved" id="settings-appearance-{{ .State.saves }}" />{{ end }}
+</form>
+<brick:style>
+.settings-themes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.settings-themes .bk-radio--card { flex-direction: column; align-items: stretch; gap: .6rem; padding: .6rem; }
+.settings-themes .bk-radio__text { order: 0; }
+.settings-themes .bk-radio__label { display: flex; flex-direction: column; gap: .55rem; }
+.settings-themes .bk-radio__dot { position: absolute; right: .75rem; bottom: .7rem; }
+.settings-themes .bk-radio--card { position: relative; }
+.settings-preview { display: grid; grid-template-columns: 30% 1fr; grid-template-rows: 1fr 1fr; gap: 5px; height: 4.5rem; padding: 6px; border-radius: var(--bk-radius); }
+.settings-preview i { border-radius: 3px; }
+.settings-preview i:first-child { grid-row: 1 / 3; }
+.settings-preview--light { background: #f4f4f5; }
+.settings-preview--light i { background: #fff; box-shadow: 0 0 0 1px #e4e4e7; }
+.settings-preview--dark { background: #18181b; }
+.settings-preview--dark i { background: #27272a; }
+.settings-preview--system { background: linear-gradient(90deg, #f4f4f5 50%, #18181b 50%); }
+.settings-preview--system i { background: rgb(128 128 128 / .45); }
+.settings-preview i:nth-child(2) { background: var(--bk-primary); opacity: .85; }
+@media (max-width: 640px) { .settings-themes { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); gap: .5rem; } .settings-preview { height: 3.25rem; } }
+</brick:style>

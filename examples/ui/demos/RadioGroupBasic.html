@@ -1,0 +1,8 @@
+<div style="display: grid; gap: 1.5rem; width: 100%; max-width: 30rem">
+  <Field label="Notify me about">
+    <RadioGroup name="notify" value="mentions" :options="list (dict `value` `all` `label` `All new messages`) (dict `value` `mentions` `label` `Direct messages and mentions`) (dict `value` `none` `label` `Nothing`)" />
+  </Field>
+  <Field label="Density">
+    <RadioGroup name="density" orientation="horizontal" value="Compact" :options="list `Compact` `Comfortable` `Spacious`" />
+  </Field>
+</div>

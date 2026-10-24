@@ -1,0 +1,28 @@
+---
+title: Table
+category: Data display
+description: "A styled data table from columns and rows — with per-column scoped slots for custom cells — or from your own thead/tbody markup."
+api:
+  - {name: columns, type: "list of {key, label, align, width}", desc: "The columns. align is left, center or right. Without columns, children are the table's content."}
+  - {name: rows, type: list of maps, desc: "One map per row; a cell is the value at its column's key."}
+  - {name: caption, type: string, desc: "A caption above the table."}
+  - {name: empty, type: string, default: No results., desc: "The text of the row shown when rows is empty (or pass an “empty” block)."}
+  - {name: striped, type: bool, desc: "Tints every other row."}
+  - {name: bordered, type: bool, desc: "Lines between columns."}
+  - {name: compact, type: bool, desc: "Shorter rows."}
+  - {name: hover, type: bool, desc: "Highlights the row under the pointer."}
+  - {name: sticky, type: bool, desc: "Keeps the header in view; set height too."}
+  - {name: height, type: string, desc: "A maximum height (e.g. 20rem); the table scrolls inside it."}
+  - {name: "cell_<key> (block)", type: scoped slot, desc: "Draws one column's cells; reads .Slot.row, .Slot.col and .Slot.value."}
+  - {name: "cell (block)", type: scoped slot, desc: "Draws every other column's cells."}
+  - {name: "empty (block)", type: markup, desc: "Replaces the empty row's text."}
+---
+<h1>Table</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Columns, rows and cell slots" block><TableColumns /><brick:prop name="code"><Source src="~/demos/TableColumns.html" /></brick:prop></Example>
+<Example title="Variants" block><TableVariants /><brick:prop name="code"><Source src="~/demos/TableVariants.html" /></brick:prop></Example>
+<Example title="Your own markup" block><TableMarkup /><brick:prop name="code"><Source src="~/demos/TableMarkup.html" /></brick:prop></Example>
+<Example title="Empty" block><TableEmpty /><brick:prop name="code"><Source src="~/demos/TableEmpty.html" /></brick:prop></Example>
+<Example title="From the database, with server-side pagination" block><TableDatabase /><brick:prop name="code"><Source src="~/demos/TableDatabase.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

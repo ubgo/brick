@@ -1,0 +1,50 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  name: {type: string, required: true}
+  options: {type: list, required: true}
+  type: {type: string, default: single, oneof: [single, multiple]}
+  value: {type: any, default: ""}
+  label: {type: string, default: ""}
+  variant: {type: string, default: outline, oneof: [outline, ghost]}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  disabled: {type: bool, default: false}
+---
+{{/*
+ToggleGroup: a row of joined toggles — one of them (type="single",
+radios: alignment) or any of them (type="multiple", checkboxes: bold,
+italic, underline). Native inputs, so arrow keys, forms and change events
+work with no JavaScript.
+
+  <ToggleGroup name="align" label="Alignment" value="left" :options="list (dict `value` `left` `label` `Left` `icon` `align-left`) (dict `value` `center` `label` `Center` `icon` `align-center`)" />
+  <ToggleGroup name="format" type="multiple" label="Formatting" :value="list `bold`" :options="…" />
+  <ToggleGroup name="size" :options="list `S` `M` `L`" value="M" variant="ghost" />
+
+An option is a string or {value, label, icon, disabled}; an option with an
+icon shows only the icon and label becomes its accessible name and
+tooltip. value is the checked value, or a list of them for multiple.
+*/}}
+<brick:style>
+.bk-toggle-group { display: inline-flex; margin: 0; padding: 0; border: 0; min-inline-size: 0; }
+.bk-toggle-group__legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+.bk-toggle-group__opt { position: relative; display: inline-flex; }
+.bk-toggle-group__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.bk-toggle-group__input:disabled { cursor: not-allowed; }
+.bk-toggle-group__face { display: inline-flex; align-items: center; justify-content: center; gap: .4em; min-width: var(--bk-h-md); height: var(--bk-h-md); padding: 0 .65rem; border: 1px solid transparent; color: var(--bk-muted-fg); font: 500 var(--bk-text-sm)/1 var(--bk-font); white-space: nowrap; pointer-events: none; transition: background var(--bk-duration), color var(--bk-duration); }
+.bk-toggle-group--icons .bk-toggle-group__face, .bk-toggle-group__face--icon { padding: 0; }
+.bk-toggle-group--sm .bk-toggle-group__face { min-width: var(--bk-h-sm); height: var(--bk-h-sm); font-size: var(--bk-text-xs); }
+.bk-toggle-group--lg .bk-toggle-group__face { min-width: var(--bk-h-lg); height: var(--bk-h-lg); font-size: var(--bk-text-base); }
+.bk-toggle-group--outline .bk-toggle-group__face { border-color: var(--bk-input); background: var(--bk-surface); margin-left: -1px; }
+.bk-toggle-group--outline .bk-toggle-group__opt:first-of-type .bk-toggle-group__face { margin-left: 0; border-radius: var(--bk-radius) 0 0 var(--bk-radius); }
+.bk-toggle-group--outline .bk-toggle-group__opt:last-of-type .bk-toggle-group__face { border-radius: 0 var(--bk-radius) var(--bk-radius) 0; }
+.bk-toggle-group--outline { border-radius: var(--bk-radius); box-shadow: var(--bk-shadow-sm); }
+.bk-toggle-group--ghost { gap: 2px; }
+.bk-toggle-group--ghost .bk-toggle-group__face { border-radius: var(--bk-radius); }
+.bk-toggle-group__opt:hover .bk-toggle-group__face { background: var(--bk-accent); color: var(--bk-fg); }
+.bk-toggle-group__input:checked + .bk-toggle-group__face { position: relative; z-index: 1; background: color-mix(in oklab, var(--bk-fg) 9%, var(--bk-surface)); color: var(--bk-fg); }
+.bk-toggle-group__input:focus-visible + .bk-toggle-group__face { z-index: 2; outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+.bk-toggle-group__input:disabled + .bk-toggle-group__face { opacity: .5; }
+</brick:style>
+{{ $multi := eq .Props.type "multiple" }}{{ $is := cond (eq .Props.size "lg") 16 (cond (eq .Props.size "sm") 13 15) }}
+<fieldset class="{{ cx `bk-toggle-group` (print `bk-toggle-group--` .Props.variant) (cond (ne .Props.size `md`) (print `bk-toggle-group--` .Props.size) ``) .Attrs.class }}"{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` }}>{{ with .Props.label }}<legend class="bk-toggle-group__legend">{{ . }}</legend>{{ end }}{{ range .Props.options }}{{ $v := . }}{{ $l := . }}{{ $ic := "" }}{{ $off := false }}{{ if ne (printf "%T" .) "string" }}{{ $v = index . "value" }}{{ $l = default $v (index . "label") }}{{ $ic = default "" (index . "icon") }}{{ $off = index . "disabled" }}{{ end }}{{ $on := false }}{{ if eq (printf "%T" $.Props.value) "string" }}{{ $on = eq (print $v) $.Props.value }}{{ else }}{{ range $.Props.value }}{{ if eq (print .) (print $v) }}{{ $on = true }}{{ end }}{{ end }}{{ end }}<label class="bk-toggle-group__opt"{{ if $ic }} title="{{ $l }}"{{ end }}><input class="bk-toggle-group__input" type="{{ cond $multi `checkbox` `radio` }}" name="{{ $.Props.name }}" value="{{ $v }}"{{ if $on }} checked{{ end }}{{ if $off }} disabled{{ end }}{{ if $ic }} aria-label="{{ $l }}"{{ end }}><span class="bk-toggle-group__face{{ if $ic }} bk-toggle-group__face--icon{{ end }}">{{ if $ic }}<Icon :name="$ic" :size="$is" />{{ else }}{{ $l }}{{ end }}</span></label>{{ end }}</fieldset>

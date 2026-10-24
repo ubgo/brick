@@ -1,0 +1,10 @@
+<div style="display: flex; flex-wrap: wrap; gap: .5rem">
+  <ConfirmDialog variant="primary" title="Publish this post?" message="It goes live on your blog and is e-mailed to 1,204 subscribers." confirmLabel="Publish">
+    <brick:prop name="trigger"><Button icon="send">Publish</Button></brick:prop>
+  </ConfirmDialog>
+  <form id="demo-close-account" method="get" action="/components/confirm-dialog/"><input type="hidden" name="closed" value="1"></form>
+  <ConfirmDialog title="Close your account?" form="demo-close-account" confirmLabel="Close account" cancelLabel="Keep my account">
+    Your projects are deleted after <b>30 days</b>. You can reopen the account until then.
+    <brick:prop name="trigger"><Button variant="danger" icon="trash">Close account</Button></brick:prop>
+  </ConfirmDialog>
+</div>

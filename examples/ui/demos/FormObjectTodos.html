@@ -1,0 +1,46 @@
+---
+state:
+  name: ""
+  todos: [{title: "Write the spec"}, {title: ""}]
+brick:
+  rules:
+    name: [required, {min: 2}]
+    todos.*.title: [required, {min: 3}]
+  messages:
+    todos.*.title.required: "Each todo needs a title."
+---
+<brick:script>
+# .Form reads one value per field: .Name (the path brick:model takes),
+# .ID (for label for=), .Value, .Error and .Touched. List items come from
+# .Items, so the title of the third todo is todos.2.title, the same path
+# the todos.*.title rule reports its error under.
+def add_todo(state, props):
+    return dict(state, todos = state["todos"] + [{"title": ""}])
+
+def save(state, props):
+    errors = brick.validate()
+    if errors:
+        return [state, errors]
+    brick.untouch()
+    brick.flash("Saved %d todos." % len(state["todos"]), "success")
+    return state
+</brick:script>
+<form brick:submit="save" novalidate style="display: grid; gap: .6rem; width: 100%; max-width: 30rem">
+  {{ with .Form.name }}
+  <label for="{{ .ID }}" style="font-weight: 600">List name</label>
+  <input id="{{ .ID }}" class="fo-name" brick:model.lazy="{{ .Name }}" value="{{ .Value }}" {{ if .Invalid }}aria-invalid="true"{{ end }} style="padding: .3rem .5rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm)">
+  {{ if .Error }}<p class="fo-error" data-for="{{ .Name }}" style="margin: 0; color: var(--bk-danger, #b91c1c)">{{ .Error }}</p>{{ end }}
+  {{ end }}
+  <ol style="display: grid; gap: .4rem; margin: 0; padding-left: 1.25rem">
+    {{ range .Form.todos.Items }}{{ with .Fields.title }}
+    <li>
+      <input id="{{ .ID }}" class="fo-todo" brick:model.lazy="{{ .Name }}" value="{{ .Value }}" {{ if .Invalid }}aria-invalid="true"{{ end }} style="padding: .3rem .5rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-sm)">
+      {{ if .Error }}<span class="fo-error" data-for="{{ .Name }}" style="color: var(--bk-danger, #b91c1c)">{{ .Error }}</span>{{ end }}
+    </li>
+    {{ end }}{{ end }}
+  </ol>
+  <div style="display: flex; gap: .5rem">
+    <button id="fo-add" type="button" brick:click="add_todo">Add todo</button>
+    <button id="fo-save" type="submit">Save</button>
+  </div>
+</form>

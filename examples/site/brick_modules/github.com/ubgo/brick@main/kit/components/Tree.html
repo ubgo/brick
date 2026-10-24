@@ -1,0 +1,63 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Tree: ~/components/Tree.html
+props:
+  items: {type: list, required: true}
+  open: {type: bool, default: false}
+  current: {type: string, default: ""}
+  files: {type: bool, default: false}
+  label: {type: string, default: ""}
+  nested: {type: bool, default: false}
+---
+{{/*
+Tree: nested, collapsible items — a file browser, a docs outline, an org
+chart. Built on <details>, so it opens and closes without JavaScript.
+
+  <Tree :items=".Params.outline" />
+    outline:
+      - label: Getting started
+        children: [{label: Install, href: /docs/install/}, {label: First page, href: /docs/first/}]
+      - {label: Changelog, href: /changelog/, icon: file-text}
+  <Tree :items=".Params.repo" files open current="/src/main.go" />
+
+An item is {label, href, icon, open, children}; children makes it a branch
+(a <details>), which starts open with open: true on the item or open on the
+tree. current is an href: that item gets aria-current="page", and each
+branch around it starts open so it is visible. files gives branches a
+folder icon and leaves a file icon, for items without their own.
+
+The tree renders itself for each level; nested is set by the tree on those
+inner calls and is not for callers.
+*/}}
+<brick:style>
+.bk-tree { margin: 0; padding: 0; list-style: none; font-size: var(--bk-text-sm); }
+.bk-tree .bk-tree { position: relative; margin-left: .95rem; padding-left: .45rem; border-left: 1px solid var(--bk-border); }
+.bk-tree__row { display: flex; align-items: center; gap: .4rem; min-height: 1.75rem; padding: 0 .45rem; border-radius: var(--bk-radius-sm); color: var(--bk-fg); text-decoration: none; cursor: default; list-style: none; }
+.bk-tree__row::-webkit-details-marker { display: none; }
+summary.bk-tree__row, a.bk-tree__row { cursor: pointer; }
+summary.bk-tree__row:hover, a.bk-tree__row:hover { background: var(--bk-accent); }
+.bk-tree__row:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.bk-tree__row[aria-current=page] { background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); font-weight: 600; }
+.bk-tree__chev { flex: none; color: var(--bk-muted-fg); transition: transform var(--bk-duration); }
+.bk-tree__branch[open] > summary > .bk-tree__chev { transform: rotate(90deg); }
+.bk-tree__spacer { flex: none; width: 14px; }
+.bk-tree__icon { flex: none; color: var(--bk-muted-fg); }
+.bk-tree__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bk-tree__branch > summary .bk-tree__label { font-weight: 500; }
+</brick:style>
+{{- $cur := .Props.current -}}
+<ul class="{{ cx `bk-tree` .Attrs.class }}"{{ if not .Props.nested }}{{ with .Props.label }} aria-label="{{ . }}"{{ end }}{{ end }} {{ attrs `class` }}>
+  {{- range .Props.items }}
+  <li>
+    {{- $icon := default (cond $.Props.files (cond .children `folder` `file`) ``) .icon -}}
+    {{- if .children }}{{ $here := and $cur (contains (print `"href":` (toJSON $cur)) (print (toJSON .children))) }}
+    <details class="bk-tree__branch"{{ if or .open $.Props.open $here }} open{{ end }}>
+      <summary class="bk-tree__row"><Icon name="chevron-right" :size="14" class="bk-tree__chev" />{{ with $icon }}<Icon :name="." :size="15" class="bk-tree__icon" />{{ end }}<span class="bk-tree__label">{{ .label }}</span></summary>
+      <Tree :items=".children" :open="$.Props.open" :current="$cur" :files="$.Props.files" nested />
+    </details>
+    {{- else if .href }}<a class="bk-tree__row" href="{{ .href }}"{{ if eq .href $cur }} aria-current="page"{{ end }}><span class="bk-tree__spacer"></span>{{ with $icon }}<Icon :name="." :size="15" class="bk-tree__icon" />{{ end }}<span class="bk-tree__label">{{ .label }}</span></a>
+    {{- else }}<span class="bk-tree__row"><span class="bk-tree__spacer"></span>{{ with $icon }}<Icon :name="." :size="15" class="bk-tree__icon" />{{ end }}<span class="bk-tree__label">{{ .label }}</span></span>{{ end }}
+  </li>
+  {{- end }}
+</ul>

@@ -1,0 +1,265 @@
+---
+use:
+  cal: ~/apps/calendar/calendar.star
+state:
+  view: month
+  cursor: "2026-09-27"
+  form_open: false
+  draft: {id: 0, title: "", all_day: false, start_date: "2026-09-27", start_time: "09:00", end_date: "2026-09-27", end_time: "10:00", tone: primary, location: "", notes: "", attendees: ""}
+  flash: ""
+  flashes: 0
+---
+{{/*
+CalendarApp: the Calendar demo as one stateful component — month, week and
+agenda views of the events table, a side panel with a mini month and the
+next events, and an event dialog for create, edit and delete
+(apps/calendar/calendar.star).
+
+  <CalendarApp />
+
+A click on an empty day (month) or hour (week) opens the dialog for that
+slot; a click on an event opens it filled in. The dialog renders open while
+state.form_open is true and tells the component when the visitor closes it
+(closeAction), so a later re-render does not reopen it. "All day" hides the
+time fields with CSS alone (:has), so the form works without JavaScript.
+*/}}
+<brick:style>
+.cal { display: grid; grid-template-columns: 16.5rem minmax(0, 1fr); gap: 0; height: calc(100dvh - 5.25rem); min-height: 34rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); overflow: hidden; }
+.cal__side { display: flex; flex-direction: column; gap: 1.25rem; min-height: 0; padding: 1rem .9rem; border-right: 1px solid var(--bk-border); background: var(--bk-surface-2); overflow-y: auto; }
+.cal__side .bk-calendar { width: 100%; padding: 0; border: 0; background: none; box-shadow: none; }
+.cal__side .bk-calendar__grid { width: 100%; }
+.cal__side .bk-calendar__grid th, .cal__side .bk-calendar__day { width: auto; min-width: 1.9rem; }
+.cal__side .bk-calendar__day { height: 1.9rem; }
+.cal__side h3 { margin: 0 0 .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+.cal__up { display: grid; gap: .15rem; }
+.cal__up button { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 .6rem; align-items: start; padding: .45rem .5rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-fg); font: var(--bk-text-sm)/1.35 var(--bk-font); text-align: left; cursor: pointer; }
+.cal__up button:hover { background: var(--bk-accent); }
+.cal__up b { overflow: hidden; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+.cal__up small { grid-column: 2; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.cal__dot { width: .55rem; height: .55rem; margin-top: .35rem; border-radius: 50%; background: var(--cal-tone); }
+.cal__legend { display: flex; flex-wrap: wrap; gap: .35rem .9rem; font-size: var(--bk-text-xs); color: var(--bk-muted-fg); }
+.cal__legend span { display: inline-flex; align-items: center; gap: .35rem; }
+.cal__legend .cal__dot { margin: 0; }
+
+.cal__main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.cal__bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .65rem .9rem; border-bottom: 1px solid var(--bk-border); }
+.cal__bar h1 { margin: 0 .5rem; font-size: var(--bk-text-xl); font-weight: 650; letter-spacing: -.02em; white-space: nowrap; }
+.cal__bar-sep { flex: 1; }
+.cal__bar .cal__new-sm { display: none; }
+
+.cal-tone--primary { --cal-tone: var(--bk-primary); }
+.cal-tone--info { --cal-tone: var(--bk-info); }
+.cal-tone--success { --cal-tone: var(--bk-success); }
+.cal-tone--warning { --cal-tone: var(--bk-warning); }
+.cal-tone--danger { --cal-tone: var(--bk-danger); }
+.cal-tone--neutral { --cal-tone: var(--bk-muted-fg); }
+
+.cal-chip { position: relative; z-index: 1; display: flex; align-items: center; gap: .3rem; width: 100%; min-width: 0; height: 1.3rem; padding: 0 .35rem; border: 0; border-radius: var(--bk-radius-sm); background: none; color: var(--bk-fg); font: 500 .6875rem/1 var(--bk-font); text-align: left; cursor: pointer; }
+.cal-chip:hover { background: color-mix(in oklab, var(--cal-tone) 12%, transparent); }
+.cal-chip::before { content: ""; flex: none; width: .45rem; height: .45rem; border-radius: 50%; background: var(--cal-tone); }
+.cal-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cal-chip time { flex: none; color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; }
+.cal-chip--all { background: color-mix(in oklab, var(--cal-tone) 16%, var(--bk-surface)); color: color-mix(in oklab, var(--cal-tone), var(--bk-fg) 35%); font-weight: 600; }
+.cal-chip--all::before { display: none; }
+.cal-chip--all:hover { background: color-mix(in oklab, var(--cal-tone) 24%, var(--bk-surface)); }
+.cal-chip:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+
+.cal-m { flex: 1; display: grid; grid-template-rows: auto repeat(6, minmax(0, 1fr)); min-height: 0; }
+.cal-m__head, .cal-m__week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cal-m__head div { padding: .45rem .6rem; border-bottom: 1px solid var(--bk-border); color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; text-align: right; }
+.cal-m__cell { position: relative; display: flex; flex-direction: column; gap: 1px; min-height: 0; padding: 1.85rem .3rem .3rem; border-right: 1px solid var(--bk-border); border-bottom: 1px solid var(--bk-border); overflow: hidden; }
+.cal-m__week > .cal-m__cell:last-child { border-right: 0; }
+.cal-m__week:last-child > .cal-m__cell { border-bottom: 0; }
+.cal-m__cell--weekend { background: color-mix(in oklab, var(--bk-muted) 35%, transparent); }
+.cal-m__cell--out .cal-m__day { color: var(--bk-muted-fg); }
+.cal-m__add { position: absolute; inset: 0; border: 0; background: none; cursor: pointer; }
+.cal-m__add:hover { background: color-mix(in oklab, var(--bk-primary) 4%, transparent); }
+.cal-m__add:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.cal-m__day { position: absolute; top: .35rem; right: .45rem; display: grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .3rem; border-radius: var(--bk-radius-full); font-size: var(--bk-text-xs); font-weight: 600; font-variant-numeric: tabular-nums; pointer-events: none; }
+.cal-m__cell--today .cal-m__day { background: var(--bk-primary); color: var(--bk-primary-fg); }
+.cal-m__more { position: relative; z-index: 1; }
+.cal-m__more .bk-btn { height: 1.3rem; padding: 0 .35rem; font-size: .6875rem; color: var(--bk-muted-fg); }
+.cal-pop { display: grid; gap: 2px; width: 15rem; }
+
+.cal-w { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow-x: auto; }
+.cal-w__row { display: grid; grid-template-columns: 3.25rem repeat(7, minmax(5.25rem, 1fr)); }
+.cal-w__head > div { padding: .5rem .4rem; border-bottom: 1px solid var(--bk-border); text-align: center; }
+.cal-w__dow { display: block; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.cal-w__num { display: inline-grid; place-items: center; width: 2rem; height: 2rem; margin-top: .15rem; border-radius: 50%; font-size: var(--bk-text-lg); font-weight: 600; }
+.cal-w__today .cal-w__num { background: var(--bk-primary); color: var(--bk-primary-fg); }
+.cal-w__today .cal-w__dow { color: var(--bk-primary-text); }
+.cal-w__all > div { display: flex; flex-direction: column; gap: 2px; min-height: 1.9rem; padding: .25rem; border-bottom: 1px solid var(--bk-border); border-left: 1px solid var(--bk-border); }
+.cal-w__all > div:first-child { justify-content: center; border-left: 0; color: var(--bk-muted-fg); font-size: .625rem; text-align: right; }
+.cal-w__body { flex: 1; min-height: 0; overflow-y: auto; }
+.cal-w__grid { --cal-hour: 3.25rem; min-height: calc(var(--cal-hour) * 14); }
+.cal-w__grid > div { position: relative; height: calc(var(--cal-hour) * 14); border-left: 1px solid var(--bk-border); }
+.cal-w__grid > div:first-child { border-left: 0; }
+.cal-w__hour { height: var(--cal-hour); border-bottom: 1px solid color-mix(in oklab, var(--bk-border) 70%, transparent); }
+.cal-w__label { height: var(--cal-hour); padding: 0 .45rem 0 0; color: var(--bk-muted-fg); font-size: .625rem; text-align: right; transform: translateY(-.45rem); font-variant-numeric: tabular-nums; }
+.cal-w__label:first-child { visibility: hidden; }
+.cal-w__slot { display: block; width: 100%; height: var(--cal-hour); border: 0; border-bottom: 1px solid color-mix(in oklab, var(--bk-border) 70%, transparent); background: none; cursor: pointer; }
+.cal-w__slot:hover { background: color-mix(in oklab, var(--bk-primary) 5%, transparent); }
+.cal-w__slot:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: -2px; }
+.cal-w__col--today { background: color-mix(in oklab, var(--bk-primary) 3%, transparent); }
+.cal-ev { position: absolute; z-index: 1; top: calc(var(--top) * 1%); height: calc(var(--h) * 1% - 2px); left: calc(var(--lane) * 100% / var(--lanes) + 2px); width: calc(100% / var(--lanes) - 4px); display: flex; flex-direction: column; gap: 1px; padding: .25rem .4rem; overflow: hidden; border: 0; border-left: 3px solid var(--cal-tone); border-radius: var(--bk-radius-sm); background: color-mix(in oklab, var(--cal-tone) 14%, var(--bk-surface)); color: color-mix(in oklab, var(--cal-tone), var(--bk-fg) 45%); font: 600 .6875rem/1.25 var(--bk-font); text-align: left; cursor: pointer; box-shadow: 0 0 0 1px var(--bk-surface); }
+.cal-ev:hover { background: color-mix(in oklab, var(--cal-tone) 22%, var(--bk-surface)); }
+.cal-ev:focus-visible { outline: 2px solid var(--bk-ring); z-index: 2; }
+.cal-ev time { font-weight: 500; opacity: .8; }
+.cal-ev small { overflow: hidden; font-weight: 400; opacity: .75; text-overflow: ellipsis; white-space: nowrap; }
+.cal-ev--short { flex-direction: row; align-items: center; gap: .3rem; padding-block: 0; white-space: nowrap; }
+
+.cal-a { flex: 1; min-height: 0; overflow-y: auto; padding: .5rem 1.25rem 1.5rem; }
+.cal-a__day { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: 1rem; padding: .9rem 0; border-bottom: 1px solid var(--bk-border); }
+.cal-a__day--past { opacity: .6; }
+.cal-a__date { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.cal-a__date b { font-size: var(--bk-text-2xl); font-weight: 650; }
+.cal-a__date span { color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-transform: uppercase; letter-spacing: .05em; }
+.cal-a__day--today .cal-a__date b { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 50%; background: var(--bk-primary); color: var(--bk-primary-fg); font-size: var(--bk-text-lg); }
+.cal-a__events { display: grid; gap: .35rem; }
+.cal-a__ev { display: grid; grid-template-columns: 7.5rem auto minmax(0, 1fr); align-items: center; gap: .75rem; padding: .55rem .7rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-fg); font: var(--bk-text-sm) var(--bk-font); text-align: left; cursor: pointer; }
+.cal-a__ev:hover { background: var(--bk-accent); }
+.cal-a__ev time { color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; }
+.cal-a__ev b { font-weight: 600; }
+.cal-a__ev small { display: block; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); }
+.cal-a__ev .cal__dot { margin: 0; }
+
+.cal-form { display: grid; gap: 1rem; }
+.cal-form__row { display: grid; grid-template-columns: minmax(0, 1fr) 8.5rem; gap: .75rem; }
+.cal-form:has([name=all_day]:checked) .cal-form__time { display: none; }
+.cal-form:has([name=all_day]:checked) .cal-form__row { grid-template-columns: minmax(0, 1fr); }
+.cal-tones { display: flex; gap: .5rem; }
+.cal-swatch { position: relative; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--cal-tone); cursor: pointer; }
+.cal-swatch input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.cal-swatch:has(input:checked) { box-shadow: 0 0 0 2px var(--bk-surface), 0 0 0 4px var(--cal-tone); }
+.cal-swatch:has(input:focus-visible) { outline: 2px solid var(--bk-ring); outline-offset: 4px; }
+.cal-form__two { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.cal-foot { display: flex; align-items: center; gap: .5rem; width: 100%; }
+.cal-foot__sep { flex: 1; }
+.cal-foot .cal-delete { color: var(--bk-danger); }
+
+@media (max-width: 1024px) {
+  .cal { grid-template-columns: minmax(0, 1fr); }
+  .cal__side { display: none; }
+  .cal__bar .cal__new-sm { display: inline-flex; }
+}
+@media (max-width: 640px) {
+  .cal { height: auto; min-height: 0; border-radius: var(--bk-radius); }
+  .cal__bar { position: relative; padding: .5rem; }
+  .cal__bar .cal__new-sm { position: absolute; top: .45rem; right: .5rem; }
+  .cal__bar h1 { order: -1; width: 100%; margin: 0 0 .25rem; font-size: var(--bk-text-lg); }
+  .cal-m { grid-template-rows: auto repeat(6, 4.25rem); }
+  .cal-m__cell { padding: 1.7rem .15rem .2rem; }
+  .cal-chip { height: .45rem; padding: 0; background: var(--cal-tone); border-radius: 2px; font-size: 0; }
+  .cal-chip::before, .cal-chip time { display: none; }
+  .cal-m__more .bk-btn { height: 1rem; font-size: .625rem; }
+  .cal-w__body { max-height: 32rem; }
+  .cal-a { padding: .25rem .75rem 1rem; }
+  .cal-a__day { grid-template-columns: 3rem minmax(0, 1fr); gap: .6rem; }
+  .cal-a__ev { grid-template-columns: auto minmax(0, 1fr); }
+  .cal-a__ev time { grid-column: 1 / -1; font-size: var(--bk-text-xs); }
+  .cal-form__row, .cal-form__two { grid-template-columns: minmax(0, 1fr); }
+}
+</brick:style>
+{{- $h := cal.header .State -}}
+{{- $d := .State.draft -}}
+<div class="cal">
+  <aside class="cal__side" aria-label="Calendar overview">
+    <Button icon="plus" block brick:click="cal.new_event">New event</Button>
+    <Calendar :month="slice .State.cursor 0 7" :selected=".State.cursor" today="2026-09-27" />
+    <section>
+      <h3>Upcoming</h3>
+      <div class="cal__up">{{ range cal.upcoming .State }}<button type="button" class="cal-tone--{{ .tone }}" brick:click="cal.edit({{ .id }})"><span class="cal__dot"></span><b>{{ .title }}</b><small>{{ .date_label }} · {{ .when }}</small></button>{{ end }}</div>
+    </section>
+    <section>
+      <h3>Calendars</h3>
+      <div class="cal__legend">{{ range cal.tones .State }}<span class="cal-tone--{{ .value }}"><i class="cal__dot"></i>{{ .label }}</span>{{ end }}</div>
+    </section>
+  </aside>
+
+  <section class="cal__main" aria-label="{{ $h.title }}">
+    <div class="cal__bar">
+      <Button variant="outline" size="sm" brick:click="cal.go_today">Today</Button>
+      <ButtonGroup label="Move">
+        <Button variant="outline" size="sm" square icon="chevron-left" :label="cond (eq .State.view `week`) `Previous week` `Previous month`" brick:click="cal.prev" />
+        <Button variant="outline" size="sm" square icon="chevron-right" :label="cond (eq .State.view `week`) `Next week` `Next month`" brick:click="cal.next" />
+      </ButtonGroup>
+      <h1>{{ $h.title }}</h1>
+      <span class="cal__bar-sep"></span>
+      <ButtonGroup label="View">
+        <Button variant="outline" size="sm" :aria-pressed="print (eq .State.view `month`)" brick:click="cal.set_view(0)">Month</Button>
+        <Button variant="outline" size="sm" :aria-pressed="print (eq .State.view `week`)" brick:click="cal.set_view(1)">Week</Button>
+        <Button variant="outline" size="sm" :aria-pressed="print (eq .State.view `agenda`)" brick:click="cal.set_view(2)">Agenda</Button>
+      </ButtonGroup>
+      <Button size="sm" icon="plus" square label="New event" class="cal__new-sm" brick:click="cal.new_event" />
+    </div>
+
+    {{ if eq .State.view "week" }}{{ $w := cal.week .State }}
+    <div class="cal-w" role="grid" aria-label="Week of {{ $h.title }}">
+      <div class="cal-w__row cal-w__head" role="row"><div></div>{{ range $w.days }}<div role="columnheader" class="{{ if .today }}cal-w__today{{ end }}"><span class="cal-w__dow">{{ .dow }}</span><span class="cal-w__num">{{ .day }}</span></div>{{ end }}</div>
+      <div class="cal-w__row cal-w__all" role="row"><div>all-day</div>{{ range $w.days }}<div role="gridcell">{{ range .all_day }}<button type="button" class="cal-chip cal-chip--all cal-tone--{{ .tone }}" brick:click="cal.edit({{ .id }})"><span>{{ .title }}</span></button>{{ end }}</div>{{ end }}</div>
+      <div class="cal-w__body">
+        <div class="cal-w__row cal-w__grid">
+          <div aria-hidden="true">{{ range $w.hours }}<div class="cal-w__label">{{ .label }}</div>{{ end }}</div>
+          {{ range $w.days }}{{ $day := . }}<div class="{{ if .today }}cal-w__col--today{{ end }}" role="gridcell" aria-label="{{ .dow }} {{ .day }}">
+            {{ range $w.hours }}<button type="button" class="cal-w__slot" brick:click="cal.new_at({{ $day.n }}, {{ .h }})" aria-label="New event {{ $day.dow }} {{ $day.day }} at {{ .label }}"></button>{{ end }}
+            {{ range .timed }}<button type="button" class="{{ cx `cal-ev` (print `cal-tone--` .tone) (cond .short `cal-ev--short` ``) }}" style="--top: {{ .top }}; --h: {{ .height }}; --lane: {{ .lane }}; --lanes: {{ .lanes }}" brick:click="cal.edit({{ .id }})"><span>{{ .title }}</span><time>{{ cal.clock .t0 }}{{ if not .short }} – {{ cal.clock .t1 }}{{ end }}</time>{{ if and (not .short) .location }}<small>{{ .location }}</small>{{ end }}</button>{{ end }}
+          </div>{{ end }}
+        </div>
+      </div>
+    </div>
+    {{ else if eq .State.view "agenda" }}{{ $a := cal.agenda .State }}
+    <div class="cal-a">
+      {{ range $a }}
+      <div class="{{ cx `cal-a__day` (cond .today `cal-a__day--today` ``) (cond .past `cal-a__day--past` ``) }}">
+        <div class="cal-a__date"><b>{{ .day }}</b><span>{{ .dow }}</span></div>
+        <div class="cal-a__events">{{ range .events }}<button type="button" class="cal-a__ev cal-tone--{{ .tone }}" brick:click="cal.edit({{ .id }})"><time>{{ .when }}</time><span class="cal__dot"></span><span><b>{{ .title }}</b>{{ with .location }}<small>{{ . }}</small>{{ end }}</span></button>{{ end }}</div>
+      </div>
+      {{ else }}
+      <EmptyState icon="calendar" title="Nothing this month" description="Events you add show up here, day by day." />
+      {{ end }}
+    </div>
+    {{ else }}{{ $m := cal.month .State }}
+    <div class="cal-m" role="grid" aria-label="{{ $h.title }}">
+      <div class="cal-m__head" role="row">{{ range $m.weekdays }}<div role="columnheader">{{ . }}</div>{{ end }}</div>
+      {{ range $m.weeks }}<div class="cal-m__week" role="row">{{ range . }}{{ $cell := . }}
+        <div class="{{ cx `cal-m__cell` (cond .inside `` `cal-m__cell--out`) (cond .today `cal-m__cell--today` ``) (cond .weekend `cal-m__cell--weekend` ``) }}" role="gridcell" data-date="{{ .date }}"{{ if .today }} aria-current="date"{{ end }}>
+          <button type="button" class="cal-m__add" brick:click="cal.new_on({{ .n }})" aria-label="New event on {{ .label }}"></button>
+          <span class="cal-m__day">{{ .day }}</span>
+          {{ range .events }}<button type="button" class="{{ cx `cal-chip` (cond .all_day `cal-chip--all` ``) (print `cal-tone--` .tone) }}" brick:click="cal.edit({{ .id }})" title="{{ .title }} · {{ .when }}">{{ if not .all_day }}<time>{{ cal.clock .t0 }}</time>{{ end }}<span>{{ .title }}</span></button>{{ end }}
+          {{ if .extra }}<div class="cal-m__more"><Popover :label="print `+` .extra ` more`" variant="ghost" size="xs" :title="$cell.label"><div class="cal-pop">{{ range $cell.more }}<button type="button" class="{{ cx `cal-chip` (cond .all_day `cal-chip--all` ``) (print `cal-tone--` .tone) }}" brick:click="cal.edit({{ .id }})">{{ if not .all_day }}<time>{{ cal.clock .t0 }}</time>{{ end }}<span>{{ .title }}</span></button>{{ end }}</div></Popover></div>{{ end }}
+        </div>{{ end }}
+      </div>{{ end }}
+    </div>
+    {{ end }}
+  </section>
+
+  <Dialog id="cal-event" :title="cond $d.id `Edit event` `New event`" size="md" :open=".State.form_open" closeAction="cal.close_form">
+    <form id="cal-event-form" class="cal-form" brick:submit="cal.save" novalidate>
+      <Field label="Title" :error=".Errors.title" required><Input name="title" value="{{ $d.title }}" placeholder="Add a title" autocomplete="off" /></Field>
+      <Switch name="all_day" label="All day" :checked="$d.all_day" />
+      <div class="cal-form__row">
+        <Field label="Starts" :error=".Errors.start"><DatePicker name="start_date" value="{{ $d.start_date }}" /></Field>
+        <Field label="Time" class="cal-form__time"><TimePicker name="start_time" :value="$d.start_time" :step="15" /></Field>
+      </div>
+      <div class="cal-form__row">
+        <Field label="Ends" :error=".Errors.end"><DatePicker name="end_date" value="{{ $d.end_date }}" /></Field>
+        <Field label="Time" class="cal-form__time"><TimePicker name="end_time" :value="$d.end_time" :step="15" /></Field>
+      </div>
+      <Field label="Colour" :error=".Errors.tone"><div class="cal-tones" role="radiogroup" aria-label="Colour">{{ range cal.tones .State }}<label class="cal-swatch cal-tone--{{ .value }}" title="{{ .label }}"><input type="radio" name="tone" value="{{ .value }}"{{ if eq .value $d.tone }} checked{{ end }}><span class="bk-sr-only">{{ .label }}</span></label>{{ end }}</div></Field>
+      <div class="cal-form__two">
+        <Field label="Location" optional><Input name="location" value="{{ $d.location }}" placeholder="Room, address or link" icon="map-pin" /></Field>
+        <Field label="Guests" hint="Press Enter after each name." optional><TagInput name="attendees" :value="$d.attendees" placeholder="Add a guest" /></Field>
+      </div>
+      <Field label="Notes" optional><Textarea name="notes" :value="$d.notes" :rows="3" placeholder="Agenda, links, dial-in…" /></Field>
+    </form>
+    <brick:prop name="footer">
+      <div class="cal-foot">
+        <CalDelete :id="$d.id" :title="$d.title" />
+        <span class="cal-foot__sep"></span>
+        <Button variant="ghost" data-bk-close>Cancel</Button>
+        <Button type="submit" form="cal-event-form">Save</Button>
+      </div>
+    </brick:prop>
+  </Dialog>
+  {{ with .State.flash }}<Toast id="{{ print `cal-flash-` $.State.flashes }}" variant="success" :title="." :duration="3000" />{{ end }}
+</div>

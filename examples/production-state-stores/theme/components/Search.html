@@ -1,0 +1,5 @@
+---
+state:
+  q: ""
+---
+<div class="search"><input brick:model="q" value="{{ .State.q }}"> {{ with .State.q }}Results for {{ . }}{{ end }}</div>

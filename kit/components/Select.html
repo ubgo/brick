@@ -1,0 +1,46 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  options: {type: list, default: []}
+  value: {type: string, default: ""}
+  placeholder: {type: string, default: ""}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+Select: a styled native <select> — the platform's own picker, keyboard
+and mobile wheel, with the kit's box around it.
+
+  <Select name="role" :options="list `Admin` `Editor` `Viewer`" value="Editor" />
+  <Select name="country" placeholder="Choose a country" :options=".Params.countries" />
+  <Select name="size"><option value="s">Small</option><option value="l">Large</option></Select>
+
+options items are strings (value = label) or maps {value, label,
+disabled}; children <option>s come after them. value= marks the selected
+option; placeholder adds a first empty option, selected when value is
+empty, so a required select starts unchosen. The caller's class goes on the
+wrapper, every other attribute on the <select>.
+*/}}
+<brick:style>
+.bk-select { position: relative; display: flex; align-items: center; width: 100%; }
+.bk-select__control { appearance: none; width: 100%; height: var(--bk-h-md); margin: 0; padding: 0 2rem 0 .65rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm)/1.25 var(--bk-font); box-shadow: var(--bk-shadow-sm); cursor: pointer; transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-select__control:hover { border-color: color-mix(in oklab, var(--bk-input), var(--bk-fg) 15%); }
+.bk-select__control:focus-visible { outline: none; border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-select__control:disabled { background: var(--bk-muted); opacity: .6; cursor: not-allowed; }
+.bk-select__control:has(option[value=""]:checked) { color: var(--bk-muted-fg); }
+.bk-select__control option { color: var(--bk-fg); background: var(--bk-surface); }
+.bk-select__chevron { position: absolute; right: .6rem; color: var(--bk-muted-fg); pointer-events: none; }
+.bk-select--sm .bk-select__control { height: var(--bk-h-sm); }
+.bk-select--lg .bk-select__control { height: var(--bk-h-lg); font-size: var(--bk-text-base); }
+.bk-select--invalid .bk-select__control { border-color: var(--bk-danger); }
+.bk-select--invalid .bk-select__control:focus-visible { box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-danger) 18%, transparent); }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $invalid := or .Props.invalid (index $f "invalid") }}
+{{ $sel := .Props.value }}
+<div class="{{ cx `bk-select` (cond (ne .Props.size `md`) (print `bk-select--` .Props.size) ``) (cond $invalid `bk-select--invalid` ``) .Attrs.class }}"><select class="bk-select__control"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if or .Props.required (index $f "required") }} required{{ end }}{{ if .Props.disabled }} disabled{{ end }} {{ attrs `class` `id` }}>{{ with .Props.placeholder }}<option value=""{{ if not $sel }} selected{{ end }}{{ if or $.Props.required (index $f "required") }} disabled{{ end }}>{{ . }}</option>{{ end }}{{ range .Props.options }}{{ if has . "value" }}<option value="{{ .value }}"{{ if eq (print .value) $sel }} selected{{ end }}{{ if .disabled }} disabled{{ end }}>{{ default .value .label }}</option>{{ else }}<option value="{{ . }}"{{ if eq (print .) $sel }} selected{{ end }}>{{ . }}</option>{{ end }}{{ end }}{{ children }}</select><Icon name="chevrons-up-down" :size="14" class="bk-select__chevron" /></div>

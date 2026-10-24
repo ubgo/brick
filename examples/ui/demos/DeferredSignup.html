@@ -1,0 +1,34 @@
+---
+state:
+  name: ""
+  email: ""
+  tags: []
+  saves: 0
+---
+<brick:script>
+def save(state, props):
+    return dict(state, saves = state["saves"] + 1)
+
+def clear(state, props):
+    return dict(state, name = "", email = "", tags = [], saves = 0)
+</brick:script>
+<form brick:submit="save" novalidate style="display: grid; gap: 1rem; width: 100%; max-width: 30rem">
+  <Fieldset>
+    <Field label="Name"><Input brick:model.defer="name" value="{{ .State.name }}" placeholder="Ada Lovelace" autocomplete="off" /></Field>
+    <Field label="E-mail"><Input type="email" brick:model.defer="email" value="{{ .State.email }}" placeholder="ada@example.com" icon="mail" autocomplete="off" /></Field>
+  </Fieldset>
+  {{ $tags := .State.tags }}
+  <div role="group" aria-label="Topics" style="display: flex; gap: 1.25rem">
+    {{ range $t := list "go" "js" "rust" }}{{ $on := false }}{{ range $tags }}{{ if eq . $t }}{{ $on = true }}{{ end }}{{ end }}
+    <Checkbox brick:model.defer="tags" value="{{ $t }}" :checked="$on" :label="$t" />
+    {{ end }}
+  </div>
+  <p style="font-size: var(--bk-text-sm)">Hello, <b brick:text="name">{{ .State.name }}</b></p>
+  <p id="deferred-dirty" brick:dirty hidden style="color: var(--bk-warning-text); font-size: var(--bk-text-sm)">Unsaved changes: nothing has been sent yet.</p>
+  <p id="deferred-server" style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">The server has: {{ if .State.name }}{{ .State.name }}{{ else }}(no name){{ end }}, {{ if .State.email }}{{ .State.email }}{{ else }}(no e-mail){{ end }}, topics [{{ join ", " .State.tags }}], saved {{ .State.saves }} times.</p>
+  <FormActions>
+    <span brick:loading.delay="save" hidden style="color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">Still saving…</span>
+    <Button id="deferred-clear" variant="outline" size="sm" brick:click="clear" brick:confirm="Clear the form and everything saved?">Clear</Button>
+    <Button id="deferred-save" type="submit" size="sm" brick:disable-with="Saving…" class="data-loading:opacity-60">Save</Button>
+  </FormActions>
+</form>

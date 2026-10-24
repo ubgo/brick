@@ -1,0 +1,29 @@
+---
+title: Contacts
+layout: app
+description: A CRUD app over the contacts table — search, filter, sort, pages, selection with bulk actions, a validated create/edit dialog, confirmations and a detail drawer, built only from kit components and Starlark actions.
+---
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/contacts/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Contacts`)" />
+    <div class="ct-top"><ContactCount /><ThemeToggle /></div>
+  </brick:prop>
+  <ContactsApp />
+  <Toaster />
+</AppShell>
+<brick:style>
+.ct-top { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
+</brick:style>
+
+<AppSource app="Contacts">
+  <Tabs label="Contacts files" size="sm">
+    <Tab title="contacts.html"><CodeView file="content/apps/contacts.html"><Source src="~/content/apps/contacts.html" /></CodeView></Tab>
+    <Tab title="ContactsApp.html"><CodeView file="apps/contacts/ContactsApp.html"><Source src="~/apps/contacts/ContactsApp.html" /></CodeView></Tab>
+    <Tab title="ContactCount.html"><CodeView file="apps/contacts/ContactCount.html"><Source src="~/apps/contacts/ContactCount.html" /></CodeView></Tab>
+    <Tab title="contacts.star"><CodeView file="apps/contacts/contacts.star"><Source src="~/apps/contacts/contacts.star" /></CodeView></Tab>
+    <Tab title="db_contacts.go"><CodeView file="demodb/db_contacts.go"><Source src="~/demodb/db_contacts.go" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+    <Tab title="main.go"><CodeView file="main.go"><Source src="~/main.go" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

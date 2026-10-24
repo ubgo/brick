@@ -1,0 +1,38 @@
+---
+use:
+  Icon: ~/components/Icon.html
+  Avatar: ~/components/Avatar.html
+props:
+  name: {type: string, required: true}
+  email: {type: string, default: ""}
+  src: {type: string, default: ""}
+  href: {type: string, default: ""}
+  chevron: {type: string, default: up-down, oneof: [up-down, down, none]}
+  status: {type: string, default: "", oneof: ["", online, away, busy, offline]}
+  compact: {type: bool, default: false}
+---
+{{/*
+Profile: the signed-in person as a chip — avatar, name, e-mail and a
+chevron — the face of an account menu in a sidebar footer or a top bar.
+
+  <Profile name="Ada Lovelace" email="ada@example.com" status="online" />
+  <Profile name="Ada Lovelace" href="/account/" chevron="none" />
+  <Profile name="Ada Lovelace" compact />       avatar only; name stays the accessible name
+
+With href it is a link; without, a <button type="button"> — give it
+data-bk-open, popovertarget or brick:click to open a menu. The chevron says
+"this opens something" and is decorative. Avatar draws the initials when
+there is no src.
+*/}}
+<brick:style>
+.bk-profile { display: inline-flex; align-items: center; gap: .6rem; max-width: 100%; min-width: 0; padding: .3rem .45rem; border: 0; border-radius: var(--bk-radius); background: none; color: var(--bk-fg); font: var(--bk-text-sm)/1.25 var(--bk-font); text-align: left; text-decoration: none; cursor: pointer; transition: background var(--bk-duration); }
+.bk-profile:hover { background: var(--bk-accent); }
+.bk-profile:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 1px; }
+.bk-profile__text { display: grid; flex: 1; min-width: 0; }
+.bk-profile__name { overflow: hidden; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.bk-profile__email { overflow: hidden; color: var(--bk-muted-fg); font-size: var(--bk-text-xs); text-overflow: ellipsis; white-space: nowrap; }
+.bk-profile__chev { flex: none; margin-left: auto; color: var(--bk-muted-fg); }
+.bk-profile--compact { padding: .2rem; border-radius: var(--bk-radius-full); }
+</brick:style>
+{{ $cls := cx "bk-profile" (cond .Props.compact "bk-profile--compact" "") .Attrs.class }}
+{{ if .Props.href }}<a class="{{ $cls }}" href="{{ .Props.href }}"{{ if .Props.compact }} aria-label="{{ .Props.name }}"{{ end }} {{ attrs `class` }}>{{ else }}<button type="button" class="{{ $cls }}"{{ if .Props.compact }} aria-label="{{ .Props.name }}"{{ end }} {{ attrs `class` }}>{{ end }}<Avatar :name=".Props.name" :src=".Props.src" :status=".Props.status" :size="cond .Props.compact `sm` `sm`" alt="" />{{ if not .Props.compact }}<span class="bk-profile__text"><span class="bk-profile__name">{{ .Props.name }}</span>{{ with .Props.email }}<span class="bk-profile__email">{{ . }}</span>{{ end }}</span>{{ if ne .Props.chevron "none" }}<Icon :name="cond (eq .Props.chevron `down`) `chevron-down` `chevrons-up-down`" :size="14" class="bk-profile__chev" />{{ end }}{{ end }}{{ if .Props.href }}</a>{{ else }}</button>{{ end }}

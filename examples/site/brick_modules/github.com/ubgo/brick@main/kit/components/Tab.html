@@ -1,0 +1,16 @@
+---
+props:
+  title: {type: string, required: true}
+  icon: {type: string, default: ""}
+  badge: {type: string, default: ""}
+  href: {type: string, default: ""}
+  disabled: {type: bool, default: false}
+  prefetch: {type: any, default: false}
+---
+{{/*
+Tab: one tab of a <Tabs>. It renders only its body; <Tabs> reads title,
+icon, badge, href and disabled from .Children to draw the tab bar, so a Tab
+means nothing outside a Tabs. With href the tab is a link to another page
+(server-side tabs) and its body shows only on the page it is current on;
+prefetch (bare, or "visible") then writes brick:prefetch on that link.
+*/}}{{ children }}

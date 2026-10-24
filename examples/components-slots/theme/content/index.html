@@ -1,0 +1,15 @@
+---
+posts:
+  - {title: Hello, url: /hello/}
+  - {title: Again, url: /again/}
+---
+<Card>
+  <brick:prop name="header"><strong>Plans</strong></brick:prop>
+  <brick:prop name="footer"><a href="/buy">Buy now</a></brick:prop>
+  <p>This is the children.</p>
+</Card>
+<Card><brick:prop name="header">No footer</brick:prop><p>Only a body.</p></Card>
+<PostList :posts=".Params.posts">
+  <brick:prop name="item"><a href="{{ .Slot.url }}">{{ .Slot.title }}</a></brick:prop>
+</PostList>
+<Panel><brick:prop name="title">Settings</brick:prop><p>Panel body.</p></Panel>

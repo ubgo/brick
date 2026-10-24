@@ -1,0 +1,11 @@
+<Card title="Deploy preview" description="main · 2 minutes ago" id="deploy-card" style="width: 100%; max-width: 24rem">
+  <Stack direction="row" gap="sm">
+    <Indicator dot tone="success" label="Healthy"><Icon name="globe" :size="18" /></Indicator>
+    <Code>acme-7f3a.brick.test</Code>
+    <CopyButton text="https://acme-7f3a.brick.test" label="Copy URL" />
+  </Stack>
+  <brick:prop name="actions">
+    <Button size="sm" variant="ghost">Logs</Button>
+    <Button size="sm" iconRight="arrow-right">Promote</Button>
+  </brick:prop>
+</Card>

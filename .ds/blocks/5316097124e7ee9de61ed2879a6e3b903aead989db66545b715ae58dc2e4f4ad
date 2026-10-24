@@ -1,0 +1,3 @@
+func newPinnedEngine(dir string, src sources) (*brick.Engine, error) {
+	return buildEngine(dir, limits{}, src)
+}

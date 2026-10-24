@@ -1,0 +1,21 @@
+func buildEngine(dir string, l limits, src sources) (*brick.Engine, error) {
+	root, err := os.OpenRoot(dir)
+	if err != nil {
+		return nil, err
+	}
+	sc, err := scriptstarlark.New(scriptstarlark.Options{Steps: l.ScriptSteps, Timeout: l.ScriptTimeout})
+	if err != nil {
+		return nil, err
+	}
+	return brick.New(brick.Options{
+		FS:             root.FS(),
+		Scripting:      sc,
+		States:         brick.NewMemoryStates(0, 0),
+		MaxComponents:  l.MaxComponents,
+		MaxOutputBytes: l.MaxOutputBytes,
+		MaxActionBytes: l.MaxActionBytes,
+		ActionErrors:   actionError,
+		Clock:          src.Clock,
+		Rand:           src.Rand,
+	})
+}

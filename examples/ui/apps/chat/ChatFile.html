@@ -1,0 +1,11 @@
+---
+props:
+  name: {type: string, default: ""}
+---
+{{/* ChatFile: a message's attachment chip, or nothing when name is "". Its own component so ChatApp can pass every message's attachment without a conditional tag inside ChatBubble. */}}
+<brick:style>
+.chat-file { display: flex; align-items: center; gap: .6rem; margin-top: .4rem; padding: .5rem .7rem; border: 1px solid color-mix(in oklab, currentColor 18%, transparent); border-radius: var(--bk-radius); background: color-mix(in oklab, currentColor 6%, transparent); font-size: var(--bk-text-sm); text-decoration: none; color: inherit; }
+.chat-file__icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--bk-radius-sm); background: color-mix(in oklab, currentColor 12%, transparent); }
+.chat-file small { display: block; opacity: .7; font-size: var(--bk-text-xs); }
+</brick:style>
+{{ with .Props.name }}<a class="chat-file" href="#" download="{{ . }}"><span class="chat-file__icon"><Icon name="file" :size="16" /></span><span><b>{{ . }}</b><small>{{ upper (last (split "." .)) }} file · Download</small></span></a>{{ end }}

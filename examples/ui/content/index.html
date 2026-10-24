@@ -1,0 +1,32 @@
+---
+order: 1
+title: Introduction
+category: Getting started
+---
+<IntroBadge />
+<h1>brick kit</h1>
+<p class="lead">A component library for brick: buttons, forms, overlays, data tables, charts and app layouts, rendered on the server in Go. Every component works without JavaScript and gets better with it.</p>
+<Stack direction="row" gap="sm" wrap>
+  <Button href="/components/button/" iconRight="arrow-right">Browse components</Button>
+  <Button href="/theming/" variant="outline" icon="palette">Theming</Button>
+  <Button href="/apps/dashboard/" variant="ghost" icon="layout-dashboard">See a demo app</Button>
+</Stack>
+
+<h2>At a glance</h2>
+<Example title="Live components — these are the real thing, not screenshots" block><IntroGlance /><brick:prop name="code"><Source src="~/demos/IntroGlance.html" /></brick:prop></Example>
+
+<h2>What is inside</h2>
+<IntroCategories />
+
+<h2>Install</h2>
+<Heading :level="3" size="md" style="margin: 1.75rem 0 .5rem">1 · Add the kit</Heading>
+  <Prose><p>Copy <code>kit/</code> into your project and add it as a component root, so every kit tag is available by name:</p></Prose>
+  <Prose class="bk-prose--wide"><Source src="~/snippets/brick-yaml.yaml" /></Prose>
+  <Prose><p>Or import single components remotely and run <code>brick vendor</code>:</p></Prose>
+  <Prose class="bk-prose--wide"><Source src="~/snippets/remote-use.yaml" /></Prose>
+<Heading :level="3" size="md" style="margin: 1.75rem 0 .5rem">2 · Lay out the page</Heading>
+  <Prose><p><code>class="bk-base"</code> on <code>&lt;body&gt;</code> opts in to the base font, colours and focus rings. <code>{{ "{{ assets }}" }}</code> goes first in the body, so each component's CSS loads before the content that uses it, and <code>&lt;Theme /&gt;</code> carries the design tokens. The script in <code>&lt;head&gt;</code> applies a saved theme and accent before the first paint.</p></Prose>
+  <Prose class="bk-prose--wide"><Source src="~/snippets/layout.html" /></Prose>
+<Heading :level="3" size="md" style="margin: 1.75rem 0 .5rem">3 · Use a component</Heading>
+  <Prose><p>A component is a tag. Attributes are props, <code>&lt;brick:prop&gt;</code> blocks carry markup, and anything else you write on the tag — <code>id</code>, <code>aria-*</code>, <code>hx-*</code> — lands on the component's root element.</p></Prose>
+  <Example title="A card with an action"><IntroUse /><brick:prop name="code"><Source src="~/demos/IntroUse.html" /></brick:prop></Example>

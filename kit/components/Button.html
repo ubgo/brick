@@ -1,0 +1,59 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  variant: {type: string, default: primary, oneof: [primary, secondary, outline, ghost, soft, danger, link]}
+  size: {type: string, default: md, oneof: [xs, sm, md, lg]}
+  href: {type: string, default: ""}
+  type: {type: string, default: button, oneof: [button, submit, reset]}
+  icon: {type: string, default: ""}
+  iconRight: {type: string, default: ""}
+  label: {type: string, default: ""}
+  square: {type: bool, default: false}
+  block: {type: bool, default: false}
+  loading: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+---
+{{/*
+Button: the kit's one clickable control. With href it is a link styled as a
+button, so navigation stays a real <a> (middle-click, prefetch, no JS).
+
+  <Button>Save</Button>
+  <Button variant="outline" icon="plus">New</Button>
+  <Button href="/docs/" variant="ghost" iconRight="arrow-right">Docs</Button>
+  <Button icon="trash" square label="Delete" variant="ghost" />
+  <Button type="submit" loading>Saving</Button>
+
+label is the accessible name for an icon-only (square) button. Loading
+disables the control and shows a spinner in place of the leading icon; the
+class bk-btn is usable on any element for a one-off.
+*/}}
+<brick:style>
+.bk-btn { display: inline-flex; align-items: center; justify-content: center; gap: .4em; height: var(--bk-h-md); padding: 0 .8rem; border: 1px solid transparent; border-radius: var(--bk-radius); font: 500 var(--bk-text-sm)/1 var(--bk-font); white-space: nowrap; text-decoration: none; cursor: pointer; user-select: none; transition: background var(--bk-duration), border-color var(--bk-duration), color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-btn:focus-visible { outline: 2px solid var(--bk-ring); outline-offset: 2px; }
+.bk-btn:active { transform: translateY(.5px); }
+.bk-btn:disabled, .bk-btn[aria-disabled=true] { opacity: .5; cursor: not-allowed; pointer-events: none; }
+.bk-btn--primary { background: var(--bk-primary); color: var(--bk-primary-fg); box-shadow: var(--bk-shadow-sm); }
+.bk-btn--primary:hover { background: var(--bk-primary-hover); }
+.bk-btn--secondary { background: var(--bk-muted); color: var(--bk-fg); }
+.bk-btn--secondary:hover { background: color-mix(in oklab, var(--bk-muted), var(--bk-fg) 6%); }
+.bk-btn--outline { background: var(--bk-surface); color: var(--bk-fg); border-color: var(--bk-input); box-shadow: var(--bk-shadow-sm); }
+.bk-btn--outline:hover { background: var(--bk-accent); }
+.bk-btn--ghost { background: transparent; color: var(--bk-fg); }
+.bk-btn--ghost:hover { background: var(--bk-accent); }
+.bk-btn--soft { background: color-mix(in oklab, var(--bk-primary) 12%, transparent); color: var(--bk-primary-text); }
+.bk-btn--soft:hover { background: color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-btn--danger { background: var(--bk-danger); color: var(--bk-danger-fg); box-shadow: var(--bk-shadow-sm); }
+.bk-btn--danger:hover { background: color-mix(in oklab, var(--bk-danger), black 12%); }
+.bk-btn--link { background: none; color: var(--bk-primary-text); height: auto; padding: 0; }
+.bk-btn--link:hover { text-decoration: underline; }
+.bk-btn--xs { height: var(--bk-h-xs); padding: 0 .5rem; font-size: var(--bk-text-xs); border-radius: var(--bk-radius-sm); }
+.bk-btn--sm { height: var(--bk-h-sm); padding: 0 .65rem; }
+.bk-btn--lg { height: var(--bk-h-lg); padding: 0 1.1rem; font-size: var(--bk-text-base); }
+.bk-btn--square { padding: 0; aspect-ratio: 1; }
+.bk-btn--block { display: flex; width: 100%; }
+.bk-btn__spin { animation: bk-spin .8s linear infinite; }
+</brick:style>
+{{ $cls := cx "bk-btn" (print "bk-btn--" .Props.variant) (cond (ne .Props.size "md") (print "bk-btn--" .Props.size) "") (cond .Props.square "bk-btn--square" "") (cond .Props.block "bk-btn--block" "") .Attrs.class }}
+{{ $isize := cond (eq .Props.size "lg") 16 14 }}
+{{ if .Props.href }}<a href="{{ .Props.href }}" class="{{ $cls }}"{{ if .Props.label }} aria-label="{{ .Props.label }}"{{ end }}{{ if or .Props.disabled .Props.loading }} aria-disabled="true" tabindex="-1"{{ end }} {{ attrs `class` }}>{{ else }}<button type="{{ .Props.type }}" class="{{ $cls }}"{{ if .Props.label }} aria-label="{{ .Props.label }}"{{ end }}{{ if or .Props.disabled .Props.loading }} disabled{{ end }}{{ if .Props.loading }} aria-busy="true"{{ end }} {{ attrs `class` }}>{{ end }}{{ if .Props.loading }}<Icon name="loader" :size="$isize" class="bk-btn__spin" />{{ else if .Props.icon }}<Icon :name=".Props.icon" :size="$isize" />{{ end }}{{ children }}{{ with .Props.iconRight }}<Icon :name="." :size="$isize" />{{ end }}{{ if .Props.href }}</a>{{ else }}</button>{{ end }}

@@ -1,0 +1,49 @@
+---
+use:
+  icons: ~/brick_libs/brick-kit/data/icons.yaml
+---
+<brick:client>
+// Filters the tiles as you type; "/" focuses the search box.
+brick.mount("IconGallery", (el) => {
+  const q = el.querySelector("input");
+  const tiles = [...el.querySelectorAll("[data-name]")];
+  const count = el.querySelector(".icon-gallery__count");
+  const empty = el.querySelector(".icon-gallery__empty");
+  const filter = () => {
+    const v = q.value.trim().toLowerCase();
+    let n = 0;
+    tiles.forEach((t) => { t.hidden = !t.dataset.name.includes(v); if (!t.hidden) n++; });
+    count.textContent = n;
+    empty.hidden = n > 0;
+  };
+  const slash = (e) => { if (e.key === "/" && document.activeElement !== q) { e.preventDefault(); q.focus(); } };
+  q.addEventListener("input", filter);
+  document.addEventListener("keydown", slash);
+  return () => { q.removeEventListener("input", filter); document.removeEventListener("keydown", slash); };
+})
+</brick:client>
+<brick:style>
+.icon-gallery { width: 100%; }
+.icon-gallery__bar { display: flex; align-items: center; gap: .75rem; margin-bottom: .9rem; }
+.icon-gallery__search { position: relative; flex: 1; max-width: 22rem; }
+.icon-gallery__search .bk-icon { position: absolute; left: .6rem; top: 50%; translate: 0 -50%; color: var(--bk-muted-fg); }
+.icon-gallery__search input { width: 100%; height: var(--bk-h-md); padding: 0 2rem 0 2rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm) var(--bk-font); }
+.icon-gallery__search .bk-kbd { position: absolute; right: .45rem; top: 50%; translate: 0 -50%; }
+.icon-gallery__count { font-size: var(--bk-text-xs); color: var(--bk-muted-fg); font-variant-numeric: tabular-nums; }
+.icon-gallery__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr)); gap: .5rem; }
+.icon-gallery__tile { display: flex; flex-direction: column; align-items: center; gap: .55rem; padding: .9rem .4rem .6rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); transition: border-color var(--bk-duration), background var(--bk-duration); }
+.icon-gallery__tile:hover { border-color: color-mix(in oklab, var(--bk-primary) 45%, var(--bk-border)); background: color-mix(in oklab, var(--bk-primary) 5%, var(--bk-surface)); color: var(--bk-primary-text); }
+.icon-gallery__tile[hidden] { display: none; }
+.icon-gallery__tile code { font-size: .6875rem; color: var(--bk-muted-fg); text-align: center; overflow-wrap: anywhere; }
+.icon-gallery__empty { padding: 2rem; text-align: center; color: var(--bk-muted-fg); }
+</brick:style>
+<div class="icon-gallery">
+  <div class="icon-gallery__bar">
+    <label class="icon-gallery__search"><Icon name="search" :size="14" /><input type="search" placeholder="Search icons" aria-label="Search icons"><Kbd size="sm">/</Kbd></label>
+    <span class="icon-gallery__count">{{ len .Data.icons }}</span><span class="icon-gallery__count">icons</span>
+  </div>
+  <div class="icon-gallery__grid">
+    {{ range $name, $paths := .Data.icons }}<div class="icon-gallery__tile" data-name="{{ $name }}" title="&lt;Icon name=&quot;{{ $name }}&quot; /&gt;"><Icon :name="$name" :size="20" /><code>{{ $name }}</code></div>{{ end }}
+  </div>
+  <p class="icon-gallery__empty" hidden>No icon matches.</p>
+</div>

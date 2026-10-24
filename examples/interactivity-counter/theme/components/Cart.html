@@ -1,0 +1,9 @@
+---
+state:
+  qty: 2
+---
+<div class="cart">
+  <Stepper brick:model="qty" />
+  <button id="one" brick:click='$set("qty", 1)'>Reset to 1</button>
+  <span id="total">Total: ${{ mul .State.qty 12 }}</span>
+</div>

@@ -1,0 +1,36 @@
+<brick:style>
+.glance { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: .75rem; width: 100%; }
+.glance__tile { display: flex; flex-direction: column; gap: .75rem; padding: 1rem; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-lg); background: var(--bk-surface); }
+.glance__label { font-size: var(--bk-text-xs); font-weight: 600; color: var(--bk-muted-fg); text-transform: uppercase; letter-spacing: .05em; }
+.glance__row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; min-height: 2.25rem; }
+</brick:style>
+<div class="glance">
+  <div class="glance__tile">
+    <span class="glance__label">Actions</span>
+    <div class="glance__row"><Button size="sm" icon="plus">New</Button><Button size="sm" variant="outline">Cancel</Button><CopyButton text="brick" variant="outline" /></div>
+  </div>
+  <div class="glance__tile">
+    <span class="glance__label">Toggles</span>
+    <div class="glance__row">
+      <ButtonGroup label="View"><Button size="sm" variant="outline" square icon="list" label="List" :aria-pressed="`true`" /><Button size="sm" variant="outline" square icon="grid" label="Grid" :aria-pressed="`false`" /></ButtonGroup>
+      <Swap label="Menu" iconOff="menu" iconOn="x" variant="button" />
+      <ThemeToggle />
+    </div>
+  </div>
+  <div class="glance__tile">
+    <span class="glance__label">Foundations</span>
+    <div class="glance__row"><Kbd keys="⌘ K" /><Code>go run .</Code><Link href="/components/link/">A link</Link></div>
+  </div>
+  <div class="glance__tile">
+    <span class="glance__label">Theme</span>
+    <div class="glance__row"><AccentPicker size="sm" /></div>
+  </div>
+  <div class="glance__tile">
+    <span class="glance__label">Indicators</span>
+    <div class="glance__row"><Indicator :count="4" label="4 unread"><Button size="sm" variant="outline" square icon="bell" label="Notifications" /></Indicator><Indicator dot tone="success" position="bottom-end" label="Online"><Button size="sm" variant="secondary" square icon="user" label="Profile" /></Indicator></div>
+  </div>
+  <div class="glance__tile">
+    <span class="glance__label">Type</span>
+    <div><Heading :level="3" size="md">Readable by default</Heading><Text size="sm" tone="muted">A 13px control scale and 14px body.</Text></div>
+  </div>
+</div>

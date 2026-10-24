@@ -1,0 +1,5 @@
+cart:
+  add: Add to cart
+  items:
+    one: "{count} item"
+    other: "{count} items"

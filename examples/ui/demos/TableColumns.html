@@ -1,0 +1,15 @@
+---
+use:
+  people: ~/data/demo-people.yaml
+columns:
+  - {key: name, label: Member}
+  - {key: role, label: Role}
+  - {key: team, label: Team}
+  - {key: stage, label: Status}
+  - {key: seats, label: Seats, align: right, width: 5rem}
+tones: {active: success, lead: info, churned: neutral}
+---
+<Table :columns=".Params.columns" :rows=".Data.people" hover style="width: 100%">
+  <brick:prop name="cell_name"><div style="display: flex; align-items: center; gap: .6rem"><Avatar :name=".Slot.row.name" size="sm" /><div><div style="font-weight: 550">{{ .Slot.value }}</div><div style="font-size: var(--bk-text-xs); color: var(--bk-muted-fg)">{{ .Slot.row.email }}</div></div></div></brick:prop>
+  <brick:prop name="cell_stage"><Badge :tone="index $.Params.tones .Slot.value" dot>{{ .Slot.value }}</Badge></brick:prop>
+</Table>

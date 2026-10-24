@@ -1,0 +1,8 @@
+<div style="display: grid; gap: 1.5rem; width: 100%; max-width: 32rem">
+  <div style="display: grid; gap: 1rem">
+    <Field label="Project name"><Input name="project" value="brick-site" /></Field>
+    <FormActions><Button variant="ghost">Cancel</Button><Button type="submit">Save changes</Button></FormActions>
+  </div>
+  <FormActions align="between"><Button variant="soft" icon="trash">Delete project</Button><Button type="submit">Save</Button></FormActions>
+  <FormActions align="start" :divider="false"><Button type="submit" iconRight="arrow-right">Continue</Button></FormActions>
+</div>

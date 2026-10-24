@@ -1,0 +1,40 @@
+---
+use:
+  Icon: ~/components/Icon.html
+props:
+  name: {type: string, default: rating}
+  value: {type: int, default: 0}
+  max: {type: int, default: 5}
+  readonly: {type: bool, default: false}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  label: {type: string, default: Rating}
+---
+{{/*
+Rating: stars. Interactive, it is a fieldset of native radios (one per
+star) styled with CSS alone; readonly, it is a picture of the score.
+
+  <Rating name="score" :value="4" />
+  <Rating :value="3" readonly size="sm" />
+  <Rating name="stars" :max="10" label="Rate this episode" />
+
+Hovering lights the stars up to the pointer; the checked radio lights the
+stars up to it (:has(), no JavaScript). Arrow keys change the choice as for
+any radio group. Readonly renders role="img" with "3 out of 5" as its
+name. The caller's attributes go on the root (the fieldset or the image).
+*/}}
+<brick:style>
+.bk-rating { display: inline-flex; align-items: center; gap: .1rem; margin: 0; padding: 0; border: 0; min-width: 0; color: var(--bk-border); line-height: 0; }
+.bk-rating__star { position: relative; display: inline-grid; color: var(--bk-input); cursor: pointer; transition: color var(--bk-duration), transform var(--bk-duration); }
+.bk-rating__star .bk-icon { fill: currentColor; }
+.bk-rating__input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.bk-rating__star:has(.bk-rating__input:focus-visible) { outline: 2px solid var(--bk-ring); outline-offset: 1px; border-radius: var(--bk-radius-sm); }
+.bk-rating__star:has(.bk-rating__input:checked), .bk-rating__star:has(~ .bk-rating__star .bk-rating__input:checked), .bk-rating__star--on { color: var(--bk-warning); }
+.bk-rating:not(.bk-rating--readonly):hover .bk-rating__star { color: var(--bk-input); }
+.bk-rating:not(.bk-rating--readonly) .bk-rating__star:hover, .bk-rating:not(.bk-rating--readonly) .bk-rating__star:has(~ .bk-rating__star:hover) { color: var(--bk-warning); }
+.bk-rating:not(.bk-rating--readonly) .bk-rating__star:hover { transform: scale(1.12); }
+.bk-rating--readonly .bk-rating__star { cursor: default; }
+.bk-rating__legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+</brick:style>
+{{ $v := .Props.value }}{{ $name := .Props.name }}{{ $max := .Props.max }}
+{{ $px := cond (eq .Props.size "sm") 14 (cond (eq .Props.size "lg") 26 20) }}
+{{ if .Props.readonly }}<span class="{{ cx `bk-rating` `bk-rating--readonly` .Attrs.class }}" role="img" aria-label="{{ $v }} out of {{ $max }}" {{ attrs `class` }}>{{ range $k := $max }}<span class="bk-rating__star{{ if lt $k $v }} bk-rating__star--on{{ end }}"><Icon name="star" :size="$px" /></span>{{ end }}</span>{{ else }}<fieldset class="{{ cx `bk-rating` .Attrs.class }}" {{ attrs `class` }}><legend class="bk-rating__legend">{{ .Props.label }}</legend>{{ range $k := $max }}{{ $i := add $k 1 }}<label class="bk-rating__star"><input type="radio" class="bk-rating__input" name="{{ $name }}" value="{{ $i }}"{{ if eq $i $v }} checked{{ end }} aria-label="{{ $i }} of {{ $max }}"><Icon name="star" :size="$px" /></label>{{ end }}</fieldset>{{ end }}

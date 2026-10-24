@@ -1,0 +1,28 @@
+<brick:client>
+import { toast } from "brick:Toaster";
+
+const messages = {
+  neutral: { title: "Event created", description: "Sunday, 12 October at 09:00." },
+  success: { title: "Changes saved", description: "Your profile is up to date." },
+  info: { title: "New comment", description: "Grace replied to your review." },
+  warning: { title: "Storage almost full", description: "You have used 92% of 10 GB." },
+  danger: { title: "Could not send", description: "The mail server did not answer.", duration: 0 },
+};
+
+brick.mount("ToastFromCode", (el) => {
+  const click = (e) => {
+    const b = e.target.closest("[data-toast]");
+    if (b) toast({ variant: b.dataset.toast, ...messages[b.dataset.toast] });
+  };
+  el.addEventListener("click", click);
+  return () => el.removeEventListener("click", click);
+})
+</brick:client>
+<div style="display: flex; flex-wrap: wrap; gap: .5rem">
+  <Button variant="outline" data-toast="neutral">Default</Button>
+  <Button variant="outline" data-toast="success" icon="check-circle">Success</Button>
+  <Button variant="outline" data-toast="info" icon="info">Info</Button>
+  <Button variant="outline" data-toast="warning" icon="alert-triangle">Warning</Button>
+  <Button variant="outline" data-toast="danger" icon="alert-circle">Danger (stays)</Button>
+  <Toaster />
+</div>

@@ -1,0 +1,51 @@
+---
+state:
+  text: ""
+  posted: 3
+  last: []
+brick:
+  temporary: [last]
+---
+<brick:script>
+# The feed keeps no rows in state: each action sends only the rows that
+# change, as brick.rows effects, and the list carries brick:ignore so the
+# component's own morph leaves the rows alone. last is temporary: the
+# render that answers an action sees the rows it sent, then the instance
+# is saved with last back at [], so the store never holds them.
+_LIMIT = 5
+
+def seed_rows():
+    return [{"id": i, "text": "Seeded message " + str(i)} for i in (3, 2, 1)]
+
+def post(state, props):
+    n = state["posted"] + 1
+    item = {"id": n, "text": state["text"].strip() or "(nothing typed)"}
+    brick.rows("feed", component = "RuntimeRowsItem", items = [item], at = "top", limit = _LIMIT)
+    return dict(state, text = "", posted = n, last = [item])
+
+def burst(state, props):
+    n = state["posted"]
+    # Newest first: the rows land at the top in this order.
+    items = [{"id": n + i, "text": "Burst message " + str(n + i)} for i in (3, 2, 1)]
+    brick.rows("feed", component = "RuntimeRowsItem", items = items, at = "top", limit = _LIMIT)
+    return dict(state, posted = n + 3, last = items)
+
+def clear(state, props):
+    brick.rows("feed", op = "reset")
+    return dict(state, last = [])
+</brick:script>
+<div style="display: grid; gap: .6rem; width: 100%; max-width: 30rem">
+  <div style="display: flex; gap: .5rem">
+    <Input id="rr-text" brick:model.defer="text" value="{{ .State.text }}" placeholder="Say something" />
+    <Button id="rr-post" brick:click="post">Post</Button>
+    <Button id="rr-burst" variant="outline" brick:click="burst">Burst +3</Button>
+  </div>
+  <ul id="rr-feed" brick:ref="feed" brick:ignore style="margin: 0; padding: 0; list-style: none; border: 1px solid var(--bk-border); border-radius: var(--bk-radius-md); min-height: 2.5rem">
+    {{ range seed_rows }}<RuntimeRowsItem id="{{ .id }}" text="{{ .text }}" />{{ end }}
+  </ul>
+  <div style="display: flex; align-items: center; gap: .5rem; color: var(--bk-muted-fg); font-size: var(--bk-text-sm)">
+    <span id="rr-carried">This render carried {{ len .State.last }} new row(s).</span>
+    <Button id="rr-refresh" size="sm" variant="ghost" brick:click="$refresh">Re-render</Button>
+    <Button id="rr-clear" size="sm" variant="ghost" brick:click="clear">Clear</Button>
+  </div>
+</div>

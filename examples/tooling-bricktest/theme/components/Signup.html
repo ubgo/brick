@@ -1,0 +1,29 @@
+---
+state:
+  name: ""
+  email: ""
+  accounts: 0
+brick:
+  rules:
+    name: [required, {min: 2}]
+    email: [required, email]
+---
+<brick:script>
+def signup(state, props):
+    errors = brick.validate()
+    if errors:
+        return [state, errors]
+    # The fields are about to be emptied: untouch them, or the next render
+    # reports "required" on a form the user has not typed into yet.
+    brick.untouch()
+    brick.flash("Welcome, %s!" % state["name"], "success")
+    return dict(state, name = "", email = "", accounts = state["accounts"] + 1)
+</brick:script>
+<form id="signup" brick:submit="signup">
+  <input brick:model.defer="name" value="{{ .State.name }}">
+  {{ with .Errors.name }}<p class="error">{{ . }}</p>{{ end }}
+  <input brick:model.defer="email" value="{{ .State.email }}">
+  {{ with .Errors.email }}<p class="error">{{ . }}</p>{{ end }}
+  <button type="submit">Create account</button>
+  <p class="count">{{ .State.accounts }} accounts</p>
+</form>

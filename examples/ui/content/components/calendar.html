@@ -1,0 +1,18 @@
+---
+title: Calendar
+category: Forms
+description: "A month grid rendered on the server, with a today marker, a selected day and optional links."
+api:
+  - {name: month, type: "string", desc: "YYYY-MM; defaults to the month of selected, then of today."}
+  - {name: selected, type: "string", desc: "YYYY-MM-DD to highlight."}
+  - {name: today, type: "string", desc: "YYYY-MM-DD to mark (a prop, so renders are repeatable)."}
+  - {name: href, type: "string", desc: "Makes each day a link; {date} is replaced."}
+  - {name: monthHref, type: "string", desc: "Adds previous and next links; {month} is replaced."}
+  - {name: weekStart, type: "sunday | monday", default: "sunday", desc: "First column."}
+---
+<h1>Calendar</h1>
+<p class="lead">{{ .Params.description }}</p>
+<Example title="Months" block><CalendarBasic /><brick:prop name="code"><Source src="~/demos/CalendarBasic.html" /></brick:prop></Example>
+<Example title="With links" block><CalendarLinks /><brick:prop name="code"><Source src="~/demos/CalendarLinks.html" /></brick:prop></Example>
+<h2>Props</h2>
+<PropsTable :rows=".Params.api" />

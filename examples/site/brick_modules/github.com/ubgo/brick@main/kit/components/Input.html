@@ -1,0 +1,61 @@
+---
+use:
+  Icon: ~/components/Icon.html
+inject:
+  bkField: {default: {}}
+props:
+  type: {type: string, default: text, oneof: [text, email, password, number, search, tel, url, date, time, datetime-local, month, week]}
+  size: {type: string, default: md, oneof: [sm, md, lg]}
+  icon: {type: string, default: ""}
+  iconRight: {type: string, default: ""}
+  prefix: {type: string, default: ""}
+  suffix: {type: string, default: ""}
+  invalid: {type: bool, default: false}
+  required: {type: bool, default: false}
+  disabled: {type: bool, default: false}
+  readonly: {type: bool, default: false}
+---
+{{/*
+Input: a text field in a box that can hold icons, text addons and buttons.
+
+  <Input name="q" placeholder="Search" icon="search" />
+  <Input type="email" name="email" value="{{ .State.email }}" invalid />
+  <Input name="site" prefix="https://" suffix=".com" />
+  <Input name="price" type="number" icon="dollar" size="sm" />
+  <Input name="code"><brick:prop name="trailing"><Button size="xs" variant="ghost">Copy</Button></brick:prop></Input>
+
+The caller's class goes on the box (layout); every other attribute — name,
+value, placeholder, id, autocomplete, aria-*, data-*, hx-* and brick:model
+(inside a stateful component) — lands on the real <input>, which is what
+forms, bindings and scripts read. Inside a <Field> the id, aria-describedby,
+aria-invalid and required come from the Field. Blocks "leading" and
+"trailing" hold markup (a button, a kbd) at either end of the box.
+*/}}
+<brick:style>
+.bk-input { display: flex; align-items: center; gap: .45rem; width: 100%; height: var(--bk-h-md); padding: 0 .65rem; border: 1px solid var(--bk-input); border-radius: var(--bk-radius); background: var(--bk-surface); color: var(--bk-fg); font: var(--bk-text-sm)/1.25 var(--bk-font); box-shadow: var(--bk-shadow-sm); overflow: hidden; transition: border-color var(--bk-duration), box-shadow var(--bk-duration); }
+.bk-input:hover { border-color: color-mix(in oklab, var(--bk-input), var(--bk-fg) 15%); }
+.bk-input:focus-within { border-color: var(--bk-primary); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-primary) 18%, transparent); }
+.bk-input__control { flex: 1 1 auto; min-width: 0; height: 100%; margin: 0; padding: 0; border: 0; outline: 0; background: none; color: inherit; font: inherit; }
+.bk-input__control:focus-visible { outline: none; }
+.bk-input__control::placeholder { color: var(--bk-muted-fg); opacity: .85; }
+.bk-input__control::-webkit-search-cancel-button { display: none; }
+.bk-input__icon { flex: none; color: var(--bk-muted-fg); }
+.bk-input__addon { flex: none; align-self: stretch; display: flex; align-items: center; padding: 0 .6rem; background: var(--bk-surface-2); color: var(--bk-muted-fg); white-space: nowrap; }
+.bk-input__addon:first-child { margin-left: -.65rem; border-right: 1px solid var(--bk-input); }
+.bk-input__addon:last-child { margin-right: -.65rem; border-left: 1px solid var(--bk-input); }
+.bk-input__slot { flex: none; display: flex; align-items: center; gap: .25rem; }
+.bk-input__slot:last-child { margin-right: -.35rem; }
+.bk-input__slot:first-child { margin-left: -.35rem; }
+.bk-input--sm { height: var(--bk-h-sm); padding: 0 .55rem; }
+.bk-input--lg { height: var(--bk-h-lg); padding: 0 .8rem; font-size: var(--bk-text-base); }
+.bk-input--invalid, .bk-input--invalid:hover { border-color: var(--bk-danger); }
+.bk-input--invalid:focus-within { border-color: var(--bk-danger); box-shadow: 0 0 0 3px color-mix(in oklab, var(--bk-danger) 18%, transparent); }
+.bk-input--disabled { background: var(--bk-muted); opacity: .6; cursor: not-allowed; box-shadow: none; }
+.bk-input--disabled .bk-input__control { cursor: not-allowed; }
+.bk-input--readonly { background: var(--bk-surface-2); }
+</brick:style>
+{{ $f := .Ctx.bkField }}
+{{ $invalid := or .Props.invalid (index $f "invalid") }}
+{{ $req := or .Props.required (index $f "required") }}
+{{ $isize := cond (eq .Props.size "lg") 16 14 }}
+<div class="{{ cx `bk-input` (cond (ne .Props.size `md`) (print `bk-input--` .Props.size) ``) (cond $invalid `bk-input--invalid` ``) (cond .Props.disabled `bk-input--disabled` ``) (cond .Props.readonly `bk-input--readonly` ``) .Attrs.class }}">{{ with .Props.prefix }}<span class="bk-input__addon">{{ . }}</span>{{ end }}{{ if hasNode "leading" }}<span class="bk-input__slot">{{ node "leading" }}</span>{{ end }}{{ with .Props.icon }}<Icon :name="." :size="$isize" class="bk-input__icon" />{{ end }}<input type="{{ .Props.type }}" class="bk-input__control"{{ with coalesce .Attrs.id (index $f "id") }} id="{{ . }}"{{ end }}{{ with index $f "describedby" }} aria-describedby="{{ . }}"{{ end }}{{ if $invalid }} aria-invalid="true"{{ end }}{{ if $req }} required{{ end }}{{ if .Props.disabled }} disabled{{ end }}{{ if .Props.readonly }} readonly{{ end }} {{ attrs `class` `id` }}>{{ with .Props.iconRight }}<Icon :name="." :size="$isize" class="bk-input__icon" />{{ end }}{{ if hasNode "trailing" }}<span class="bk-input__slot">{{ node "trailing" }}</span>{{ end }}{{ with .Props.suffix }}<span class="bk-input__addon">{{ . }}</span>{{ end }}</div>

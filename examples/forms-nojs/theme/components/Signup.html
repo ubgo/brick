@@ -1,0 +1,21 @@
+---
+state:
+  name: ""
+  agree: false
+  saved: false
+---
+<brick:script>
+def save(state, props, fields):
+    name = fields.get("name", "").strip()
+    if not name:
+        return [dict(state, name = name), {"name": "Enter a name."}]
+    return dict(state, name = name, saved = True)
+</brick:script>
+<form brick:submit="save">
+  {{ if .State.saved }}<p>Welcome, {{ .State.name }}.</p>{{ end }}
+  <input name="name" value="{{ .State.name }}">
+  {{ with .Errors.name }}<p class="error">{{ . }}</p>{{ end }}
+  <label><input type="checkbox" brick:model="agree"{{ if .State.agree }} checked{{ end }}> I agree</label>
+  <button>Sign up</button>
+  <button type="button" brick:click='$dispatch("signup-cancelled")'>Cancel</button>
+</form>

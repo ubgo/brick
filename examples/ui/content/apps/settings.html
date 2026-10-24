@@ -1,0 +1,36 @@
+---
+title: Settings
+layout: app
+description: Profile, account, notifications, appearance and billing — five stateful forms built only from kit components.
+---
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/settings/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Settings`)" />
+    <div class="settings-top"><ThemeToggle /></div>
+  </brick:prop>
+  <div class="settings-page">
+    <PageHeader title="Settings" description="Manage your profile, account and preferences." />
+    <Tabs label="Settings sections" variant="underline">
+      <Tab title="Profile" icon="user"><SettingsProfile /></Tab>
+      <Tab title="Account" icon="shield"><SettingsAccount /></Tab>
+      <Tab title="Notifications" icon="bell"><SettingsNotifications /></Tab>
+      <Tab title="Appearance" icon="sun"><SettingsAppearance /></Tab>
+      <Tab title="Billing" icon="credit-card"><SettingsBilling /></Tab>
+    </Tabs>
+  </div>
+  <Toaster />
+</AppShell>
+
+<AppSource app="Settings">
+  <Tabs label="Settings files" size="sm">
+    <Tab title="settings.html"><CodeView file="content/apps/settings.html"><Source src="~/content/apps/settings.html" /></CodeView></Tab>
+    <Tab title="SettingsProfile.html"><CodeView file="apps/settings/SettingsProfile.html"><Source src="~/apps/settings/SettingsProfile.html" /></CodeView></Tab>
+    <Tab title="SettingsAccount.html"><CodeView file="apps/settings/SettingsAccount.html"><Source src="~/apps/settings/SettingsAccount.html" /></CodeView></Tab>
+    <Tab title="SettingsNotifications.html"><CodeView file="apps/settings/SettingsNotifications.html"><Source src="~/apps/settings/SettingsNotifications.html" /></CodeView></Tab>
+    <Tab title="SettingsAppearance.html"><CodeView file="apps/settings/SettingsAppearance.html"><Source src="~/apps/settings/SettingsAppearance.html" /></CodeView></Tab>
+    <Tab title="SettingsBilling.html"><CodeView file="apps/settings/SettingsBilling.html"><Source src="~/apps/settings/SettingsBilling.html" /></CodeView></Tab>
+    <Tab title="settings.yaml"><CodeView file="data/settings.yaml"><Source src="~/data/settings.yaml" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>

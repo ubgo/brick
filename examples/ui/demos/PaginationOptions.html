@@ -1,0 +1,5 @@
+<div style="display: grid; gap: 1rem; width: 100%">
+  <Pagination label="Orders pages" :page="3" :total="96" :perPage="10" :siblings="2" href="/orders/page/%d/" />
+  <Pagination label="Search result pages" :page="4" :total="200" size="sm" :summary="false" href="/search?q=brick" />
+  <Pagination label="Empty result pages" :page="1" :total="0" href="#page-%d" />
+</div>

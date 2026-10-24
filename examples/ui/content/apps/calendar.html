@@ -1,0 +1,28 @@
+---
+title: Calendar
+layout: app
+description: A Google Calendar-style app built only from kit components — month, week and agenda views over SQLite, a mini month, and an event dialog with dates, times, colours and guests.
+---
+<brick:style>
+.cal-top { margin-left: auto; display: flex; gap: .5rem; }
+</brick:style>
+<AppShell>
+  <brick:prop name="sidebar"><AppNav current="/apps/calendar/" /></brick:prop>
+  <brick:prop name="topbar">
+    <Breadcrumbs :items="list (dict `label` `Apps` `href` `/`) (dict `label` `Calendar`)" />
+    <div class="cal-top"><ThemeToggle /></div>
+  </brick:prop>
+  <CalendarApp />
+  <Toaster />
+</AppShell>
+
+<AppSource app="Calendar">
+  <Tabs label="Calendar files" size="sm">
+    <Tab title="calendar.html"><CodeView file="content/apps/calendar.html"><Source src="~/content/apps/calendar.html" /></CodeView></Tab>
+    <Tab title="CalendarApp.html"><CodeView file="apps/calendar/CalendarApp.html"><Source src="~/apps/calendar/CalendarApp.html" /></CodeView></Tab>
+    <Tab title="CalDelete.html"><CodeView file="apps/calendar/CalDelete.html"><Source src="~/apps/calendar/CalDelete.html" /></CodeView></Tab>
+    <Tab title="calendar.star"><CodeView file="apps/calendar/calendar.star"><Source src="~/apps/calendar/calendar.star" /></CodeView></Tab>
+    <Tab title="db_calendar.go"><CodeView file="demodb/db_calendar.go"><Source src="~/demodb/db_calendar.go" /></CodeView></Tab>
+    <Tab title="AppNav.html"><CodeView file="components/AppNav.html"><Source src="~/components/AppNav.html" /></CodeView></Tab>
+  </Tabs>
+</AppSource>
